@@ -108,6 +108,7 @@ function Studio() {
                   setTheme={setTheme}
                   onOpenStudio={open}
                 />
+                <BlankStoryButton sessionId={sessionId} onOpen={open} />
                 <StoryList sessionId={sessionId} onOpen={open} />
               </>
             )}
