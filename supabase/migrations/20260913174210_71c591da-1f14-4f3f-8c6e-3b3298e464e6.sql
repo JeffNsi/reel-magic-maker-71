@@ -1,0 +1,2 @@
+create policy "Stories are managed server-side only" on public.stories for select to authenticated using (false);
+create policy "Story scenes are managed server-side only" on public.story_scenes for select to authenticated using (false);

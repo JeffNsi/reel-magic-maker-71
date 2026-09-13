@@ -4,7 +4,7 @@ import { Crown, Coins, LogOut, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { getProfile, buyVip } from "@/lib/dramawave.functions";
+import { getProfile } from "@/lib/dramawave.functions";
 import { Button } from "@/components/ui/button";
 import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
 import { useState } from "react";
@@ -27,7 +27,6 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [shopOpen, setShopOpen] = useState(false);
   const fetchProfile = useServerFn(getProfile);
-  const activateVip = useServerFn(buyVip);
 
   const { data: user } = useQuery({
     queryKey: ["auth-user"],
@@ -47,16 +46,6 @@ function ProfilePage() {
     await supabase.auth.signOut();
     toast.success("Signed out.");
     navigate({ to: "/dramawave" });
-  };
-
-  const handleVip = async () => {
-    try {
-      await activateVip();
-      refetch();
-      toast.success("VIP activated for 30 days!");
-    } catch (err: any) {
-      toast.error(err.message || "Could not activate VIP.");
-    }
   };
 
   if (!user) {
@@ -132,10 +121,10 @@ function ProfilePage() {
             <Wallet className="mr-2 size-4" /> Coin shop
           </Button>
           <Button
-            onClick={handleVip}
+            onClick={() => setShopOpen(true)}
             className="h-12 flex-1 rounded-xl dw-btn-primary text-sm font-semibold"
           >
-            <Crown className="mr-2 size-4" /> Activate VIP
+            <Crown className="mr-2 size-4" /> Get VIP
           </Button>
         </div>
       </div>
