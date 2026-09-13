@@ -128,15 +128,22 @@ export function Gallery() {
               <DialogDescription className="text-xs uppercase tracking-widest text-primary">
                 {open.style}
               </DialogDescription>
-              <video
-                key={open.id}
-                src={open.video}
-                poster={STYLE_THUMBS[open.styleKey]}
-                controls
-                playsInline
-                autoPlay
-                className="aspect-[9/16] w-full rounded-xl bg-black"
-              />
+              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-black">
+                <img
+                  src={STYLE_THUMBS[open.styleKey]}
+                  alt=""
+                  loading="eager"
+                  className="size-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/30">
+                  <span className="flex size-14 items-center justify-center rounded-full border border-primary/50 bg-primary/20 text-primary backdrop-blur-sm">
+                    <Play className="size-6" fill="currentColor" aria-hidden />
+                  </span>
+                  <span className="rounded-full bg-background/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-foreground backdrop-blur-sm">
+                    Video placeholder
+                  </span>
+                </div>
+              </div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Prompt used
               </p>
