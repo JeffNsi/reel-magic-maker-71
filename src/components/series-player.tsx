@@ -118,7 +118,7 @@ export function SeriesPlayer({ title, scenes }: { title: string; scenes: SeriesS
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${safeName(title, "storyreel-series")}.zip`;
+      link.download = `${safeName(title, "jejeincvibe-series")}.zip`;
       link.click();
       URL.revokeObjectURL(url);
       toast.success("Series downloaded.");
