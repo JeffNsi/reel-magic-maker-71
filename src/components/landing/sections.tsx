@@ -67,19 +67,22 @@ const TESTIMONIALS = [
   {
     name: "Maya Lindqvist",
     role: "Content creator, 180k followers",
-    quote: "I post five shorts a week now. The style presets do the work a whole crew used to do.",
+    quote:
+      "I went from idea to a finished vertical short in under three minutes. The quality is unreal for something that fast.",
     initials: "ML",
   },
   {
     name: "Tobias Ek",
     role: "Marketing lead, Nordwave",
-    quote: "We test three hooks before lunch. Vertical, on brand, no shoot day.",
+    quote:
+      "We used to spend a day shooting one hook. Now we generate three variations before lunch and pick the winner.",
     initials: "TE",
   },
   {
     name: "Amara Osei",
     role: "Screenwriter",
-    quote: "It is the fastest way I have found to see a scene before I commit to writing it.",
+    quote:
+      "It is the easiest way to visualize a scene before I write the full script. The cinematic style presets are genuinely useful.",
     initials: "AO",
   },
 ];
@@ -91,20 +94,26 @@ export function SocialProof() {
     <section className="mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Creators ship faster
+          Loved by creators
         </h2>
       </Reveal>
       <ul className="mt-8 grid gap-3 sm:grid-cols-3">
         {TESTIMONIALS.map((person, i) => (
           <Reveal as="li" key={person.name} delay={i * 80}>
-            <figure className="surface-cinema h-full rounded-2xl p-6">
-              <blockquote className="text-sm leading-relaxed text-foreground/90">
-                “{person.quote}”
+            <figure className="surface-cinema relative h-full overflow-hidden rounded-2xl border border-border/60 p-6">
+              <span
+                aria-hidden
+                className="absolute -right-2 -top-2 font-display text-6xl italic leading-none text-primary/20"
+              >
+                “
+              </span>
+              <blockquote className="relative text-sm leading-relaxed text-foreground/90">
+                {person.quote}
               </blockquote>
               <figcaption className="mt-5 flex items-center gap-3">
                 <span
                   aria-hidden
-                  className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
+                  className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                 >
                   {person.initials}
                 </span>
