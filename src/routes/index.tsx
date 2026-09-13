@@ -146,6 +146,16 @@ function StoryReel() {
       toast.error("Describe your idea first.");
       return;
     }
+    if (!user) {
+      toast.error("Sign in to spend coins on a film.");
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (coins < COIN_COST) {
+      toast.error(`A film costs ${COIN_COST} coins. You have ${coins}.`);
+      navigate({ to: "/dramawave/rewards" });
+      return;
+    }
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
