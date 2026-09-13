@@ -157,6 +157,7 @@ export const createShopCheckout = createServerFn({ method: "POST" })
 // ---------- SumUp checkout (card widget) ----------
 
 const sumupInput = z.object({ pack: z.enum(["small", "medium", "large", "vip"]) });
+const sumupCreateInput = sumupInput.extend({ origin: z.string().url() });
 
 async function sumupRequest(path: string, init: RequestInit) {
   const apiKey = process.env["SUMUP_API_KEY"];
@@ -178,7 +179,7 @@ async function sumupRequest(path: string, init: RequestInit) {
 
 export const createSumUpCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => sumupInput.parse(data))
+  .inputValidator((data: unknown) => sumupCreateInput.parse(data))
   .handler(
     async ({ data, context }): Promise<{ checkoutId: string } | { error: string }> => {
       const pack = PACKS[data.pack];
@@ -194,6 +195,9 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
             currency: "SEK",
             pay_to_email: payToEmail,
             description: `Jeje Inc Vibe — ${pack.name}`,
+            // Required by SumUp for wallet payments (Apple Pay / Google Pay) — the widget
+            // sends the customer here after the payment sheet closes.
+            redirect_url: `${data.origin}/dramawave/profile?shop=return`,
           }),
         });
         return { checkoutId: checkout.id as string };
