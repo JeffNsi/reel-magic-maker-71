@@ -116,8 +116,8 @@ export function FilmPlayer({
   voiceUrl: string | null;
   narration: string;
   generationId: string | null;
-  onNarrate?: (input: { text: string; voice: string; music: string }) => void;
-  narrating?: boolean;
+  onNarrate?: ((input: { text: string; voice: string; music: string }) => void) | undefined;
+  narrating?: boolean | undefined;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement>(null);

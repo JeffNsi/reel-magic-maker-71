@@ -38,7 +38,7 @@ import {
 
 export const Route = createFileRoute("/studio")({
   validateSearch: (search: Record<string, unknown>) => ({
-    story: typeof search.story === "string" ? search.story : undefined,
+    story: typeof search["story"] === "string" ? (search["story"] as string) : undefined,
   }),
   head: () => ({
     meta: [
