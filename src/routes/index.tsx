@@ -427,7 +427,7 @@ function ResultState({
         <Button
           onClick={() => void download()}
           disabled={downloading}
-          className="h-13 h-14 w-full rounded-2xl bg-primary text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
+          className="h-14 w-full rounded-2xl bg-primary text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
         >
           {downloading ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
