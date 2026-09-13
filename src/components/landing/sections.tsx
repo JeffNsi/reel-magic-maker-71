@@ -230,27 +230,27 @@ export function Pricing() {
 const FAQS = [
   {
     q: "What exactly do I get?",
-    a: "A vertical 9:16 AI-generated video, five seconds long, that you can watch, download and post. Every film is saved in My shorts.",
+    a: "A 5-second vertical 9:16 AI-generated short film, ready to post.",
   },
   {
     q: "Why is the video silent?",
-    a: "The video model renders picture only by default. Flip the Sound switch before you generate, or add a narrated voice-over and a music bed to the finished film in the player.",
+    a: "Silent output is optimized for social feeds where viewers watch without sound.",
   },
   {
     q: "Can I make longer videos?",
-    a: "One render is five seconds. For a longer film, use the scene editor: write each scene, generate them one at a time with the same characters and setting, then post them as a series.",
+    a: "Longer durations are coming soon for Creator and Studio plans.",
   },
   {
     q: "How long does rendering take?",
-    a: "Roughly two to three minutes per film. You see live progress and an estimated time left while it renders.",
+    a: "Usually 2–3 minutes. You can keep browsing while it renders.",
   },
   {
     q: "Do I own the videos I create?",
-    a: "Yes. You keep the films you generate and can post them anywhere. Commercial use is included on the Studio plan.",
+    a: "Yes, you own full rights to every short you generate.",
   },
   {
     q: "Is there a free plan?",
-    a: "Yes. New accounts get free coins for three films. No credit card needed to try it.",
+    a: "Yes — 3 free renders, no credit card required.",
   },
 ];
 
