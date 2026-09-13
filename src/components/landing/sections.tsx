@@ -13,19 +13,22 @@ import { Reveal } from "./reveal";
 
 const STEPS = [
   {
+    number: "01",
     icon: PenLine,
     title: "Write your idea",
-    body: "One sentence. A person, a place, a want.",
+    body: "Describe the short film you want in a few words.",
   },
   {
+    number: "02",
     icon: Palette,
-    title: "Pick a style",
-    body: "Cinematic, anime, noir — the look is applied for you.",
+    title: "Pick your style",
+    body: "Choose a cinematic look that fits your vision.",
   },
   {
+    number: "03",
     icon: Play,
     title: "Get your film",
-    body: "A vertical short lands in your library, ready to post.",
+    body: "Render in 2–3 minutes and download in vertical 9:16.",
   },
 ];
 
@@ -35,18 +38,23 @@ export function HowItWorks() {
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">How it works</h2>
       </Reveal>
-      <ol className="mt-8 grid gap-3 sm:grid-cols-3">
+      <ol className="mt-8 grid gap-4 sm:grid-cols-3">
         {STEPS.map((step, i) => (
           <Reveal as="li" key={step.title} delay={i * 80}>
-            <div className="surface-cinema h-full rounded-2xl p-6">
-              <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
-                <step.icon className="size-5" aria-hidden />
+            <div className="surface-cinema relative h-full overflow-hidden rounded-2xl p-6">
+              <span className="absolute -right-2 -top-4 font-display text-7xl italic leading-none text-primary/10">
+                {step.number}
               </span>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                Step {i + 1}
-              </p>
-              <h3 className="mt-1 text-lg font-medium text-foreground">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+              <div className="relative">
+                <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
+                  <step.icon className="size-5" aria-hidden />
+                </span>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  Step {i + 1}
+                </p>
+                <h3 className="mt-1 text-lg font-medium text-foreground">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+              </div>
             </div>
           </Reveal>
         ))}
