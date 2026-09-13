@@ -157,6 +157,7 @@ export const createShopCheckout = createServerFn({ method: "POST" })
 // ---------- SumUp checkout (card widget) ----------
 
 const sumupInput = z.object({ pack: z.enum(["small", "medium", "large", "vip"]) });
+const sumupCreateInput = sumupInput.extend({ origin: z.string().url() });
 
 async function sumupRequest(path: string, init: RequestInit) {
   const apiKey = process.env["SUMUP_API_KEY"];
