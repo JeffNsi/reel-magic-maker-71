@@ -179,7 +179,7 @@ async function sumupRequest(path: string, init: RequestInit) {
 
 export const createSumUpCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => sumupInput.parse(data))
+  .inputValidator((data: unknown) => sumupCreateInput.parse(data))
   .handler(
     async ({ data, context }): Promise<{ checkoutId: string } | { error: string }> => {
       const pack = PACKS[data.pack];
