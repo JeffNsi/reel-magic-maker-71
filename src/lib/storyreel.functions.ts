@@ -4,53 +4,45 @@ import { z } from "zod";
 /**
  * STORYREEL V1 — text-to-video via fal.ai (Kling 3.0).
  *
- * Everything that touches the fal.ai key runs here, server-side only.
- * Modular on purpose: swap MODEL_ID / buildPrompt later without touching the UI.
+ * All fal.ai calls run server-side only; FAL_KEY never reaches the browser.
+ * Kept modular so story generation, scenes, voice-over etc. can be added later.
  */
 
 const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
 const FAL_QUEUE_BASE = "https://queue.fal.run";
-const BUCKET = "shorts";
+const BUCKET = "videos";
+const SIGNED_URL_TTL = 60 * 60 * 6;
 
 export const STYLES = [
-  { value: "cinematic", label: "Cinematic" },
-  { value: "realistic", label: "Realistic" },
-  { value: "anime", label: "Anime" },
-  { value: "3d", label: "3D" },
-  { value: "horror", label: "Horror" },
+  { value: "cinematic", label: "Cinematic", prefix: "Cinematic, dramatic lighting, film grain: " },
+  { value: "anime", label: "Anime", prefix: "Anime style, vibrant colors, dynamic motion: " },
+  { value: "realistic", label: "Realistic", prefix: "Photorealistic, natural lighting: " },
+  { value: "claymation", label: "Claymation", prefix: "Stop-motion claymation style: " },
 ] as const;
 
-const STYLE_DIRECTION: Record<string, string> = {
-  cinematic:
-    "Cinematic film look, anamorphic lens, shallow depth of field, dramatic volumetric lighting, film grain, colour graded.",
-  realistic:
-    "Photorealistic live-action footage, natural lighting, handheld documentary camera, true-to-life textures.",
-  anime:
-    "Japanese anime style, hand-drawn cel shading, expressive characters, painted backgrounds, dynamic camera.",
-  "3d": "Stylised 3D animation, high quality rendering, soft global illumination, subtle depth of field, Pixar-like polish.",
-  horror:
-    "Horror atmosphere, low-key lighting, deep shadows, cold desaturated palette, unsettling slow camera push, fog.",
-};
+const STYLE_PREFIX: Record<string, string> = Object.fromEntries(
+  STYLES.map((s) => [s.value, s.prefix]),
+);
 
 const styleValues = STYLES.map((s) => s.value) as unknown as [string, ...string[]];
 
-const createInput = z.object({
-  prompt: z.string().trim().min(10, "Describe your story a little more.").max(1500),
+const generateInput = z.object({
+  idea: z.string().trim().min(1, "Describe your idea first.").max(500),
   style: z.enum(styleValues),
+  session_id: z.string().uuid(),
 });
 
-const statusInput = z.object({ id: z.string().uuid() });
+const statusInput = z.object({
+  generation_id: z.string().uuid(),
+  session_id: z.string().uuid(),
+});
 
-export type ShortStatus = {
-  id: string;
+export type GenerationStatus = {
+  generation_id: string;
   status: "queued" | "processing" | "completed" | "failed";
-  videoUrl: string | null;
-  errorMessage: string | null;
+  video_url: string | null;
+  error_message: string | null;
 };
-
-function buildPrompt(prompt: string, style: string) {
-  return `${prompt.trim()}\n\n${STYLE_DIRECTION[style] ?? STYLE_DIRECTION["cinematic"]}`;
-}
 
 function falHeaders(key: string) {
   return { Authorization: `Key ${key}`, "Content-Type": "application/json" };
@@ -62,20 +54,22 @@ function readFalKey() {
   return key;
 }
 
-/** Start a generation: record it, submit it to fal.ai, remember the task id. */
-export const createShort = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => createInput.parse(data))
-  .handler(async ({ data }): Promise<ShortStatus> => {
+/** Start a generation: store it, submit it to fal.ai, remember the request id. */
+export const generateVideo = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => generateInput.parse(data))
+  .handler(async ({ data }): Promise<GenerationStatus> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const idea = data.idea.trim();
+    const promptFinal = `${STYLE_PREFIX[data.style] ?? STYLE_PREFIX["cinematic"]}${idea}`;
+
     const { data: row, error } = await supabaseAdmin
-      .from("video_generations")
+      .from("generations")
       .insert({
-        prompt: data.prompt.trim(),
+        session_id: data.session_id,
+        idea,
         style: data.style,
-        aspect_ratio: "9:16",
-        duration_seconds: 5,
-        provider: "fal.ai",
+        prompt_final: promptFinal,
         status: "queued",
       })
       .select("id")
@@ -89,16 +83,14 @@ export const createShort = createServerFn({ method: "POST" })
         method: "POST",
         headers: falHeaders(key),
         body: JSON.stringify({
-          prompt: buildPrompt(data.prompt, data.style),
+          prompt: promptFinal,
           duration: "5",
           aspect_ratio: "9:16",
           generate_audio: false,
         }),
       });
 
-      const payload = (await res.json().catch(() => null)) as
-        | { request_id?: string; detail?: unknown; error?: unknown }
-        | null;
+      const payload = (await res.json().catch(() => null)) as { request_id?: string } | null;
 
       if (!res.ok || !payload?.request_id) {
         console.error("fal submit failed", res.status, JSON.stringify(payload));
@@ -112,66 +104,81 @@ export const createShort = createServerFn({ method: "POST" })
       }
 
       await supabaseAdmin
-        .from("video_generations")
-        .update({ provider_task_id: payload.request_id, status: "processing" })
+        .from("generations")
+        .update({ fal_request_id: payload.request_id, status: "processing" })
         .eq("id", row.id);
 
-      return { id: row.id, status: "processing", videoUrl: null, errorMessage: null };
+      return {
+        generation_id: row.id,
+        status: "processing",
+        video_url: null,
+        error_message: null,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
       await supabaseAdmin
-        .from("video_generations")
-        .update({ status: "failed", error_message: message, completed_at: new Date().toISOString() })
+        .from("generations")
+        .update({ status: "failed", error_message: message })
         .eq("id", row.id);
-      return { id: row.id, status: "failed", videoUrl: null, errorMessage: message };
+      return { generation_id: row.id, status: "failed", video_url: null, error_message: message };
     }
   });
 
 /** Poll one generation; stores the finished video and returns a playable link. */
-export const getShortStatus = createServerFn({ method: "POST" })
+export const checkStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => statusInput.parse(data))
-  .handler(async ({ data }): Promise<ShortStatus> => {
+  .handler(async ({ data }): Promise<GenerationStatus> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: row, error } = await supabaseAdmin
-      .from("video_generations")
-      .select("id, status, provider_task_id, video_url, error_message")
-      .eq("id", data.id)
+      .from("generations")
+      .select("id, status, fal_request_id, video_url, error_message")
+      .eq("id", data.generation_id)
+      .eq("session_id", data.session_id)
       .single();
 
     if (error || !row) throw new Error("We lost track of that short.");
 
-    const fail = async (message: string): Promise<ShortStatus> => {
+    const signedUrl = async (path: string) => {
+      const { data: signed } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .createSignedUrl(path, SIGNED_URL_TTL);
+      return signed?.signedUrl ?? null;
+    };
+
+    const fail = async (message: string): Promise<GenerationStatus> => {
       await supabaseAdmin
-        .from("video_generations")
-        .update({ status: "failed", error_message: message, completed_at: new Date().toISOString() })
+        .from("generations")
+        .update({ status: "failed", error_message: message })
         .eq("id", row.id);
-      return { id: row.id, status: "failed", videoUrl: null, errorMessage: message };
+      return {
+        generation_id: row.id,
+        status: "failed",
+        video_url: null,
+        error_message: message,
+      };
     };
 
     if (row.status === "failed") {
       return {
-        id: row.id,
+        generation_id: row.id,
         status: "failed",
-        videoUrl: null,
-        errorMessage: row.error_message ?? "Something went wrong.",
+        video_url: null,
+        error_message: row.error_message ?? "Something went wrong.",
       };
     }
 
     if (row.status === "completed" && row.video_url) {
-      const { data: signed } = await supabaseAdmin.storage
-        .from(BUCKET)
-        .createSignedUrl(row.video_url, 60 * 60);
       return {
-        id: row.id,
+        generation_id: row.id,
         status: "completed",
-        videoUrl: signed?.signedUrl ?? null,
-        errorMessage: null,
+        video_url: await signedUrl(row.video_url),
+        error_message: null,
       };
     }
 
-    if (!row.provider_task_id) {
-      return { id: row.id, status: "queued", videoUrl: null, errorMessage: null };
+    if (!row.fal_request_id) {
+      return { generation_id: row.id, status: "queued", video_url: null, error_message: null };
     }
 
     let key: string;
@@ -182,7 +189,7 @@ export const getShortStatus = createServerFn({ method: "POST" })
     }
 
     const statusRes = await fetch(
-      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.provider_task_id}/status`,
+      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.fal_request_id}/status`,
       { headers: falHeaders(key) },
     );
     const statusBody = (await statusRes.json().catch(() => null)) as { status?: string } | null;
@@ -190,21 +197,29 @@ export const getShortStatus = createServerFn({ method: "POST" })
     if (!statusRes.ok) {
       console.error("fal status failed", statusRes.status, JSON.stringify(statusBody));
       if (statusRes.status >= 500 || statusRes.status === 429) {
-        return { id: row.id, status: "processing", videoUrl: null, errorMessage: null };
+        return {
+          generation_id: row.id,
+          status: "processing",
+          video_url: null,
+          error_message: null,
+        };
       }
       return fail("The video service lost this generation.");
     }
 
     if (statusBody?.status !== "COMPLETED") {
-      return { id: row.id, status: "processing", videoUrl: null, errorMessage: null };
+      if (row.status !== "processing") {
+        await supabaseAdmin.from("generations").update({ status: "processing" }).eq("id", row.id);
+      }
+      return { generation_id: row.id, status: "processing", video_url: null, error_message: null };
     }
 
     const resultRes = await fetch(
-      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.provider_task_id}`,
+      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.fal_request_id}`,
       { headers: falHeaders(key) },
     );
     const result = (await resultRes.json().catch(() => null)) as
-      | { video?: { url?: string }; detail?: unknown }
+      | { video?: { url?: string } }
       | null;
 
     const sourceUrl = result?.video?.url;
@@ -227,18 +242,14 @@ export const getShortStatus = createServerFn({ method: "POST" })
     }
 
     await supabaseAdmin
-      .from("video_generations")
-      .update({ status: "completed", video_url: path, completed_at: new Date().toISOString() })
+      .from("generations")
+      .update({ status: "completed", video_url: path })
       .eq("id", row.id);
 
-    const { data: signed } = await supabaseAdmin.storage
-      .from(BUCKET)
-      .createSignedUrl(path, 60 * 60);
-
     return {
-      id: row.id,
+      generation_id: row.id,
       status: "completed",
-      videoUrl: signed?.signedUrl ?? null,
-      errorMessage: null,
+      video_url: await signedUrl(path),
+      error_message: null,
     };
   });
