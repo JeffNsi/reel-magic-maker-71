@@ -108,7 +108,8 @@ export const unlockEpisode = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { unlocked: true, paid_coins: 0, bonus_coins: 0 };
 
-    const { data: episode, error: epError } = (await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: episode, error: epError } = (await supabaseAdmin
       .from("episodes")
       .select("id, is_free, coin_cost, dramas(is_vip_only)")
       .eq("id", data.episode_id)
@@ -218,55 +219,104 @@ export type FeedEpisode = {
   dramas: { title: string; cover_url: string } | null;
 };
 
+type RawEpisodeRow = Omit<FeedEpisode, "video_url"> & {
+  video_url: string | null;
+  storage_path: string | null;
+  dramas: { title: string; cover_url: string } | { title: string; cover_url: string }[] | null;
+};
+
+async function resolveEpisodeUrl(
+  supabaseAdmin: any,
+  row: RawEpisodeRow,
+): Promise<string | null> {
+  if (row.storage_path) {
+    const { data: signed } = await supabaseAdmin.storage
+      .from("videos")
+      .createSignedUrl(row.storage_path, 60 * 60 * 6);
+    return signed?.signedUrl ?? null;
+  }
+  return row.video_url;
+}
+
+function normalizeDrama(
+  dramas: RawEpisodeRow["dramas"],
+): { title: string; cover_url: string } | null {
+  return Array.isArray(dramas) ? (dramas[0] ?? null) : dramas;
+}
+
+async function loadEpisodes(supabaseAdmin: any, filterFreeOnly: boolean): Promise<FeedEpisode[]> {
+  let query = supabaseAdmin
+    .from("episodes")
+    .select(
+      "id, drama_id, episode_number, title, video_url, storage_path, coin_cost, is_free, dramas(title, cover_url)",
+    )
+    .order("drama_id")
+    .order("episode_number")
+    .limit(200);
+
+  if (filterFreeOnly) {
+    query = query.eq("is_free", true);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error("Could not load episodes.");
+
+  const rows = (data ?? []) as unknown as RawEpisodeRow[];
+
+  const episodes = await Promise.all(
+    rows.map(async (row) => {
+      const url = await resolveEpisodeUrl(supabaseAdmin, row);
+      if (!url) return null;
+      return {
+        id: row.id,
+        drama_id: row.drama_id,
+        episode_number: row.episode_number,
+        title: row.title,
+        video_url: url,
+        coin_cost: row.coin_cost,
+        is_free: row.is_free,
+        dramas: normalizeDrama(row.dramas),
+      } satisfies FeedEpisode;
+    }),
+  );
+
+  return episodes.filter((e): e is FeedEpisode => e !== null);
+}
+
 /**
- * Public feed of every episode with a playable link.
+ * Public feed of free episodes only.
  * Episodes generated in STORYREEL live in a private bucket, so they get a signed URL.
  */
 export const listEpisodes = createServerFn({ method: "GET" }).handler(
   async (): Promise<FeedEpisode[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data, error } = await supabaseAdmin
-      .from("episodes")
-      .select(
-        "id, drama_id, episode_number, title, video_url, storage_path, coin_cost, is_free, dramas(title, cover_url)",
-      )
-      .order("drama_id")
-      .order("episode_number")
-      .limit(200);
-
-    if (error) throw new Error("Could not load episodes.");
-
-    const rows = (data ?? []) as unknown as (Omit<FeedEpisode, "video_url"> & {
-      video_url: string | null;
-      storage_path: string | null;
-      dramas: { title: string; cover_url: string } | { title: string; cover_url: string }[] | null;
-    })[];
-
-    const episodes = await Promise.all(
-      rows.map(async (row) => {
-        let url = row.video_url;
-        if (row.storage_path) {
-          const { data: signed } = await supabaseAdmin.storage
-            .from("videos")
-            .createSignedUrl(row.storage_path, 60 * 60 * 6);
-          url = signed?.signedUrl ?? null;
-        }
-        const drama = Array.isArray(row.dramas) ? (row.dramas[0] ?? null) : row.dramas;
-        if (!url) return null;
-        return {
-          id: row.id,
-          drama_id: row.drama_id,
-          episode_number: row.episode_number,
-          title: row.title,
-          video_url: url,
-          coin_cost: row.coin_cost,
-          is_free: row.is_free,
-          dramas: drama,
-        } satisfies FeedEpisode;
-      }),
-    );
-
-    return episodes.filter((e): e is FeedEpisode => e !== null);
+    return loadEpisodes(supabaseAdmin, true);
   },
 );
+
+/**
+ * Episodes visible to the authenticated user: free, VIP-locked, or previously unlocked.
+ */
+export const getEpisodesForUser = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FeedEpisode[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [profile, unlockedRows] = await Promise.all([
+      (await supabaseAdmin.from("profiles").select("is_vip, vip_until").eq("id", context.userId).single()) as {
+        data: { is_vip: boolean; vip_until: string | null } | null;
+      },
+      (await supabaseAdmin
+        .from("user_unlocked_episodes")
+        .select("episode_id")
+        .eq("user_id", context.userId)) as { data: { episode_id: string }[] | null },
+    ]);
+
+    const unlocked = new Set((unlockedRows.data ?? []).map((u) => u.episode_id));
+    const vipActive =
+      profile.data?.is_vip &&
+      (!profile.data.vip_until || new Date(profile.data.vip_until) > new Date());
+
+    const all = await loadEpisodes(supabaseAdmin, false);
+    return all.filter((ep) => ep.is_free || vipActive || unlocked.has(ep.id));
+  });

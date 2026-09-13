@@ -8,6 +8,7 @@ import {
   getProfile,
   unlockEpisode,
   listEpisodes,
+  getEpisodesForUser,
   type Profile,
 } from "@/lib/dramawave.functions";
 import { Button } from "@/components/ui/button";
@@ -87,9 +88,13 @@ function ShortsPage() {
   });
 
   const fetchEpisodes = useServerFn(listEpisodes);
+  const fetchUserEpisodes = useServerFn(getEpisodesForUser);
   const { data: episodes } = useQuery({
-    queryKey: ["episodes"],
-    queryFn: async () => (await fetchEpisodes()) as unknown as Episode[],
+    queryKey: ["episodes", user?.id ?? "anon"],
+    queryFn: async () =>
+      user
+        ? ((await fetchUserEpisodes()) as unknown as Episode[])
+        : ((await fetchEpisodes()) as unknown as Episode[]),
   });
 
   const fetchProfile = useServerFn(getProfile);
