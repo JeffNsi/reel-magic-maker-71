@@ -9,12 +9,12 @@ import {
   watchAd,
   getProfile,
   type Profile,
-} from "@/lib/dramawave.functions";
+} from "@/lib/vibe.functions";
 import { Button } from "@/components/ui/button";
-import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
+import { CoinShopModal } from "@/components/vibe/coin-shop-modal";
 import { Check, Gift, Clock, Share2, Film, Coins, Crown } from "lucide-react";
 
-export const Route = createFileRoute("/dramawave/rewards")({
+export const Route = createFileRoute("/vibe/rewards")({
   head: () => ({
     meta: [
       { title: "Rewards — Jeje Inc Vibe" },

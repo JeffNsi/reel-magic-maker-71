@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Heart, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyList } from "@/lib/dramawave.functions";
+import { getMyList } from "@/lib/vibe.functions";
 
-export const Route = createFileRoute("/dramawave/my-list")({
+export const Route = createFileRoute("/vibe/my-list")({
   head: () => ({
     meta: [
       { title: "My List — Jeje Inc Vibe" },
@@ -62,7 +62,7 @@ function MyListPage() {
           <Heart className="mx-auto size-10 text-dw-muted" aria-hidden />
           <p className="mt-4 text-sm text-dw-muted">No saved dramas yet.</p>
           <Link
-            to="/dramawave"
+            to="/vibe"
             className="mt-4 inline-flex h-11 items-center rounded-full bg-dw-card px-6 text-sm font-medium"
           >
             Browse dramas
@@ -74,7 +74,7 @@ function MyListPage() {
         {(dramas ?? []).map((drama: any) => (
           <Link
             key={drama.id}
-            to="/dramawave/shorts"
+            to="/vibe/shorts"
             className="group overflow-hidden rounded-2xl border border-dw-border bg-dw-card"
           >
             <div className="relative">

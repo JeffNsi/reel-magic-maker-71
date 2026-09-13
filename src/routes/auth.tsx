@@ -46,7 +46,7 @@ function AuthPage() {
 
   const afterSignIn = () => {
     if (plan === "creator" || plan === "studio") {
-      navigate({ to: "/dramawave/profile", search: { shop: plan } });
+      navigate({ to: "/vibe/profile", search: { shop: plan } });
     } else {
       navigate({ to: "/" });
     }

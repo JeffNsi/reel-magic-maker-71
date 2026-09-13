@@ -10,7 +10,7 @@ import {
   listEpisodes,
   getEpisodesForUser,
   type Profile,
-} from "@/lib/dramawave.functions";
+} from "@/lib/vibe.functions";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,7 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
+import { CoinShopModal } from "@/components/vibe/coin-shop-modal";
 import {
   Play,
   Pause,
@@ -32,7 +32,7 @@ import {
   Crown,
 } from "lucide-react";
 
-export const Route = createFileRoute("/dramawave/shorts")({
+export const Route = createFileRoute("/vibe/shorts")({
   head: () => ({
     meta: [
       { title: "Shorts — Jeje Inc Vibe" },

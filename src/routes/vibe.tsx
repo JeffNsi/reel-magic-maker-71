@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Home, Film, Gift, Heart, User } from "lucide-react";
 
-export const Route = createFileRoute("/dramawave")({
+export const Route = createFileRoute("/vibe")({
   head: () => ({
     meta: [
       { title: "Jeje Inc Vibe" },
@@ -12,18 +12,18 @@ export const Route = createFileRoute("/dramawave")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DramaWaveLayout,
+  component: VibeLayout,
 });
 
 const tabs = [
-  { to: "/dramawave", label: "Home", icon: Home },
-  { to: "/dramawave/shorts", label: "Shorts", icon: Film },
-  { to: "/dramawave/rewards", label: "Rewards", icon: Gift },
-  { to: "/dramawave/my-list", label: "My List", icon: Heart },
-  { to: "/dramawave/profile", label: "Profile", icon: User },
+  { to: "/vibe", label: "Home", icon: Home },
+  { to: "/vibe/shorts", label: "Shorts", icon: Film },
+  { to: "/vibe/rewards", label: "Rewards", icon: Gift },
+  { to: "/vibe/my-list", label: "My List", icon: Heart },
+  { to: "/vibe/profile", label: "Profile", icon: User },
 ];
 
-function DramaWaveLayout() {
+function VibeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (

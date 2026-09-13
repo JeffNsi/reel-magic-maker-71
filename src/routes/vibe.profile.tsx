@@ -4,12 +4,12 @@ import { Crown, Coins, LogOut, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { getProfile } from "@/lib/dramawave.functions";
+import { getProfile } from "@/lib/vibe.functions";
 import { Button } from "@/components/ui/button";
-import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
+import { CoinShopModal } from "@/components/vibe/coin-shop-modal";
 import { useEffect, useState } from "react";
 
-export const Route = createFileRoute("/dramawave/profile")({
+export const Route = createFileRoute("/vibe/profile")({
   validateSearch: (search: Record<string, unknown>): { shop?: string | undefined } => ({
     shop: typeof search["shop"] === "string" ? (search["shop"] as string) : undefined,
   }),
@@ -54,7 +54,7 @@ function ProfilePage() {
   const signOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out.");
-    navigate({ to: "/dramawave" });
+    navigate({ to: "/vibe" });
   };
 
   if (!user) {
@@ -70,7 +70,7 @@ function ProfilePage() {
         >
           Sign in / Sign up
         </Link>
-        <Link to="/dramawave" className="mt-4 text-sm text-dw-muted hover:text-dw-foreground">
+        <Link to="/vibe" className="mt-4 text-sm text-dw-muted hover:text-dw-foreground">
           Continue as guest
         </Link>
       </div>
