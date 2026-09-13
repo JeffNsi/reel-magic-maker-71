@@ -184,9 +184,10 @@ export const generateVideo = createServerFn({ method: "POST" })
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
+      await charge(-1);
       await supabaseAdmin
         .from("generations")
-        .update({ status: "failed", error_message: message })
+        .update({ status: "failed", error_message: message, coins_spent: 0 })
         .eq("id", row.id);
       return { generation_id: row.id, status: "failed", video_url: null, error_message: message };
     }
