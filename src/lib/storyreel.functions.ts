@@ -42,7 +42,25 @@ export type GenerationStatus = {
   status: "queued" | "processing" | "completed" | "failed";
   video_url: string | null;
   error_message: string | null;
+  /** When the generation was started, so the UI can estimate time remaining. */
+  created_at?: string | null;
+  /** Position in the provider queue, when the provider reports one. */
+  queue_position?: number | null;
 };
+
+/** Typical wall-clock time for one 5-second short, used for the progress estimate. */
+export const ESTIMATED_SECONDS = 210;
+
+export type HistoryItem = {
+  id: string;
+  idea: string;
+  style: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  created_at: string;
+  video_url: string | null;
+  error_message: string | null;
+};
+
 
 function falHeaders(key: string) {
   return { Authorization: `Key ${key}`, "Content-Type": "application/json" };
@@ -138,7 +156,7 @@ export const checkStatus = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
-      .select("id, status, fal_request_id, video_url, error_message")
+      .select("id, status, fal_request_id, video_url, error_message, created_at")
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .single();
@@ -184,7 +202,13 @@ export const checkStatus = createServerFn({ method: "POST" })
     }
 
     if (!row.fal_request_id) {
-      return { generation_id: row.id, status: "queued", video_url: null, error_message: null };
+      return {
+        generation_id: row.id,
+        status: "queued",
+        video_url: null,
+        error_message: null,
+        created_at: row.created_at,
+      };
     }
 
     let key: string;
@@ -198,7 +222,9 @@ export const checkStatus = createServerFn({ method: "POST" })
       `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.fal_request_id}/status`,
       { headers: falHeaders(key) },
     );
-    const statusBody = (await statusRes.json().catch(() => null)) as { status?: string } | null;
+    const statusBody = (await statusRes.json().catch(() => null)) as
+      | { status?: string; queue_position?: number }
+      | null;
 
     if (!statusRes.ok) {
       console.error("fal status failed", statusRes.status, JSON.stringify(statusBody));
@@ -208,6 +234,7 @@ export const checkStatus = createServerFn({ method: "POST" })
           status: "processing",
           video_url: null,
           error_message: null,
+          created_at: row.created_at,
         };
       }
       return fail("The video service lost this generation.");
@@ -217,7 +244,14 @@ export const checkStatus = createServerFn({ method: "POST" })
       if (row.status !== "processing") {
         await supabaseAdmin.from("generations").update({ status: "processing" }).eq("id", row.id);
       }
-      return { generation_id: row.id, status: "processing", video_url: null, error_message: null };
+      return {
+        generation_id: row.id,
+        status: statusBody?.status === "IN_QUEUE" ? "queued" : "processing",
+        video_url: null,
+        error_message: null,
+        created_at: row.created_at,
+        queue_position: statusBody?.queue_position ?? null,
+      };
     }
 
     const resultRes = await fetch(
@@ -258,4 +292,99 @@ export const checkStatus = createServerFn({ method: "POST" })
       video_url: await signedUrl(path),
       error_message: null,
     };
+  });
+
+const historyInput = z.object({ session_id: z.string().uuid() });
+
+/** All shorts made in this browser, newest first, with playable links for finished ones. */
+export const listGenerations = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => historyInput.parse(data))
+  .handler(async ({ data }): Promise<HistoryItem[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("generations")
+      .select("id, idea, style, status, created_at, video_url, error_message")
+      .eq("session_id", data.session_id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw new Error("Could not load your shorts.");
+
+    return Promise.all(
+      (rows ?? []).map(async (row) => {
+        let url: string | null = null;
+        if (row.status === "completed" && row.video_url) {
+          const { data: signed } = await supabaseAdmin.storage
+            .from(BUCKET)
+            .createSignedUrl(row.video_url, SIGNED_URL_TTL);
+          url = signed?.signedUrl ?? null;
+        }
+        return {
+          id: row.id,
+          idea: row.idea,
+          style: row.style,
+          status: (row.status ?? "queued") as HistoryItem["status"],
+          created_at: row.created_at,
+          video_url: url,
+          error_message: row.error_message,
+        };
+      }),
+    );
+  });
+
+const storyInput = z.object({
+  theme: z.string().trim().min(1, "Give me a theme first.").max(200),
+  style: z.enum(styleValues),
+});
+
+const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+/** Turn a short theme into a single vivid 5-second short-film prompt. */
+export const generateStory = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => storyInput.parse(data))
+  .handler(async ({ data }): Promise<{ idea: string }> => {
+    const key = process.env["LOVABLE_API_KEY"];
+    if (!key) throw new Error("The story writer isn't available right now.");
+
+    const styleLabel = STYLES.find((s) => s.value === data.style)?.label ?? "Cinematic";
+
+    const res = await fetch(AI_GATEWAY, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You write prompts for a text-to-video model that renders one continuous 5-second vertical shot. " +
+              "Reply with ONE paragraph under 400 characters: a single scene with a clear subject, setting, " +
+              "camera movement, lighting and mood. No scene lists, no dialogue, no titles, no quotation marks, " +
+              "no camera brand names, no markdown.",
+          },
+          {
+            role: "user",
+            content: `Theme: ${data.theme}\nVisual style: ${styleLabel}`,
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("ai gateway failed", res.status, await res.text().catch(() => ""));
+      throw new Error(
+        res.status === 429
+          ? "The story writer is busy. Try again in a moment."
+          : "The story writer could not finish. Please try again.",
+      );
+    }
+
+    const body = (await res.json().catch(() => null)) as
+      | { choices?: { message?: { content?: string } }[] }
+      | null;
+    const idea = body?.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g, "");
+    if (!idea) throw new Error("The story writer came back empty. Please try again.");
+
+    return { idea: idea.slice(0, 500) };
   });
