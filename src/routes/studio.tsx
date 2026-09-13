@@ -564,12 +564,49 @@ function SceneCard({
         className="mt-3 h-11 rounded-xl border-border bg-background/50 text-sm"
       />
 
-      <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-3">
-        <label htmlFor={`audio-${scene.id}`} className="text-sm text-muted-foreground">
-          Let the video model add its own sound
-        </label>
-        <Switch id={`audio-${scene.id}`} checked={audio} onCheckedChange={setAudio} />
+      <div className="mt-4 space-y-3 rounded-xl border border-border bg-background/40 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor={`audio-${scene.id}`} className="text-sm text-muted-foreground">
+            Generate this scene with voice and music
+          </label>
+          <Switch id={`audio-${scene.id}`} checked={audio} onCheckedChange={setAudio} />
+        </div>
+        {audio && (
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Select value={voice} onValueChange={setVoice}>
+              <SelectTrigger
+                className="h-11 rounded-xl border-border bg-background/60 text-sm sm:flex-1"
+                aria-label="Narrator voice"
+              >
+                <SelectValue placeholder="Voice" />
+              </SelectTrigger>
+              <SelectContent>
+                {VOICES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={music} onValueChange={setMusic}>
+              <SelectTrigger
+                className="h-11 rounded-xl border-border bg-background/60 text-sm sm:flex-1"
+                aria-label="Music bed"
+              >
+                <SelectValue placeholder="Music" />
+              </SelectTrigger>
+              <SelectContent>
+                {MUSIC_BEDS.map((bed) => (
+                  <SelectItem key={bed.value} value={bed.value}>
+                    {bed.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
+
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Button
