@@ -155,11 +155,14 @@ function StoryReel() {
               setIdea={setIdea}
               style={style}
               setStyle={setStyle}
+              audio={audio}
+              setAudio={setAudio}
               onSubmit={submit}
               pending={generate.isPending || !sessionId}
             />
             <p className="mt-8 text-center text-xs text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · estimated render time 2–3 minutes
+              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · estimated render time
+              2–3 minutes
             </p>
           </>
         )}
@@ -311,6 +314,8 @@ function CreateCard({
   setIdea,
   style,
   setStyle,
+  audio,
+  setAudio,
   onSubmit,
   pending,
 }: {
@@ -318,6 +323,8 @@ function CreateCard({
   setIdea: (v: string) => void;
   style: string;
   setStyle: (v: string) => void;
+  audio: boolean;
+  setAudio: (v: boolean) => void;
   onSubmit: () => void;
   pending: boolean;
 }) {
