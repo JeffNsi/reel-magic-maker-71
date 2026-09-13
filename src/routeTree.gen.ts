@@ -22,6 +22,7 @@ import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
 import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
 import { Route as DramawaveRewardsRouteImport } from './routes/dramawave.rewards'
 import { Route as DramawaveShortsRouteImport } from './routes/dramawave.shorts'
+import { Route as ApiPublicApplePayVerificationRouteImport } from './routes/api/public/apple-pay-verification'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -89,6 +90,12 @@ const DramawaveShortsRoute = DramawaveShortsRouteImport.update({
   path: '/shorts',
   getParentRoute: () => DramawaveRoute,
 } as any)
+const ApiPublicApplePayVerificationRoute =
+  ApiPublicApplePayVerificationRouteImport.update({
+    id: '/api/public/apple-pay-verification',
+    path: '/api/public/apple-pay-verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave/': typeof DramawaveIndexRoute
+  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave': typeof DramawaveIndexRoute
+  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave/': typeof DramawaveIndexRoute
+  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave/'
+    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave'
+    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -191,6 +203,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave/'
+    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -203,6 +216,7 @@ export interface RootRouteChildren {
   StudioRoute: typeof StudioRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  ApiPublicApplePayVerificationRoute: typeof ApiPublicApplePayVerificationRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -299,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DramawaveShortsRouteImport
       parentRoute: typeof DramawaveRoute
     }
+    '/api/public/apple-pay-verification': {
+      id: '/api/public/apple-pay-verification'
+      path: '/api/public/apple-pay-verification'
+      fullPath: '/api/public/apple-pay-verification'
+      preLoaderRoute: typeof ApiPublicApplePayVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -338,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudioRoute: StudioRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  ApiPublicApplePayVerificationRoute: ApiPublicApplePayVerificationRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
