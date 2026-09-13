@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   getProfile,
   unlockEpisode,
+  listEpisodes,
   type Profile,
 } from "@/lib/dramawave.functions";
 import { Button } from "@/components/ui/button";
