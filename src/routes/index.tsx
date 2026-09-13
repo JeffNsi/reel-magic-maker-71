@@ -205,6 +205,17 @@ function StoryReel() {
           />
         )}
       </main>
+
+      {phase === "create" && (
+        <>
+          <Gallery />
+          <HowItWorks />
+          <SocialProof />
+          <Pricing />
+          <Faq />
+          <SiteFooter />
+        </>
+      )}
     </div>
   );
 }
