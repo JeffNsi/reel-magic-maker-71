@@ -30,6 +30,8 @@ const generateInput = z.object({
   idea: z.string().trim().min(1, "Describe your idea first.").max(500),
   style: z.enum(styleValues),
   session_id: z.string().uuid(),
+  /** When true, fal.ai generates a soundtrack for the clip. */
+  audio: z.boolean().optional().default(false),
 });
 
 const statusInput = z.object({
@@ -104,7 +106,7 @@ export const generateVideo = createServerFn({ method: "POST" })
           prompt: promptFinal,
           duration: "5",
           aspect_ratio: "9:16",
-          generate_audio: false,
+          generate_audio: data.audio === true,
         }),
       });
 

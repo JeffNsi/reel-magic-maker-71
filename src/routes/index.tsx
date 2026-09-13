@@ -28,6 +28,7 @@ import { getSessionId } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ function StoryReel() {
   const [sessionId, setSessionId] = useState("");
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
+  const [audio, setAudio] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
@@ -80,7 +82,7 @@ function StoryReel() {
   const poll = useServerFn(checkStatus);
 
   const generate = useMutation({
-    mutationFn: () => start({ data: { idea, style, session_id: sessionId } }),
+    mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       if (result.status === "failed") {
@@ -155,11 +157,14 @@ function StoryReel() {
               setIdea={setIdea}
               style={style}
               setStyle={setStyle}
+              audio={audio}
+              setAudio={setAudio}
               onSubmit={submit}
               pending={generate.isPending || !sessionId}
             />
             <p className="mt-8 text-center text-xs text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · estimated render time 2–3 minutes
+              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · estimated render time
+              2–3 minutes
             </p>
           </>
         )}
@@ -311,6 +316,8 @@ function CreateCard({
   setIdea,
   style,
   setStyle,
+  audio,
+  setAudio,
   onSubmit,
   pending,
 }: {
@@ -318,6 +325,8 @@ function CreateCard({
   setIdea: (v: string) => void;
   style: string;
   setStyle: (v: string) => void;
+  audio: boolean;
+  setAudio: (v: boolean) => void;
   onSubmit: () => void;
   pending: boolean;
 }) {
@@ -366,6 +375,13 @@ function CreateCard({
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/50 px-4 py-3">
+              <label htmlFor="audio" className="text-sm text-muted-foreground">
+                Sound
+              </label>
+              <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
+            </div>
           </div>
 
           <div className="flex items-end">
