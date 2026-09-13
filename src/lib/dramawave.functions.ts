@@ -108,7 +108,8 @@ export const unlockEpisode = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { unlocked: true, paid_coins: 0, bonus_coins: 0 };
 
-    const { data: episode, error: epError } = (await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: episode, error: epError } = (await supabaseAdmin
       .from("episodes")
       .select("id, is_free, coin_cost, dramas(is_vip_only)")
       .eq("id", data.episode_id)
