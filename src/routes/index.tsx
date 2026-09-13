@@ -4,6 +4,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  ArrowRight,
+  ChevronRight,
   Download,
   Film,
   History as HistoryIcon,
@@ -13,6 +15,7 @@ import {
   Sparkles,
   Wand2,
 } from "lucide-react";
+
 
 import {
   checkStatus,
