@@ -232,3 +232,70 @@ export const isDramaSaved = createServerFn({ method: "POST" })
       .maybeSingle();
     return { saved: !!existing };
   });
+
+/** The DramaWave series that every STORYREEL generation is published into. */
+export const STORYREEL_DRAMA_ID = "00000000-0000-4000-8000-000000005701";
+
+export type FeedEpisode = {
+  id: string;
+  drama_id: string;
+  episode_number: number;
+  title: string | null;
+  video_url: string;
+  coin_cost: number;
+  is_free: boolean;
+  dramas: { title: string; cover_url: string } | null;
+};
+
+/**
+ * Public feed of every episode with a playable link.
+ * Episodes generated in STORYREEL live in a private bucket, so they get a signed URL.
+ */
+export const listEpisodes = createServerFn({ method: "GET" }).handler(
+  async (): Promise<FeedEpisode[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data, error } = await supabaseAdmin
+      .from("episodes")
+      .select(
+        "id, drama_id, episode_number, title, video_url, storage_path, coin_cost, is_free, dramas(title, cover_url)",
+      )
+      .order("drama_id")
+      .order("episode_number")
+      .limit(200);
+
+    if (error) throw new Error("Could not load episodes.");
+
+    const rows = (data ?? []) as unknown as (Omit<FeedEpisode, "video_url"> & {
+      video_url: string | null;
+      storage_path: string | null;
+      dramas: { title: string; cover_url: string } | { title: string; cover_url: string }[] | null;
+    })[];
+
+    const episodes = await Promise.all(
+      rows.map(async (row) => {
+        let url = row.video_url;
+        if (row.storage_path) {
+          const { data: signed } = await supabaseAdmin.storage
+            .from("videos")
+            .createSignedUrl(row.storage_path, 60 * 60 * 6);
+          url = signed?.signedUrl ?? null;
+        }
+        const drama = Array.isArray(row.dramas) ? (row.dramas[0] ?? null) : row.dramas;
+        if (!url) return null;
+        return {
+          id: row.id,
+          drama_id: row.drama_id,
+          episode_number: row.episode_number,
+          title: row.title,
+          video_url: url,
+          coin_cost: row.coin_cost,
+          is_free: row.is_free,
+          dramas: drama,
+        } satisfies FeedEpisode;
+      }),
+    );
+
+    return episodes.filter((e): e is FeedEpisode => e !== null);
+  },
+);
