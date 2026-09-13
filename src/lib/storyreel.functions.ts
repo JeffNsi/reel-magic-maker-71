@@ -55,6 +55,20 @@ export const STYLES = [
     description: "Ultra sharp detail, crisp highlights",
     prefix: "Hyperreal photography, ultra sharp detail, high dynamic range, crisp highlights: ",
   },
+  {
+    value: "realistic",
+    label: "Realistic",
+    description: "Natural light, true-to-life detail",
+    prefix:
+      "Photorealistic footage, natural lighting, true-to-life colors, realistic textures and skin detail, 35mm lens: ",
+  },
+  {
+    value: "claymation",
+    label: "Claymation",
+    description: "Handmade clay figures, stop-motion",
+    prefix:
+      "Stop-motion claymation, handmade plasticine characters, visible fingerprints and clay texture, miniature practical set, soft studio light: ",
+  },
 ] as const;
 
 const STYLE_PREFIX: Record<string, string> = Object.fromEntries(
