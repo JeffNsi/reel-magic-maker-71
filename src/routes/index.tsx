@@ -10,7 +10,8 @@ import { getProfile } from "@/lib/vibe.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionId } from "@/lib/session";
 import { StylePicker } from "@/components/landing/style-picker";
-import { Learn, SiteFooter } from "@/components/landing/sections";
+import { Faq, HowItWorks, Learn, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
+import { Gallery } from "@/components/landing/gallery";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -189,12 +190,7 @@ function StoryReel() {
               statusText={statusText}
             />
 
-            {phase === "create" && (
-              <>
-                <Learn />
-                <SiteFooter />
-              </>
-            )}
+            {phase === "create" && <Learn />}
           </>
         )}
 
@@ -209,6 +205,17 @@ function StoryReel() {
           />
         )}
       </main>
+
+      {phase === "create" && (
+        <>
+          <Gallery />
+          <HowItWorks />
+          <SocialProof />
+          <Pricing />
+          <Faq />
+          <SiteFooter />
+        </>
+      )}
     </div>
   );
 }
