@@ -581,19 +581,19 @@ function CreateCard({
             )}
           </div>
 
+          {!working && (
+            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+              Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
+              {COIN_COST} coins
+            </p>
+          )}
+
           {working && (
             <GenerationProgress startedAt={startedAt} statusText={statusText} queuePosition={queuePosition} />
           )}
 
           <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
-            {working ? (
-              "No credit card required · 3 free renders"
-            ) : (
-              <>
-                Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
-                {COIN_COST} coins
-              </>
-            )}
+            No credit card required · 3 free renders
           </p>
         </div>
       </div>
