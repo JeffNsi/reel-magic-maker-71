@@ -190,12 +190,7 @@ function StoryReel() {
               statusText={statusText}
             />
 
-            {phase === "create" && (
-              <>
-                <Learn />
-                <SiteFooter />
-              </>
-            )}
+            {phase === "create" && <Learn />}
           </>
         )}
 
