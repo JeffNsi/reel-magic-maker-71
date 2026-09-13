@@ -161,7 +161,7 @@ const TIERS = [
     price: "$0",
     cadence: "per month",
     highlight: false,
-    features: ["3 renders", "5-second videos", "STORYREEL watermark"],
+    features: ["3 renders", "5-second videos", "Jeje Inc Vibe watermark"],
     cta: "Start free",
     to: "/auth" as const,
   },
@@ -302,7 +302,7 @@ const FOOTER_LINKS = {
   ],
   Company: [
     { label: "About", href: "#top" },
-    { label: "Contact", href: "mailto:hello@storyreel.app" },
+    { label: "Contact", href: "mailto:hello@jejeincvibe.app" },
     { label: "Careers", href: "#top" },
   ],
   Legal: [
@@ -323,7 +323,7 @@ export function SiteFooter() {
     <footer className="mt-24 border-t border-border pt-12">
       <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <p className="font-display text-2xl italic text-primary">STORYREEL</p>
+          <p className="font-display text-2xl italic text-primary">Jeje Inc Vibe</p>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             Cinematic vertical shorts from a single idea.
           </p>
@@ -374,7 +374,7 @@ export function SiteFooter() {
 
       <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
         <p className="text-xs text-muted-foreground">
-          © 2026 STORYREEL. All rights reserved.
+          © 2026 Jeje Inc Vibe. All rights reserved.
         </p>
         <ul className="flex items-center gap-4">
           {SOCIALS.map((social) => (

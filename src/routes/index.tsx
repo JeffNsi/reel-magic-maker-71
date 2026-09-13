@@ -37,17 +37,17 @@ import { Switch } from "@/components/ui/switch";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "STORYREEL — Turn your idea into a short film" },
+      { title: "Jeje Inc Vibe — Turn your idea into a short film" },
       {
         name: "description",
         content:
-          "Write one idea, pick a style, and STORYREEL generates a vertical cinematic AI short you can watch and download.",
+          "Write one idea, pick a style, and Jeje Inc Vibe generates a vertical cinematic AI short you can watch and download.",
       },
-      { property: "og:title", content: "STORYREEL — Cinematic AI shorts from a single idea" },
+      { property: "og:title", content: "Jeje Inc Vibe — Cinematic AI shorts from a single idea" },
       {
         property: "og:description",
         content:
-          "Write one idea, pick a style, and STORYREEL generates a vertical cinematic AI short you can watch and download.",
+          "Write one idea, pick a style, and Jeje Inc Vibe generates a vertical cinematic AI short you can watch and download.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -283,7 +283,7 @@ function Header() {
           to="/"
           className="font-display text-2xl italic tracking-tight text-primary transition-opacity hover:opacity-80"
         >
-          STORYREEL
+          Jeje Inc Vibe
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
           {[
