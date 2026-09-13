@@ -425,7 +425,7 @@ function WorkingState({
   return (
     <section className="surface-cinema mt-6 rounded-3xl p-8 text-center">
       <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border/70">
-        <Film className="size-7 animate-reel text-gold" aria-hidden />
+        <Film className="size-7 animate-reel text-primary" aria-hidden />
       </div>
       <h2 className="mt-6 font-display text-3xl text-foreground">Creating your short film...</h2>
       <p className="mt-3 text-sm text-muted-foreground">
@@ -493,7 +493,7 @@ function ResultState({
       <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button
           onClick={() => videoRef.current?.play()}
-          className="btn-gold h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
         >
           <Play className="mr-2 size-4" /> Play
         </Button>
@@ -526,7 +526,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <Button
           onClick={onRetry}
-          className="btn-gold h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
         >
           <RotateCcw className="mr-2 size-4" /> Try again
         </Button>
