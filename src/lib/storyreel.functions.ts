@@ -1,5 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { STORYREEL_DRAMA_ID } from "@/lib/dramawave.functions";
+
+/** Coins burned by one generation. Coins are earned in Rewards or bought in the coin shop. */
+export const COIN_COST = 70;
 
 /**
  * STORYREEL V1 — text-to-video via fal.ai (Kling 3.0).
