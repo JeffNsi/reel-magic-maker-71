@@ -370,24 +370,25 @@ const LEARN_STEPS = [
 function LearnHow() {
   return (
     <section id="learn" className="mt-24 scroll-mt-24">
-      <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-        How a short film gets made
-      </h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Eight steps from a single sentence to a finished film.
-      </p>
+      <Reveal>
+        <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
+          How a short film gets made
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Eight steps from a single sentence to a finished film.
+        </p>
+      </Reveal>
       <ol className="mt-8 grid gap-3 sm:grid-cols-2">
         {LEARN_STEPS.map((step, i) => (
-          <li
-            key={step.title}
-            className="surface-cinema rounded-2xl p-5 transition-colors hover:border-primary/40"
-          >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Step {i + 1}
-            </span>
-            <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-          </li>
+          <Reveal as="li" key={step.title} delay={Math.min(i, 4) * 60}>
+            <div className="surface-cinema h-full rounded-2xl p-5 transition-colors hover:border-primary/40">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Step {i + 1}
+              </span>
+              <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+            </div>
+          </Reveal>
         ))}
       </ol>
     </section>
