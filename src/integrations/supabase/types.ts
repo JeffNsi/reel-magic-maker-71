@@ -116,6 +116,7 @@ export type Database = {
           music_track: string | null
           narration: string | null
           prompt_final: string | null
+          provider: string
           scene_number: number | null
           session_id: string
           status: string
@@ -137,6 +138,7 @@ export type Database = {
           music_track?: string | null
           narration?: string | null
           prompt_final?: string | null
+          provider?: string
           scene_number?: number | null
           session_id: string
           status?: string
@@ -158,6 +160,7 @@ export type Database = {
           music_track?: string | null
           narration?: string | null
           prompt_final?: string | null
+          provider?: string
           scene_number?: number | null
           session_id?: string
           status?: string

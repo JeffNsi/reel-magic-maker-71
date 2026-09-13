@@ -1,0 +1,1 @@
+ALTER TABLE public.generations ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAULT 'lovable';
