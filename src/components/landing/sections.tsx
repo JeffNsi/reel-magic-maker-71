@@ -137,14 +137,14 @@ export function SocialProof() {
         ))}
       </ul>
       <Reveal className="mt-10 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground/70">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
           Used by creators from
         </p>
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
           {LOGOS.map((logo) => (
             <li
               key={logo}
-              className="text-sm font-semibold tracking-[0.2em] text-muted-foreground/50"
+              className="text-sm font-semibold tracking-[0.2em] text-muted-foreground"
             >
               {logo}
             </li>
@@ -327,7 +327,7 @@ export function SiteFooter() {
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             Cinematic vertical shorts from a single idea.
           </p>
-          <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+          <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Sparkles className="size-3.5 text-primary" aria-hidden /> Made for creators
           </p>
         </div>
@@ -373,7 +373,7 @@ export function SiteFooter() {
       </div>
 
       <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
-        <p className="text-xs text-muted-foreground/60">
+        <p className="text-xs text-muted-foreground">
           © 2026 STORYREEL. All rights reserved.
         </p>
         <ul className="flex items-center gap-4">

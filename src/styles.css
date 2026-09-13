@@ -301,3 +301,21 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Anchor links land below the sticky header */
+html {
+  scroll-padding-top: 5rem;
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

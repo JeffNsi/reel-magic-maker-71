@@ -27,6 +27,7 @@ import { getSessionId } from "@/lib/session";
 import { FilmPlayer } from "@/components/film-player";
 import { StoryPack } from "@/components/story-pack";
 import { StylePicker } from "@/components/landing/style-picker";
+import { Reveal } from "@/components/landing/reveal";
 import { Gallery } from "@/components/landing/gallery";
 import { Faq, HowItWorks, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
 import { Button } from "@/components/ui/button";
@@ -183,6 +184,12 @@ function StoryReel() {
 
   return (
     <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
+      <a
+        href="#create"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to the generator
+      </a>
       <Header />
       <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-0 sm:px-6">
         {(phase === "create" || phase === "working") && (
@@ -349,7 +356,7 @@ function Hero() {
           Watch examples
         </Button>
       </div>
-      <p className="mt-5 text-xs text-muted-foreground/70">
+      <p className="mt-5 text-xs text-muted-foreground">
         No credit card required · 3 free renders
       </p>
     </section>
@@ -369,25 +376,26 @@ const LEARN_STEPS = [
 
 function LearnHow() {
   return (
-    <section id="learn" className="mt-20 scroll-mt-24">
-      <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-        How a short film gets made
-      </h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Eight steps from a single sentence to a finished film.
-      </p>
+    <section id="learn" className="mt-24 scroll-mt-24">
+      <Reveal>
+        <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
+          How a short film gets made
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Eight steps from a single sentence to a finished film.
+        </p>
+      </Reveal>
       <ol className="mt-8 grid gap-3 sm:grid-cols-2">
         {LEARN_STEPS.map((step, i) => (
-          <li
-            key={step.title}
-            className="surface-cinema rounded-2xl p-5 transition-colors hover:border-primary/40"
-          >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Step {i + 1}
-            </span>
-            <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-          </li>
+          <Reveal as="li" key={step.title} delay={Math.min(i, 4) * 60}>
+            <div className="surface-cinema h-full rounded-2xl p-5 transition-colors hover:border-primary/40">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Step {i + 1}
+              </span>
+              <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+            </div>
+          </Reveal>
         ))}
       </ol>
     </section>
@@ -468,7 +476,7 @@ function CreateCard({
                 >
                   Your script / prompt
                 </label>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {idea.length} / {MAX_IDEA}
                 </span>
               </div>
@@ -501,7 +509,7 @@ function CreateCard({
                       className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                         format.available
                           ? "border-primary bg-primary/10 text-foreground"
-                          : "border-border bg-background/40 text-muted-foreground/50"
+                          : "border-border bg-background/40 text-muted-foreground"
                       }`}
                     >
                       {format.label}
@@ -597,7 +605,7 @@ function CreateCard({
           </div>
 
           {!working && (
-            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
               Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
               {COIN_COST} coins
             </p>
@@ -607,7 +615,7 @@ function CreateCard({
             <GenerationProgress startedAt={startedAt} statusText={statusText} queuePosition={queuePosition} />
           )}
 
-          <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+          <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
             No credit card required · 3 free renders
           </p>
         </div>
