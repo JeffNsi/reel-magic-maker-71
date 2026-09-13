@@ -375,6 +375,13 @@ function CreateCard({
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/50 px-4 py-3">
+              <label htmlFor="audio" className="text-sm text-muted-foreground">
+                Sound
+              </label>
+              <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
+            </div>
           </div>
 
           <div className="flex items-end">
