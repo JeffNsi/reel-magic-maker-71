@@ -12,7 +12,7 @@ export const Route = createFileRoute("/vibe")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DramaWaveLayout,
+  component: VibeLayout,
 });
 
 const tabs = [
@@ -23,7 +23,7 @@ const tabs = [
   { to: "/vibe/profile", label: "Profile", icon: User },
 ];
 
-function DramaWaveLayout() {
+function VibeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
