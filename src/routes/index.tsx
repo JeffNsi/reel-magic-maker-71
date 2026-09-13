@@ -232,7 +232,7 @@ function Header({ signedIn }: { signedIn: boolean }) {
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
         <Link
           to="/"
-          className="text-sm font-semibold uppercase tracking-[0.35em] text-foreground transition-opacity hover:opacity-70"
+          className="mr-4 shrink-0 text-sm font-semibold uppercase tracking-[0.2em] text-foreground transition-opacity hover:opacity-70 sm:tracking-[0.35em]"
         >
           Story<span className="text-primary">reel</span>
         </Link>
