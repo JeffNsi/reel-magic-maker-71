@@ -683,8 +683,8 @@ function SceneCard({
             <SelectValue placeholder="Film engine" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="lovable">Lovable AI — included credits</SelectItem>
-            <SelectItem value="fal">fal.ai Kling — your own account</SelectItem>
+            <SelectItem value="lovable">Ezy — included credits</SelectItem>
+            <SelectItem value="fal">Strong — your own account</SelectItem>
           </SelectContent>
         </Select>
       </div>
