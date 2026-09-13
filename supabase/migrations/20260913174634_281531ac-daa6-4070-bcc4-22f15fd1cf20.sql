@@ -1,0 +1,1 @@
+revoke update (paid_coins, bonus_coins, is_vip, vip_until) on public.profiles from authenticated;
