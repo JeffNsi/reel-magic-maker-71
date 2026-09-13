@@ -81,10 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Jeje Inc Vibe — AI short film studio" },
+      { title: "STORYREEL — AI short film studio" },
       { name: "description", content: "Turn your idea into a cinematic vertical short film with AI." },
-      { name: "author", content: "Jeje Inc Vibe" },
-      { property: "og:title", content: "Jeje Inc Vibe — AI short film studio" },
+      { name: "author", content: "STORYREEL" },
+      { property: "og:title", content: "STORYREEL — AI short film studio" },
       { property: "og:description", content: "Turn your idea into a cinematic vertical short film with AI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

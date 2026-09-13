@@ -31,7 +31,7 @@ import {
 export const Route = createFileRoute("/team")({
   head: () => ({
     meta: [
-      { title: "Studio team — share roles and films | Jeje Inc Vibe" },
+      { title: "Studio team — share roles and films | STORYREEL" },
       {
         name: "description",
         content:
@@ -76,7 +76,7 @@ function TeamPage() {
       <header className="border-b border-border/60">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
           <Link to="/" className="font-display text-2xl italic tracking-tight text-primary">
-            Jeje Inc Vibe
+            STORYREEL
           </Link>
           <Button asChild variant="ghost" className="h-9 rounded-full px-4">
             <Link
@@ -268,7 +268,7 @@ function TeamBody({ userId }: { userId: string }) {
             <Input
               value={teamName}
               onChange={(event) => setTeamName(event.target.value)}
-              placeholder="Jeje Inc Vibe studio"
+              placeholder="STORYREEL studio"
               className="h-11 rounded-2xl"
               maxLength={60}
               required
