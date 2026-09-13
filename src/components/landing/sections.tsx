@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Palette, PenLine, Play, Sparkles } from "lucide-react";
+import {
+  Check,
+  Instagram,
+  Music,
+  Palette,
+  PenLine,
+  Play,
+  Sparkles,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 
 import {
   Accordion,
