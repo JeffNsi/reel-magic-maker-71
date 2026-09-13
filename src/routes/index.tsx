@@ -184,6 +184,12 @@ function StoryReel() {
 
   return (
     <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
+      <a
+        href="#create"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to the generator
+      </a>
       <Header />
       <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-0 sm:px-6">
         {(phase === "create" || phase === "working") && (
