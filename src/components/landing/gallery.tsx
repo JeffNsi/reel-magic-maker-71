@@ -90,7 +90,7 @@ function titleFrom(idea: string) {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** "Made with Jeje Inc Vibe" — real finished shorts, topped up with example concepts. */
+/** "Made with STORYREEL" — real finished shorts, topped up with example concepts. */
 export function Gallery() {
   const [open, setOpen] = useState<Example | null>(null);
   const fetchShowcase = useServerFn(listShowcase);
@@ -116,7 +116,7 @@ export function Gallery() {
     <section id="gallery" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Made with <span className="text-primary">Jeje Inc Vibe</span>
+          Made with <span className="text-primary">STORYREEL</span>
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
           Real shorts created from a single prompt.
