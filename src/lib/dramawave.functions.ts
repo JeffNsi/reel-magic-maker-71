@@ -144,7 +144,9 @@ export const unlockEpisode = createServerFn({ method: "POST" })
 
     const [{ error: updateError }, { error: insertError }] = await Promise.all([
       context.supabase.from("profiles").update({ paid_coins: newPaid, bonus_coins: newBonus }).eq("id", profile.id),
-      context.supabase.from("user_unlocked_episodes").insert({ episode_id: data.episode_id }),
+      context.supabase
+        .from("user_unlocked_episodes")
+        .insert({ episode_id: data.episode_id, user_id: context.userId }),
     ]);
 
     if (updateError || insertError) throw new Error("Could not unlock episode.");
