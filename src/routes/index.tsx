@@ -58,10 +58,10 @@ export const Route = createFileRoute("/")({
 const MAX_IDEA = 500;
 
 const EXAMPLE_PROMPTS = [
-  "A lone astronaut walks across a red desert planet as two suns set behind the dunes.",
-  "A young filmmaker arrives in Stockholm with a dream of becoming a director.",
-  "A street cellist plays in the rain while the city lights blur behind her.",
-  "A getaway driver waits outside a neon bank, engine running, eyes on the door.",
+  "A lone astronaut on a desert planet at sunset",
+  "A neon-soaked Tokyo alley in the rain",
+  "A dragon circling a medieval castle at dawn",
+  "An old lighthouse in a storm, cinematic wide shot",
 ];
 
 const FORMATS = [
