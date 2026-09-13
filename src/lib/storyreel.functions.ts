@@ -30,6 +30,8 @@ const generateInput = z.object({
   idea: z.string().trim().min(1, "Describe your idea first.").max(500),
   style: z.enum(styleValues),
   session_id: z.string().uuid(),
+  /** When true, fal.ai generates a soundtrack for the clip. */
+  audio: z.boolean().optional().default(false),
 });
 
 const statusInput = z.object({
