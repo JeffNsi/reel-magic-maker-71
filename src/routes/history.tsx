@@ -11,17 +11,17 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "Your shorts — STORYREEL film history" },
+      { title: "Your shorts — Jeje Inc Vibe film history" },
       {
         name: "description",
         content:
-          "Revisit every short film you made with STORYREEL: the idea behind it, the visual style, its status and the finished video.",
+          "Revisit every short film you made with Jeje Inc Vibe: the idea behind it, the visual style, its status and the finished video.",
       },
-      { property: "og:title", content: "Your shorts — STORYREEL film history" },
+      { property: "og:title", content: "Your shorts — Jeje Inc Vibe film history" },
       {
         property: "og:description",
         content:
-          "Revisit every short film you made with STORYREEL: the idea behind it, the visual style, its status and the finished video.",
+          "Revisit every short film you made with Jeje Inc Vibe: the idea behind it, the visual style, its status and the finished video.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -57,7 +57,7 @@ function History() {
       <header className="border-b border-border/60">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-5">
           <Link to="/" className="font-display text-2xl italic tracking-tight text-primary">
-            STORYREEL
+            Jeje Inc Vibe
           </Link>
           <Button asChild variant="ghost" className="h-9 rounded-full px-4">
             <Link to="/" className="text-xs uppercase tracking-[0.2em]">
@@ -132,7 +132,7 @@ function History() {
                   {item.video_url && (
                     <a
                       href={item.video_url}
-                      download={`storyreel-${item.id}.mp4`}
+                      download={`jejeincvibe-${item.id}.mp4`}
                       className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary underline-offset-4 hover:underline"
                     >
                       Download

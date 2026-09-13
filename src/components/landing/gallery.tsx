@@ -68,7 +68,7 @@ const EXAMPLES: Example[] = [
   },
 ];
 
-/** "Made with STORYREEL" — six example shorts below the generator. */
+/** "Made with Jeje Inc Vibe" — six example shorts below the generator. */
 export function Gallery() {
   const [open, setOpen] = useState<Example | null>(null);
 
@@ -76,7 +76,7 @@ export function Gallery() {
     <section id="gallery" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Made with <span className="text-primary">STORYREEL</span>
+          Made with <span className="text-primary">Jeje Inc Vibe</span>
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
           Real shorts created from a single prompt.

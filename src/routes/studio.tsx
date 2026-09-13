@@ -52,13 +52,13 @@ export const Route = createFileRoute("/studio")({
   }),
   head: () => ({
     meta: [
-      { title: "Scene editor — STORYREEL multi-scene short films" },
+      { title: "Scene editor — Jeje Inc Vibe multi-scene short films" },
       {
         name: "description",
         content:
           "Write your short film scene by scene, keep the same characters and setting, and generate each scene with its own voice-over.",
       },
-      { property: "og:title", content: "STORYREEL scene editor — build a multi-scene short" },
+      { property: "og:title", content: "Jeje Inc Vibe scene editor — build a multi-scene short" },
       {
         property: "og:description",
         content:
@@ -126,7 +126,7 @@ function StudioHeader() {
           to="/"
           className="font-display text-2xl italic tracking-tight text-primary transition-opacity hover:opacity-80"
         >
-          STORYREEL
+          Jeje Inc Vibe
         </Link>
         <nav className="flex items-center gap-6">
           <Link

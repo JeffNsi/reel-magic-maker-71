@@ -209,7 +209,7 @@ export function FilmPlayer({
           <Button asChild variant="outline" className="h-12 rounded-2xl px-6">
             <a
               href={videoUrl}
-              download={`storyreel-${generationId ?? "short"}.mp4`}
+              download={`jejeincvibe-${generationId ?? "short"}.mp4`}
               className="text-xs font-semibold uppercase tracking-[0.2em]"
             >
               <Download className="mr-2 size-4" /> Video
@@ -250,7 +250,7 @@ export function FilmPlayer({
             </Select>
             {voiceUrl && (
               <Button asChild variant="ghost" className="h-10 shrink-0 rounded-xl px-4">
-                <a href={voiceUrl} download={`storyreel-${generationId ?? "short"}-voice.mp3`}>
+                <a href={voiceUrl} download={`jejeincvibe-${generationId ?? "short"}-voice.mp3`}>
                   <Download className="mr-2 size-4" /> Voice
                 </a>
               </Button>
