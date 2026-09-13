@@ -27,6 +27,7 @@ import { getSessionId } from "@/lib/session";
 import { FilmPlayer } from "@/components/film-player";
 import { StoryPack } from "@/components/story-pack";
 import { StylePicker } from "@/components/landing/style-picker";
+import { Reveal } from "@/components/landing/reveal";
 import { Gallery } from "@/components/landing/gallery";
 import { Faq, HowItWorks, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
 import { Button } from "@/components/ui/button";
