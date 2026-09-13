@@ -331,6 +331,35 @@ export const checkStatus = createServerFn({ method: "POST" })
       .update({ status: "completed", video_url: path })
       .eq("id", row.id);
 
+    // Publish the finished short as a free episode in the DramaWave Shorts feed.
+    if (!row.episode_id) {
+      const { count } = await supabaseAdmin
+        .from("episodes")
+        .select("id", { count: "exact", head: true })
+        .eq("drama_id", STORYREEL_DRAMA_ID);
+
+      const { data: episode } = await supabaseAdmin
+        .from("episodes")
+        .insert({
+          drama_id: STORYREEL_DRAMA_ID,
+          episode_number: (count ?? 0) + 1,
+          title: row.idea.slice(0, 70),
+          storage_path: path,
+          coin_cost: 0,
+          is_free: true,
+          source_generation_id: row.id,
+        })
+        .select("id")
+        .single();
+
+      if (episode) {
+        await supabaseAdmin
+          .from("generations")
+          .update({ episode_id: episode.id })
+          .eq("id", row.id);
+      }
+    }
+
     return {
       generation_id: row.id,
       status: "completed",
