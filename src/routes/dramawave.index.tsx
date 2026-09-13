@@ -54,7 +54,7 @@ function HomePage() {
 
       <section className="relative mt-4 px-5">
         <div className="relative overflow-hidden rounded-3xl">
-          {featured.length > 0 ? (
+          {featured[0] ? (
             <FeaturedBanner drama={featured[0]} />
           ) : (
             <div className="aspect-[4/5] w-full rounded-3xl bg-dw-card" />
