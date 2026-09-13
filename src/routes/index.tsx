@@ -254,8 +254,23 @@ function StoryReel() {
 }
 
 function Header() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <header
+      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? "border-b border-border bg-background/90 backdrop-blur-md"
+          : "bg-transparent"
+      }`}
+    >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link
           to="/"
@@ -263,45 +278,41 @@ function Header() {
         >
           STORYREEL
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-4 sm:gap-6">
-          <a
-            href="#gallery"
-            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            Gallery
-          </a>
-          <a
-            href="#pricing"
-            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            Pricing
-          </a>
-          <a
-            href="#faq"
-            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            FAQ
-          </a>
+        <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+          {[
+            { label: "Generator", href: "#create" },
+            { label: "Gallery", href: "#gallery" },
+            { label: "How it works", href: "#how" },
+            { label: "Pricing", href: "#pricing" },
+            { label: "FAQ", href: "#faq" },
+          ].map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollTo(item.href.slice(1));
+              }}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-4">
           <Link
-            to="/history"
-            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            to="/auth"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
           >
-            <HistoryIcon className="size-4" aria-hidden /> My shorts
-          </Link>
-          <Link
-            to="/studio"
-            search={{ story: undefined }}
-            className="hidden items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex"
-          >
-            <Clapperboard className="size-4" aria-hidden /> Scene editor
+            Sign in
           </Link>
           <Button
             onClick={() => scrollTo("create")}
             className="h-9 rounded-xl bg-primary px-4 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground hover:shadow-[0_0_20px_var(--glow)]"
           >
-            Generate
+            Get started
           </Button>
-        </nav>
+        </div>
       </div>
     </header>
   );
