@@ -369,6 +369,44 @@ export const listGenerations = createServerFn({ method: "POST" })
     );
   });
 
+export type ShowcaseShort = {
+  id: string;
+  idea: string;
+  style: string;
+  video_url: string;
+};
+
+/** Real finished shorts, newest first — used by the "Made with" gallery. */
+export const listShowcase = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ShowcaseShort[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows } = await supabaseAdmin
+      .from("generations")
+      .select("id, idea, style, video_url")
+      .eq("status", "completed")
+      .not("video_url", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    const out: ShowcaseShort[] = [];
+    for (const row of rows ?? []) {
+      if (!row.video_url) continue;
+      const { data: signed } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .createSignedUrl(row.video_url, SIGNED_URL_TTL);
+      if (!signed?.signedUrl) continue;
+      out.push({
+        id: row.id,
+        idea: row.idea,
+        style: row.style,
+        video_url: signed.signedUrl,
+      });
+    }
+    return out;
+  },
+);
+
 const storyInput = z.object({
   theme: z.string().trim().min(1, "Give me a theme first.").max(200),
   style: z.enum(styleValues),

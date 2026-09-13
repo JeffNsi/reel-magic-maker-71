@@ -40,6 +40,7 @@ import {
   narrateGeneration,
   saveBible,
   saveScene,
+  saveStory,
   VOICES,
   type SceneView,
   type StoryCharacter,
@@ -108,6 +109,7 @@ function Studio() {
                   setTheme={setTheme}
                   onOpenStudio={open}
                 />
+                <BlankStoryButton sessionId={sessionId} onOpen={open} />
                 <StoryList sessionId={sessionId} onOpen={open} />
               </>
             )}
@@ -147,6 +149,50 @@ function StudioHeader() {
         </nav>
       </div>
     </header>
+  );
+}
+
+function BlankStoryButton({
+  sessionId,
+  onOpen,
+}: {
+  sessionId: string;
+  onOpen: (id: string) => void;
+}) {
+  const create = useServerFn(saveStory);
+  const mutation = useMutation({
+    mutationFn: () =>
+      create({
+        data: {
+          session_id: sessionId,
+          theme: "",
+          style: "cinematic" as const,
+          concept: {
+            title: "Untitled film",
+            logline: "",
+            setting: "",
+            characters: [],
+            scenes: [{ title: "Scene 1", prompt: "", narration: "" }],
+          },
+        },
+      }),
+    onSuccess: (result) => onOpen(result.story_id),
+  });
+
+  return (
+    <div className="mt-6 text-center">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => mutation.mutate()}
+        disabled={mutation.isPending}
+      >
+        {mutation.isPending ? "Opening…" : "Start from a blank page"}
+      </Button>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Write your own cast, setting and scenes from scratch.
+      </p>
+    </div>
   );
 }
 

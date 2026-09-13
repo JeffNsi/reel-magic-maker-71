@@ -234,7 +234,6 @@ function StoryReel() {
                 <SocialProof />
                 <Pricing />
                 <Faq />
-                <LearnHow />
                 <SiteFooter />
               </>
             )}
@@ -362,47 +361,6 @@ function Hero() {
     </section>
   );
 }
-
-const LEARN_STEPS = [
-  { title: "Create your idea", body: "One sentence is enough — a person, a place, a want." },
-  { title: "Build your story", body: "Shape a beginning, a turn and an ending you can film." },
-  { title: "Create your characters", body: "Describe faces, clothes and age so they stay the same." },
-  { title: "Create your scenes", body: "Split the story into short beats — one moment per shot." },
-  { title: "Generate your visuals", body: "Write each shot as a prompt with camera, light and mood." },
-  { title: "Add voice and sound", body: "Narration and a music bed lift a silent clip into a film." },
-  { title: "Edit your short", body: "Order the shots, trim the dead air, keep the rhythm tight." },
-  { title: "Publish your film", body: "Export vertical, add a title card, and share it." },
-];
-
-function LearnHow() {
-  return (
-    <section id="learn" className="mt-24 scroll-mt-24">
-      <Reveal>
-        <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          How a short film gets made
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Eight steps from a single sentence to a finished film.
-        </p>
-      </Reveal>
-      <ol className="mt-8 grid gap-3 sm:grid-cols-2">
-        {LEARN_STEPS.map((step, i) => (
-          <Reveal as="li" key={step.title} delay={Math.min(i, 4) * 60}>
-            <div className="surface-cinema h-full rounded-2xl p-5 transition-colors hover:border-primary/40">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                Step {i + 1}
-              </span>
-              <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-            </div>
-          </Reveal>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-
 
 const ENGINES = [
   { value: "lovable" as const, label: "Lovable AI", note: "Included credits" },
