@@ -424,8 +424,11 @@ function SceneCard({
   const [title, setTitle] = useState(scene.title);
   const [idea, setIdea] = useState(scene.idea);
   const [narration, setNarration] = useState(scene.narration);
-  const [audio, setAudio] = useState(false);
+  const [audio, setAudio] = useState(true);
+  const [voice, setVoice] = useState("alloy");
+  const [music, setMusic] = useState("wonder");
   const [voiceUrl, setVoiceUrl] = useState<string | null>(scene.voice_url);
+  const narratedFor = useRef<string | null>(null);
 
   useEffect(() => setVoiceUrl(scene.voice_url), [scene.voice_url]);
 
