@@ -202,8 +202,8 @@ function StoryReel() {
               pending={generate.isPending || !sessionId}
             />
             <p className="mt-8 text-center text-xs text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · estimated render time
-              2–3 minutes
+              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · {COIN_COST} coins ·
+              published to DramaWave Shorts when it finishes
             </p>
             <LearnHow />
           </>
