@@ -109,12 +109,21 @@ function Studio() {
                 music is part of the Studio plan. Free and Creator accounts can explore the editor;
                 publishing full series requires Studio.
               </p>
-              <Button
-                asChild
-                className="mt-5 h-11 rounded-full bg-primary px-8 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
-              >
-                <Link to="/auth" search={{ plan: "studio" }}>Sign up for Studio</Link>
-              </Button>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Button
+                  asChild
+                  className="h-11 rounded-full bg-primary px-8 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
+                >
+                  <Link to="/auth" search={{ plan: "studio" }}>Sign up for Studio</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-11 rounded-full px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+                >
+                  <Link to="/team">Your team</Link>
+                </Button>
+              </div>
             </div>
 
             {sessionId && (
