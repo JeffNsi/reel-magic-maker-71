@@ -15,10 +15,10 @@ export const Route = createFileRoute("/vibe/profile")({
   }),
   head: () => ({
     meta: [
-      { title: "Profile — Jeje Inc Vibe" },
-      { name: "description", content: "Your Jeje Inc Vibe profile, coins and VIP status." },
-      { property: "og:title", content: "Profile — Jeje Inc Vibe" },
-      { property: "og:description", content: "Your Jeje Inc Vibe profile, coins and VIP status." },
+      { title: "Profile — STORYREEL" },
+      { name: "description", content: "Your STORYREEL profile, coins and VIP status." },
+      { property: "og:title", content: "Profile — STORYREEL" },
+      { property: "og:description", content: "Your STORYREEL profile, coins and VIP status." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -60,7 +60,7 @@ function ProfilePage() {
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-2xl font-bold">Sign in to Jeje Inc Vibe</h1>
+        <h1 className="text-2xl font-bold">Sign in to STORYREEL</h1>
         <p className="mt-2 text-sm text-dw-muted">
           Unlock episodes, save your list and earn rewards.
         </p>

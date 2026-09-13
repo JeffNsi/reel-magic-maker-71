@@ -4,10 +4,10 @@ import { Home, Film, Gift, Heart, User } from "lucide-react";
 export const Route = createFileRoute("/vibe")({
   head: () => ({
     meta: [
-      { title: "Jeje Inc Vibe" },
-      { name: "description", content: "Binge vertical short films on Jeje Inc Vibe." },
-      { property: "og:title", content: "Jeje Inc Vibe" },
-      { property: "og:description", content: "Binge vertical short films on Jeje Inc Vibe." },
+      { title: "STORYREEL" },
+      { name: "description", content: "Binge vertical short films on STORYREEL." },
+      { property: "og:title", content: "STORYREEL" },
+      { property: "og:description", content: "Binge vertical short films on STORYREEL." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

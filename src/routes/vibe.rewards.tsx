@@ -17,10 +17,10 @@ import { Check, Gift, Clock, Share2, Film, Coins, Crown } from "lucide-react";
 export const Route = createFileRoute("/vibe/rewards")({
   head: () => ({
     meta: [
-      { title: "Rewards — Jeje Inc Vibe" },
-      { name: "description", content: "Earn coins and unlock VIP on Jeje Inc Vibe." },
-      { property: "og:title", content: "Rewards — Jeje Inc Vibe" },
-      { property: "og:description", content: "Earn coins and unlock VIP on Jeje Inc Vibe." },
+      { title: "Rewards — STORYREEL" },
+      { name: "description", content: "Earn coins and unlock VIP on STORYREEL." },
+      { property: "og:title", content: "Rewards — STORYREEL" },
+      { property: "og:description", content: "Earn coins and unlock VIP on STORYREEL." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

@@ -25,10 +25,10 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — Jeje Inc Vibe" },
-      { name: "description", content: "Sign in or create your Jeje Inc Vibe account to save and make short films." },
-      { property: "og:title", content: "Sign in — Jeje Inc Vibe" },
-      { property: "og:description", content: "Sign in or create your Jeje Inc Vibe account to save and make short films." },
+      { title: "Sign in — STORYREEL" },
+      { name: "description", content: "Sign in or create your STORYREEL account to save and make short films." },
+      { property: "og:title", content: "Sign in — STORYREEL" },
+      { property: "og:description", content: "Sign in or create your STORYREEL account to save and make short films." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -68,7 +68,7 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (!("redirected" in result && result.redirected)) {
-        toast.success("Welcome to Jeje Inc Vibe!");
+        toast.success("Welcome to STORYREEL!");
         afterSignIn();
       }
     } catch (err) {
@@ -90,7 +90,7 @@ function AuthPage() {
         });
         if (error) throw error;
         if (data.session) {
-          toast.success("Welcome to Jeje Inc Vibe!");
+          toast.success("Welcome to STORYREEL!");
           afterSignIn();
         } else {
           toast.success("Check your email to confirm your account.");
@@ -115,7 +115,7 @@ function AuthPage() {
           <Film className="size-5" aria-hidden />
         </div>
         <Link to="/" className="font-display text-xl italic tracking-tight text-primary">
-          Jeje Inc Vibe
+          STORYREEL
         </Link>
       </header>
 
@@ -131,7 +131,7 @@ function AuthPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signin"
             ? "Sign in to make films, save them to your account and manage your coins."
-            : "Join Jeje Inc Vibe — every short you make is saved to your account."}
+            : "Join STORYREEL — every short you make is saved to your account."}
         </p>
 
         <Button
@@ -214,7 +214,7 @@ function AuthPage() {
 
         <div className="mt-8 text-center">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-            Back to Jeje Inc Vibe
+            Back to STORYREEL
           </Link>
         </div>
       </div>
