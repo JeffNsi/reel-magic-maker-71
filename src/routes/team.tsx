@@ -79,7 +79,11 @@ function TeamPage() {
             Jeje Inc Vibe
           </Link>
           <Button asChild variant="ghost" className="h-9 rounded-full px-4">
-            <Link to="/studio" search={{}} className="text-xs uppercase tracking-[0.2em]">
+            <Link
+              to="/studio"
+              search={{ story: undefined }}
+              className="text-xs uppercase tracking-[0.2em]"
+            >
               <ArrowLeft className="mr-2 size-4" /> Scene editor
             </Link>
           </Button>
