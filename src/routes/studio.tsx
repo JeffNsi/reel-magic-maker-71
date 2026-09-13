@@ -40,6 +40,7 @@ import {
   narrateGeneration,
   saveBible,
   saveScene,
+  saveStory,
   VOICES,
   type SceneView,
   type StoryCharacter,
