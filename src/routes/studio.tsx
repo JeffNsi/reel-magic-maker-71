@@ -232,6 +232,16 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
     );
   }
 
+  const finished = story.scenes
+    .filter((scene): scene is SceneView & { video_url: string } => !!scene.video_url)
+    .map((scene) => ({
+      id: scene.id,
+      scene_number: scene.scene_number,
+      title: scene.title,
+      video_url: scene.video_url,
+      voice_url: scene.voice_url,
+    }));
+
   return (
     <div className="space-y-8">
       <Link
@@ -243,6 +253,10 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
       </Link>
 
       <BibleCard story={story} sessionId={sessionId} onSaved={setStory} />
+
+      {finished.length > 0 && (
+        <SeriesPlayer title={story.title || "storyreel-series"} scenes={finished} />
+      )}
 
       <div className="space-y-6">
         {story.scenes.map((scene) => (
