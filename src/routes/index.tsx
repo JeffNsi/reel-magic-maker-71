@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowRight,
   Clapperboard,
+  Coins,
   Film,
   History as HistoryIcon,
   Loader2,
@@ -13,7 +14,15 @@ import {
 } from "lucide-react";
 
 
-import { checkStatus, ESTIMATED_SECONDS, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import {
+  checkStatus,
+  COIN_COST,
+  ESTIMATED_SECONDS,
+  generateVideo,
+  STYLES,
+} from "@/lib/storyreel.functions";
+import { getProfile } from "@/lib/dramawave.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
 import { FilmPlayer } from "@/components/film-player";
@@ -75,10 +84,25 @@ function StoryReel() {
   const start = useServerFn(generateVideo);
   const poll = useServerFn(checkStatus);
 
+  const { data: user } = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
+  });
+
+  const fetchProfile = useServerFn(getProfile);
+  const { data: profile, refetch: refetchProfile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: fetchProfile,
+  });
+
+  const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
+
   const generate = useMutation({
     mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
+      void refetchProfile();
       if (result.status === "failed") {
         setErrorMessage(result.error_message ?? "Something went wrong.");
         setPhase("error");
@@ -122,6 +146,16 @@ function StoryReel() {
       toast.error("Describe your idea first.");
       return;
     }
+    if (!user) {
+      toast.error("Sign in to spend coins on a film.");
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (coins < COIN_COST) {
+      toast.error(`A film costs ${COIN_COST} coins. You have ${coins}.`);
+      navigate({ to: "/dramawave/rewards" });
+      return;
+    }
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
@@ -156,6 +190,7 @@ function StoryReel() {
               />
             </div>
             <div id="create" className="scroll-mt-24" />
+            <CoinBar signedIn={!!user} coins={coins} />
             <CreateCard
               idea={idea}
               setIdea={setIdea}
@@ -167,8 +202,8 @@ function StoryReel() {
               pending={generate.isPending || !sessionId}
             />
             <p className="mt-8 text-center text-xs text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · estimated render time
-              2–3 minutes
+              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · {COIN_COST} coins ·
+              published to DramaWave Shorts when it finishes
             </p>
             <LearnHow />
           </>
@@ -559,5 +594,36 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
         </Button>
       </div>
     </section>
+  );
+}
+
+/** Coin balance and price for one generation, with a route to earn more. */
+function CoinBar({ signedIn, coins }: { signedIn: boolean; coins: number }) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/60 px-4 py-3 text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <Coins className="size-4 text-primary" />
+        {signedIn ? (
+          <>
+            <strong className="text-foreground">{coins}</strong> coins ·{" "}
+            <span>{COIN_COST} per film</span>
+          </>
+        ) : (
+          <>Each film costs {COIN_COST} coins — sign in to use yours.</>
+        )}
+      </span>
+      {signedIn ? (
+        <Link
+          to="/dramawave/rewards"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Earn coins
+        </Link>
+      ) : (
+        <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
+          Sign in
+        </Link>
+      )}
+    </div>
   );
 }
