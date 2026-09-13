@@ -1,13 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import {
   Check,
+  Film,
   Instagram,
+  MapPin,
   Music,
   Palette,
   PenLine,
   Play,
   Sparkles,
   Twitter,
+  Users,
   Youtube,
 } from "lucide-react";
 
@@ -30,12 +33,42 @@ const STEPS = [
   },
   {
     number: "02",
+    icon: Sparkles,
+    title: "Build your story",
+    body: "Turn the idea into a title, a logline and a beginning, turn and end.",
+  },
+  {
+    number: "03",
+    icon: Users,
+    title: "Create your characters",
+    body: "Name your cast and fix their look so they stay the same in every shot.",
+  },
+  {
+    number: "04",
+    icon: MapPin,
+    title: "Lock your setting",
+    body: "One place, one time of day — the glue that holds the scenes together.",
+  },
+  {
+    number: "05",
+    icon: Film,
+    title: "Break it into scenes",
+    body: "Split the story into 5-second beats — one clear moment per scene.",
+  },
+  {
+    number: "06",
     icon: Palette,
     title: "Pick your style",
     body: "Choose a cinematic look that fits your vision.",
   },
   {
-    number: "03",
+    number: "07",
+    icon: Music,
+    title: "Add voice and music",
+    body: "Record narration and lay a music bed under the whole short.",
+  },
+  {
+    number: "08",
     icon: Play,
     title: "Get your film",
     body: "Render in 2–3 minutes and download in vertical 9:16.",
@@ -47,8 +80,11 @@ export function HowItWorks() {
     <section id="how" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">How it works</h2>
+        <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+          Eight steps from a single sentence to a finished short film.
+        </p>
       </Reveal>
-      <ol className="mt-8 grid gap-4 sm:grid-cols-3">
+      <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, i) => (
           <Reveal as="li" key={step.title} delay={i * 80}>
             <div className="surface-cinema relative h-full overflow-hidden rounded-2xl p-6">
