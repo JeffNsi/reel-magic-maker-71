@@ -1,4 +1,5 @@
 # STORYREEL — roadmap
 
-- [ ] UX/UI redesign: neon red / black, Instrument Serif + Work Sans, full-width sections (3 directions shown, awaiting pick)
-- [ ] Explain why generation stopped working (fal.ai balance check)
+- [x] UX/UI redesign: neon red / black, Instrument Serif + Work Sans, full-width sections ("Premiärmarquee")
+- [x] Explain why generation stopped working — fal.ai account locked, "Exhausted balance"
+- [ ] Blocked on user: top up fal.ai balance so Generate can produce videos again
