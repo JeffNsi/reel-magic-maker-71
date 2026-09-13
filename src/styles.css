@@ -63,6 +63,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* DramaWave semantic colors */
+  --color-dw-background: var(--dw-background);
+  --color-dw-card: var(--dw-card);
+  --color-dw-card-hover: var(--dw-card-hover);
+  --color-dw-border: var(--dw-border);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-2: var(--dw-primary-2);
+  --color-dw-gold: var(--dw-gold);
+  --color-dw-gold-2: var(--dw-gold-2);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-muted: var(--dw-muted);
 }
 
 :root {
@@ -113,6 +125,18 @@
   --sidebar-accent-foreground: oklch(0.96 0.003 285);
   --sidebar-border: oklch(1 0 0 / 0.08);
   --sidebar-ring: oklch(0.63 0.235 15);
+
+  /* DramaWave palette: black velvet + purple/pink + gold */
+  --dw-background: oklch(0.05 0.004 285);
+  --dw-card: oklch(0.10 0.006 285);
+  --dw-card-hover: oklch(0.14 0.007 285);
+  --dw-border: oklch(1 0 0 / 0.06);
+  --dw-foreground: oklch(0.98 0.003 285);
+  --dw-muted: oklch(0.65 0.003 285);
+  --dw-primary: oklch(0.68 0.20 305);
+  --dw-primary-2: oklch(0.65 0.24 350);
+  --dw-gold: oklch(0.80 0.17 85);
+  --dw-gold-2: oklch(0.73 0.17 75);
 }
 
 
@@ -227,5 +251,29 @@
 @utility bg-gradient-gold {
   background-image: var(--gradient-gold);
 }
+
+@utility dw-gradient-text {
+  background-image: linear-gradient(100deg, var(--dw-primary) 0%, var(--dw-primary-2) 100%);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility dw-gold-text {
+  background-image: linear-gradient(100deg, var(--dw-gold-2) 0%, var(--dw-gold) 100%);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility dw-btn-primary {
+  background-image: linear-gradient(100deg, var(--dw-primary) 0%, var(--dw-primary-2) 100%);
+  color: var(--dw-foreground);
+  box-shadow: 0 10px 30px -10px oklch(0.68 0.2 305 / 0.35);
+}
+
+@utility dw-btn-gold {
+  background-image: linear-gradient(100deg, var(--dw-gold-2) 0%, var(--dw-gold) 100%);
+  color: oklch(0.05 0.004 285);
+}
+
 
 

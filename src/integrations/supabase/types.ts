@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      dramas: {
+        Row: {
+          cover_url: string
+          created_at: string
+          description: string | null
+          id: string
+          is_vip_only: boolean
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_vip_only?: boolean
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_vip_only?: boolean
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      episodes: {
+        Row: {
+          coin_cost: number
+          created_at: string
+          drama_id: string
+          episode_number: number
+          id: string
+          is_free: boolean
+          title: string | null
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          coin_cost?: number
+          created_at?: string
+          drama_id: string
+          episode_number: number
+          id?: string
+          is_free?: boolean
+          title?: string | null
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          coin_cost?: number
+          created_at?: string
+          drama_id?: string
+          episode_number?: number
+          id?: string
+          is_free?: boolean
+          title?: string | null
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_drama_id_fkey"
+            columns: ["drama_id"]
+            isOneToOne: false
+            referencedRelation: "dramas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generations: {
         Row: {
           created_at: string
@@ -55,6 +132,117 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      my_list: {
+        Row: {
+          created_at: string
+          drama_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          drama_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          drama_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "my_list_drama_id_fkey"
+            columns: ["drama_id"]
+            isOneToOne: false
+            referencedRelation: "dramas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "my_list_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bonus_coins: number
+          checkin_streak: number
+          created_at: string
+          email: string | null
+          id: string
+          is_vip: boolean
+          last_checkin_date: string | null
+          paid_coins: number
+          updated_at: string
+          vip_until: string | null
+        }
+        Insert: {
+          bonus_coins?: number
+          checkin_streak?: number
+          created_at?: string
+          email?: string | null
+          id: string
+          is_vip?: boolean
+          last_checkin_date?: string | null
+          paid_coins?: number
+          updated_at?: string
+          vip_until?: string | null
+        }
+        Update: {
+          bonus_coins?: number
+          checkin_streak?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_vip?: boolean
+          last_checkin_date?: string | null
+          paid_coins?: number
+          updated_at?: string
+          vip_until?: string | null
+        }
+        Relationships: []
+      }
+      user_unlocked_episodes: {
+        Row: {
+          episode_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          episode_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          episode_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_unlocked_episodes_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_unlocked_episodes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

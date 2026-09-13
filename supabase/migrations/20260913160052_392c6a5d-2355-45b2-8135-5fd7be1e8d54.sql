@@ -1,0 +1,1 @@
+create policy "Data API cannot access generations" on public.generations for all to anon, authenticated using (false);

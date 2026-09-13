@@ -10,11 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
+import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
+import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
+import { Route as DramawaveRewardsRouteImport } from './routes/dramawave.rewards'
+import { Route as DramawaveShortsRouteImport } from './routes/dramawave.shorts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DramawaveRoute = DramawaveRouteImport.update({
+  id: '/dramawave',
+  path: '/dramawave',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -22,30 +39,104 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DramawaveIndexRoute = DramawaveIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DramawaveRoute,
+} as any)
+const DramawaveMyListRoute = DramawaveMyListRouteImport.update({
+  id: '/my-list',
+  path: '/my-list',
+  getParentRoute: () => DramawaveRoute,
+} as any)
+const DramawaveProfileRoute = DramawaveProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DramawaveRoute,
+} as any)
+const DramawaveRewardsRoute = DramawaveRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => DramawaveRoute,
+} as any)
+const DramawaveShortsRoute = DramawaveShortsRouteImport.update({
+  id: '/shorts',
+  path: '/shorts',
+  getParentRoute: () => DramawaveRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/dramawave/my-list': typeof DramawaveMyListRoute
+  '/dramawave/profile': typeof DramawaveProfileRoute
+  '/dramawave/rewards': typeof DramawaveRewardsRoute
+  '/dramawave/shorts': typeof DramawaveShortsRoute
+  '/dramawave/': typeof DramawaveIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/dramawave/my-list': typeof DramawaveMyListRoute
+  '/dramawave/profile': typeof DramawaveProfileRoute
+  '/dramawave/rewards': typeof DramawaveRewardsRoute
+  '/dramawave/shorts': typeof DramawaveShortsRoute
+  '/dramawave': typeof DramawaveIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/dramawave/my-list': typeof DramawaveMyListRoute
+  '/dramawave/profile': typeof DramawaveProfileRoute
+  '/dramawave/rewards': typeof DramawaveRewardsRoute
+  '/dramawave/shorts': typeof DramawaveShortsRoute
+  '/dramawave/': typeof DramawaveIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dramawave'
+    | '/history'
+    | '/dramawave/my-list'
+    | '/dramawave/profile'
+    | '/dramawave/rewards'
+    | '/dramawave/shorts'
+    | '/dramawave/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history'
-  id: '__root__' | '/' | '/history'
+  to:
+    | '/'
+    | '/auth'
+    | '/history'
+    | '/dramawave/my-list'
+    | '/dramawave/profile'
+    | '/dramawave/rewards'
+    | '/dramawave/shorts'
+    | '/dramawave'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/dramawave'
+    | '/history'
+    | '/dramawave/my-list'
+    | '/dramawave/profile'
+    | '/dramawave/rewards'
+    | '/dramawave/shorts'
+    | '/dramawave/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  DramawaveRoute: typeof DramawaveRouteWithChildren
   HistoryRoute: typeof HistoryRoute
 }
 
@@ -58,6 +149,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dramawave': {
+      id: '/dramawave'
+      path: '/dramawave'
+      fullPath: '/dramawave'
+      preLoaderRoute: typeof DramawaveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
@@ -65,11 +170,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dramawave/': {
+      id: '/dramawave/'
+      path: '/'
+      fullPath: '/dramawave/'
+      preLoaderRoute: typeof DramawaveIndexRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
+    '/dramawave/my-list': {
+      id: '/dramawave/my-list'
+      path: '/my-list'
+      fullPath: '/dramawave/my-list'
+      preLoaderRoute: typeof DramawaveMyListRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
+    '/dramawave/profile': {
+      id: '/dramawave/profile'
+      path: '/profile'
+      fullPath: '/dramawave/profile'
+      preLoaderRoute: typeof DramawaveProfileRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
+    '/dramawave/rewards': {
+      id: '/dramawave/rewards'
+      path: '/rewards'
+      fullPath: '/dramawave/rewards'
+      preLoaderRoute: typeof DramawaveRewardsRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
+    '/dramawave/shorts': {
+      id: '/dramawave/shorts'
+      path: '/shorts'
+      fullPath: '/dramawave/shorts'
+      preLoaderRoute: typeof DramawaveShortsRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
   }
 }
 
+interface DramawaveRouteChildren {
+  DramawaveMyListRoute: typeof DramawaveMyListRoute
+  DramawaveProfileRoute: typeof DramawaveProfileRoute
+  DramawaveRewardsRoute: typeof DramawaveRewardsRoute
+  DramawaveShortsRoute: typeof DramawaveShortsRoute
+  DramawaveIndexRoute: typeof DramawaveIndexRoute
+}
+
+const DramawaveRouteChildren: DramawaveRouteChildren = {
+  DramawaveMyListRoute: DramawaveMyListRoute,
+  DramawaveProfileRoute: DramawaveProfileRoute,
+  DramawaveRewardsRoute: DramawaveRewardsRoute,
+  DramawaveShortsRoute: DramawaveShortsRoute,
+  DramawaveIndexRoute: DramawaveIndexRoute,
+}
+
+const DramawaveRouteWithChildren = DramawaveRoute._addFileChildren(
+  DramawaveRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  DramawaveRoute: DramawaveRouteWithChildren,
   HistoryRoute: HistoryRoute,
 }
 export const routeTree = rootRouteImport
