@@ -399,6 +399,7 @@ function CreateCard({
   engine,
   setEngine,
   onSubmit,
+  isPending,
   phase,
   statusText,
   startedAt,
@@ -413,12 +414,14 @@ function CreateCard({
   engine: "lovable" | "fal";
   setEngine: (v: "lovable" | "fal") => void;
   onSubmit: () => void;
+  isPending: boolean;
   phase: Phase;
   statusText: "queued" | "processing";
   startedAt: number | null;
   queuePosition: number | null;
 }) {
   const working = phase === "working";
+  const buttonBusy = working || isPending;
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-cinema)] sm:p-8">
