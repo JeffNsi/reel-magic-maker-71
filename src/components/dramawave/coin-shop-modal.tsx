@@ -124,7 +124,7 @@ function CoinPack({
   coins: number;
   price: string;
   bonus?: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   highlight?: boolean;
   onClick: () => void;
 }) {
