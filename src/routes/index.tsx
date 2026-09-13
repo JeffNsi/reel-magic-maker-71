@@ -28,6 +28,7 @@ import { getSessionId } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ function StoryReel() {
   const [sessionId, setSessionId] = useState("");
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
+  const [audio, setAudio] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
@@ -80,7 +82,7 @@ function StoryReel() {
   const poll = useServerFn(checkStatus);
 
   const generate = useMutation({
-    mutationFn: () => start({ data: { idea, style, session_id: sessionId } }),
+    mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       if (result.status === "failed") {
