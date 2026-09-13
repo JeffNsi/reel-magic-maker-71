@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DramawaveRoute = DramawaveRouteImport.update({
+  id: '/dramawave',
+  path: '/dramawave',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -25,27 +31,31 @@ const HistoryRoute = HistoryRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dramawave': typeof DramawaveRoute
   '/history': typeof HistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dramawave': typeof DramawaveRoute
   '/history': typeof HistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dramawave': typeof DramawaveRoute
   '/history': typeof HistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history'
+  fullPaths: '/' | '/dramawave' | '/history'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history'
-  id: '__root__' | '/' | '/history'
+  to: '/' | '/dramawave' | '/history'
+  id: '__root__' | '/' | '/dramawave' | '/history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DramawaveRoute: typeof DramawaveRoute
   HistoryRoute: typeof HistoryRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dramawave': {
+      id: '/dramawave'
+      path: '/dramawave'
+      fullPath: '/dramawave'
+      preLoaderRoute: typeof DramawaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DramawaveRoute: DramawaveRoute,
   HistoryRoute: HistoryRoute,
 }
 export const routeTree = rootRouteImport
