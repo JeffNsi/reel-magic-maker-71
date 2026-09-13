@@ -117,7 +117,9 @@ export const unlockEpisode = createServerFn({ method: "POST" })
       : (episode.dramas as any)?.is_vip_only ?? false;
 
     if (episode.is_free || isVipActive(profile)) {
-      await context.supabase.from("user_unlocked_episodes").insert({ episode_id: data.episode_id });
+      await context.supabase
+        .from("user_unlocked_episodes")
+        .insert({ episode_id: data.episode_id, user_id: context.userId });
       return { unlocked: true, paid_coins: profile.paid_coins, bonus_coins: profile.bonus_coins };
     }
 
