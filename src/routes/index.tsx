@@ -185,19 +185,23 @@ function StoryReel() {
     <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
       <Header />
       <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-10 sm:px-6 lg:pt-16">
-        {phase === "create" && (
+        {(phase === "create" || phase === "working") && (
           <>
-            <Hero />
-            <div className="mb-8">
-              <StoryPack
-                style={style}
-                sessionId={sessionId}
-                theme={theme}
-                setTheme={setTheme}
-                onUsePrompt={setIdea}
-                onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
-              />
-            </div>
+            {phase === "create" && (
+              <>
+                <Hero />
+                <div className="mb-8">
+                  <StoryPack
+                    style={style}
+                    sessionId={sessionId}
+                    theme={theme}
+                    setTheme={setTheme}
+                    onUsePrompt={setIdea}
+                    onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
+                  />
+                </div>
+              </>
+            )}
             <div id="create" className="scroll-mt-24" />
             <CoinBar signedIn={!!user} coins={coins} />
             <CreateCard
@@ -210,24 +214,23 @@ function StoryReel() {
               engine={engine}
               setEngine={setEngine}
               onSubmit={submit}
-              pending={generate.isPending || !sessionId}
+              phase={phase}
+              statusText={statusText}
+              startedAt={startedAt}
+              queuePosition={queuePosition}
             />
-            <Gallery />
-            <HowItWorks />
-            <SocialProof />
-            <Pricing />
-            <Faq />
-            <LearnHow />
-            <SiteFooter />
+            {phase === "create" && (
+              <>
+                <Gallery />
+                <HowItWorks />
+                <SocialProof />
+                <Pricing />
+                <Faq />
+                <LearnHow />
+                <SiteFooter />
+              </>
+            )}
           </>
-        )}
-
-        {phase === "working" && (
-          <WorkingState
-            statusText={statusText}
-            startedAt={startedAt}
-            queuePosition={queuePosition}
-          />
         )}
 
         {phase === "done" && videoUrl && (
