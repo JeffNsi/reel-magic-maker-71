@@ -125,6 +125,18 @@
   --sidebar-accent-foreground: oklch(0.96 0.003 285);
   --sidebar-border: oklch(1 0 0 / 0.08);
   --sidebar-ring: oklch(0.63 0.235 15);
+
+  /* DramaWave palette: black velvet + purple/pink + gold */
+  --dw-background: oklch(0.05 0.004 285);
+  --dw-card: oklch(0.10 0.006 285);
+  --dw-card-hover: oklch(0.14 0.007 285);
+  --dw-border: oklch(1 0 0 / 0.06);
+  --dw-foreground: oklch(0.98 0.003 285);
+  --dw-muted: oklch(0.65 0.003 285);
+  --dw-primary: oklch(0.68 0.20 305);
+  --dw-primary-2: oklch(0.65 0.24 350);
+  --dw-gold: oklch(0.80 0.17 85);
+  --dw-gold-2: oklch(0.73 0.17 75);
 }
 
 
