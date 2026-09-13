@@ -4,7 +4,7 @@ import { Crown, Play, ChevronRight, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-export const Route = createFileRoute("/dramawave/")({
+export const Route = createFileRoute("/vibe/")({
   head: () => ({
     meta: [
       { title: "Home — Jeje Inc Vibe" },
@@ -44,7 +44,7 @@ function HomePage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight dw-gradient-text">Jeje Inc Vibe</h1>
           <Link
-            to="/dramawave/profile"
+            to="/vibe/profile"
             className="flex size-9 items-center justify-center rounded-full bg-dw-card text-dw-foreground"
           >
             <Star className="size-4 text-dw-gold" aria-hidden />
@@ -110,7 +110,7 @@ function FeaturedBanner({ drama }: { drama: Drama }) {
           ))}
         </div>
         <Link
-          to="/dramawave/shorts"
+          to="/vibe/shorts"
           className="mt-5 inline-flex h-12 items-center gap-2 rounded-full dw-btn-primary px-6 text-sm font-semibold"
         >
           <Play className="size-4 fill-current" aria-hidden /> Watch now
@@ -135,7 +135,7 @@ function CategoryRow({ title, dramas }: { title: string; dramas: Drama[] }) {
         {dramas.map((drama) => (
           <Link
             key={drama.id}
-            to="/dramawave/shorts"
+            to="/vibe/shorts"
             className="w-36 shrink-0"
           >
             <div className="relative overflow-hidden rounded-2xl">

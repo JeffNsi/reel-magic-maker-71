@@ -11,17 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
-import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
-import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
-import { Route as DramawaveRewardsRouteImport } from './routes/dramawave.rewards'
-import { Route as DramawaveShortsRouteImport } from './routes/dramawave.shorts'
+import { Route as VibeRouteImport } from './routes/vibe'
+import { Route as VibeIndexRouteImport } from './routes/vibe.index'
+import { Route as VibeMyListRouteImport } from './routes/vibe.my-list'
+import { Route as VibeProfileRouteImport } from './routes/vibe.profile'
+import { Route as VibeRewardsRouteImport } from './routes/vibe.rewards'
+import { Route as VibeShortsRouteImport } from './routes/vibe.shorts'
 import { Route as ApiPublicApplePayVerificationRouteImport } from './routes/api/public/apple-pay-verification'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -33,11 +33,6 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DramawaveRoute = DramawaveRouteImport.update({
-  id: '/dramawave',
-  path: '/dramawave',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -65,30 +60,35 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DramawaveIndexRoute = DramawaveIndexRouteImport.update({
+const VibeRoute = VibeRouteImport.update({
+  id: '/vibe',
+  path: '/vibe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VibeIndexRoute = VibeIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DramawaveRoute,
+  getParentRoute: () => VibeRoute,
 } as any)
-const DramawaveMyListRoute = DramawaveMyListRouteImport.update({
+const VibeMyListRoute = VibeMyListRouteImport.update({
   id: '/my-list',
   path: '/my-list',
-  getParentRoute: () => DramawaveRoute,
+  getParentRoute: () => VibeRoute,
 } as any)
-const DramawaveProfileRoute = DramawaveProfileRouteImport.update({
+const VibeProfileRoute = VibeProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => DramawaveRoute,
+  getParentRoute: () => VibeRoute,
 } as any)
-const DramawaveRewardsRoute = DramawaveRewardsRouteImport.update({
+const VibeRewardsRoute = VibeRewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
-  getParentRoute: () => DramawaveRoute,
+  getParentRoute: () => VibeRoute,
 } as any)
-const DramawaveShortsRoute = DramawaveShortsRouteImport.update({
+const VibeShortsRoute = VibeShortsRouteImport.update({
   id: '/shorts',
   path: '/shorts',
-  getParentRoute: () => DramawaveRoute,
+  getParentRoute: () => VibeRoute,
 } as any)
 const ApiPublicApplePayVerificationRoute =
   ApiPublicApplePayVerificationRouteImport.update({
@@ -106,17 +106,17 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/dramawave/my-list': typeof DramawaveMyListRoute
-  '/dramawave/profile': typeof DramawaveProfileRoute
-  '/dramawave/rewards': typeof DramawaveRewardsRoute
-  '/dramawave/shorts': typeof DramawaveShortsRoute
-  '/dramawave/': typeof DramawaveIndexRoute
+  '/vibe': typeof VibeRouteWithChildren
+  '/vibe/my-list': typeof VibeMyListRoute
+  '/vibe/profile': typeof VibeProfileRoute
+  '/vibe/rewards': typeof VibeRewardsRoute
+  '/vibe/shorts': typeof VibeShortsRoute
+  '/vibe/': typeof VibeIndexRoute
   '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -128,11 +128,11 @@ export interface FileRoutesByTo {
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/dramawave/my-list': typeof DramawaveMyListRoute
-  '/dramawave/profile': typeof DramawaveProfileRoute
-  '/dramawave/rewards': typeof DramawaveRewardsRoute
-  '/dramawave/shorts': typeof DramawaveShortsRoute
-  '/dramawave': typeof DramawaveIndexRoute
+  '/vibe/my-list': typeof VibeMyListRoute
+  '/vibe/profile': typeof VibeProfileRoute
+  '/vibe/rewards': typeof VibeRewardsRoute
+  '/vibe/shorts': typeof VibeShortsRoute
+  '/vibe': typeof VibeIndexRoute
   '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -140,17 +140,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/dramawave/my-list': typeof DramawaveMyListRoute
-  '/dramawave/profile': typeof DramawaveProfileRoute
-  '/dramawave/rewards': typeof DramawaveRewardsRoute
-  '/dramawave/shorts': typeof DramawaveShortsRoute
-  '/dramawave/': typeof DramawaveIndexRoute
+  '/vibe': typeof VibeRouteWithChildren
+  '/vibe/my-list': typeof VibeMyListRoute
+  '/vibe/profile': typeof VibeProfileRoute
+  '/vibe/rewards': typeof VibeRewardsRoute
+  '/vibe/shorts': typeof VibeShortsRoute
+  '/vibe/': typeof VibeIndexRoute
   '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -159,17 +159,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/dramawave'
     | '/history'
     | '/privacy'
     | '/studio'
     | '/team'
     | '/terms'
-    | '/dramawave/my-list'
-    | '/dramawave/profile'
-    | '/dramawave/rewards'
-    | '/dramawave/shorts'
-    | '/dramawave/'
+    | '/vibe'
+    | '/vibe/my-list'
+    | '/vibe/profile'
+    | '/vibe/rewards'
+    | '/vibe/shorts'
+    | '/vibe/'
     | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -181,28 +181,28 @@ export interface FileRouteTypes {
     | '/studio'
     | '/team'
     | '/terms'
-    | '/dramawave/my-list'
-    | '/dramawave/profile'
-    | '/dramawave/rewards'
-    | '/dramawave/shorts'
-    | '/dramawave'
+    | '/vibe/my-list'
+    | '/vibe/profile'
+    | '/vibe/rewards'
+    | '/vibe/shorts'
+    | '/vibe'
     | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/auth'
-    | '/dramawave'
     | '/history'
     | '/privacy'
     | '/studio'
     | '/team'
     | '/terms'
-    | '/dramawave/my-list'
-    | '/dramawave/profile'
-    | '/dramawave/rewards'
-    | '/dramawave/shorts'
-    | '/dramawave/'
+    | '/vibe'
+    | '/vibe/my-list'
+    | '/vibe/profile'
+    | '/vibe/rewards'
+    | '/vibe/shorts'
+    | '/vibe/'
     | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -210,12 +210,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  DramawaveRoute: typeof DramawaveRouteWithChildren
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
   StudioRoute: typeof StudioRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  VibeRoute: typeof VibeRouteWithChildren
   ApiPublicApplePayVerificationRoute: typeof ApiPublicApplePayVerificationRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -234,13 +234,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dramawave': {
-      id: '/dramawave'
-      path: '/dramawave'
-      fullPath: '/dramawave'
-      preLoaderRoute: typeof DramawaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -278,40 +271,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dramawave/': {
-      id: '/dramawave/'
+    '/vibe': {
+      id: '/vibe'
+      path: '/vibe'
+      fullPath: '/vibe'
+      preLoaderRoute: typeof VibeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vibe/': {
+      id: '/vibe/'
       path: '/'
-      fullPath: '/dramawave/'
-      preLoaderRoute: typeof DramawaveIndexRouteImport
-      parentRoute: typeof DramawaveRoute
+      fullPath: '/vibe/'
+      preLoaderRoute: typeof VibeIndexRouteImport
+      parentRoute: typeof VibeRoute
     }
-    '/dramawave/my-list': {
-      id: '/dramawave/my-list'
+    '/vibe/my-list': {
+      id: '/vibe/my-list'
       path: '/my-list'
-      fullPath: '/dramawave/my-list'
-      preLoaderRoute: typeof DramawaveMyListRouteImport
-      parentRoute: typeof DramawaveRoute
+      fullPath: '/vibe/my-list'
+      preLoaderRoute: typeof VibeMyListRouteImport
+      parentRoute: typeof VibeRoute
     }
-    '/dramawave/profile': {
-      id: '/dramawave/profile'
+    '/vibe/profile': {
+      id: '/vibe/profile'
       path: '/profile'
-      fullPath: '/dramawave/profile'
-      preLoaderRoute: typeof DramawaveProfileRouteImport
-      parentRoute: typeof DramawaveRoute
+      fullPath: '/vibe/profile'
+      preLoaderRoute: typeof VibeProfileRouteImport
+      parentRoute: typeof VibeRoute
     }
-    '/dramawave/rewards': {
-      id: '/dramawave/rewards'
+    '/vibe/rewards': {
+      id: '/vibe/rewards'
       path: '/rewards'
-      fullPath: '/dramawave/rewards'
-      preLoaderRoute: typeof DramawaveRewardsRouteImport
-      parentRoute: typeof DramawaveRoute
+      fullPath: '/vibe/rewards'
+      preLoaderRoute: typeof VibeRewardsRouteImport
+      parentRoute: typeof VibeRoute
     }
-    '/dramawave/shorts': {
-      id: '/dramawave/shorts'
+    '/vibe/shorts': {
+      id: '/vibe/shorts'
       path: '/shorts'
-      fullPath: '/dramawave/shorts'
-      preLoaderRoute: typeof DramawaveShortsRouteImport
-      parentRoute: typeof DramawaveRoute
+      fullPath: '/vibe/shorts'
+      preLoaderRoute: typeof VibeShortsRouteImport
+      parentRoute: typeof VibeRoute
     }
     '/api/public/apple-pay-verification': {
       id: '/api/public/apple-pay-verification'
@@ -330,35 +330,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DramawaveRouteChildren {
-  DramawaveMyListRoute: typeof DramawaveMyListRoute
-  DramawaveProfileRoute: typeof DramawaveProfileRoute
-  DramawaveRewardsRoute: typeof DramawaveRewardsRoute
-  DramawaveShortsRoute: typeof DramawaveShortsRoute
-  DramawaveIndexRoute: typeof DramawaveIndexRoute
+interface VibeRouteChildren {
+  VibeMyListRoute: typeof VibeMyListRoute
+  VibeProfileRoute: typeof VibeProfileRoute
+  VibeRewardsRoute: typeof VibeRewardsRoute
+  VibeShortsRoute: typeof VibeShortsRoute
+  VibeIndexRoute: typeof VibeIndexRoute
 }
 
-const DramawaveRouteChildren: DramawaveRouteChildren = {
-  DramawaveMyListRoute: DramawaveMyListRoute,
-  DramawaveProfileRoute: DramawaveProfileRoute,
-  DramawaveRewardsRoute: DramawaveRewardsRoute,
-  DramawaveShortsRoute: DramawaveShortsRoute,
-  DramawaveIndexRoute: DramawaveIndexRoute,
+const VibeRouteChildren: VibeRouteChildren = {
+  VibeMyListRoute: VibeMyListRoute,
+  VibeProfileRoute: VibeProfileRoute,
+  VibeRewardsRoute: VibeRewardsRoute,
+  VibeShortsRoute: VibeShortsRoute,
+  VibeIndexRoute: VibeIndexRoute,
 }
 
-const DramawaveRouteWithChildren = DramawaveRoute._addFileChildren(
-  DramawaveRouteChildren,
-)
+const VibeRouteWithChildren = VibeRoute._addFileChildren(VibeRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  DramawaveRoute: DramawaveRouteWithChildren,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
   StudioRoute: StudioRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  VibeRoute: VibeRouteWithChildren,
   ApiPublicApplePayVerificationRoute: ApiPublicApplePayVerificationRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
