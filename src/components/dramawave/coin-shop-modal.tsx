@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { buyCoins, buyVip, type Profile } from "@/lib/dramawave.functions";
+import { buyCoins, buyVip } from "@/lib/dramawave.functions";
 import { Coins, Crown, Sparkles } from "lucide-react";
 
 export function CoinShopModal({
