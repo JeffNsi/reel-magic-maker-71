@@ -504,6 +504,25 @@ function SceneCard({
     onError: (err: Error) => toast.error(err.message || "Could not record the voice-over."),
   });
 
+  // One run per scene: as soon as the picture is finished, record the voice-over
+  // and store the music bed so the scene plays back complete.
+  const narrateFn = narrateMutation.mutate;
+  useEffect(() => {
+    const line = narration.trim() || idea.trim();
+    if (
+      !audio ||
+      !scene.generation_id ||
+      scene.status !== "completed" ||
+      scene.voice_url ||
+      !line ||
+      narratedFor.current === scene.generation_id
+    ) {
+      return;
+    }
+    narratedFor.current = scene.generation_id;
+    narrateFn({ text: line, voice, music });
+  }, [audio, idea, music, narrateFn, narration, scene.generation_id, scene.status, scene.voice_url, voice]);
+
   const busy = scene.status === "queued" || scene.status === "processing";
 
   return (
