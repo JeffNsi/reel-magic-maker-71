@@ -144,7 +144,7 @@ export function SocialProof() {
           {LOGOS.map((logo) => (
             <li
               key={logo}
-              className="text-sm font-semibold tracking-[0.2em] text-muted-foreground/50"
+              className="text-sm font-semibold tracking-[0.2em] text-muted-foreground"
             >
               {logo}
             </li>

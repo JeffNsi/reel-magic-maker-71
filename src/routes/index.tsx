@@ -501,7 +501,7 @@ function CreateCard({
                       className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                         format.available
                           ? "border-primary bg-primary/10 text-foreground"
-                          : "border-border bg-background/40 text-muted-foreground/50"
+                          : "border-border bg-background/40 text-muted-foreground"
                       }`}
                     >
                       {format.label}
