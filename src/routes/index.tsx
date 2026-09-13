@@ -102,6 +102,7 @@ function StoryReel() {
     mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
+      void refetchProfile();
       if (result.status === "failed") {
         setErrorMessage(result.error_message ?? "Something went wrong.");
         setPhase("error");
