@@ -42,6 +42,13 @@ async function fetchProfile(supabase: { from: (table: string) => any }) {
   return data as Profile;
 }
 
+// Coin balances and VIP flags are locked from client-side updates; only the
+// server (verified caller + payment/reward rules) may change them.
+async function adminProfiles() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin.from("profiles");
+}
+
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Profile> => fetchProfile(context.supabase));
@@ -61,8 +68,7 @@ export const claimDailyCheckin = createServerFn({ method: "POST" })
       : 1;
     const reward = REWARDS[newStreak - 1] ?? 20;
 
-    const { data, error } = await context.supabase
-      .from("profiles")
+    const { data, error } = await (await adminProfiles())
       .update({
         last_checkin_date: todayStr,
         checkin_streak: newStreak,
@@ -80,8 +86,7 @@ export const watchAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Balance> => {
     const profile = await fetchProfile(context.supabase);
-    const { data, error } = await context.supabase
-      .from("profiles")
+    const { data, error } = await (await adminProfiles())
       .update({ bonus_coins: profile.bonus_coins + 15 })
       .eq("id", profile.id)
       .select("paid_coins, bonus_coins")
@@ -143,7 +148,7 @@ export const unlockEpisode = createServerFn({ method: "POST" })
     }
 
     const [{ error: updateError }, { error: insertError }] = await Promise.all([
-      context.supabase.from("profiles").update({ paid_coins: newPaid, bonus_coins: newBonus }).eq("id", profile.id),
+      (await adminProfiles()).update({ paid_coins: newPaid, bonus_coins: newBonus }).eq("id", profile.id),
       context.supabase
         .from("user_unlocked_episodes")
         .insert({ episode_id: data.episode_id, user_id: context.userId }),
