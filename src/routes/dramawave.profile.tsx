@@ -88,7 +88,7 @@ function ProfilePage() {
       <div className="mt-6 rounded-3xl border border-dw-border bg-dw-card p-6">
         <div className="flex items-center gap-4">
           <div className="flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-dw-primary to-dw-primary-2 text-xl font-bold text-white">
-            {profile?.email?.[0].toUpperCase() ?? "U"}
+            {profile?.email?.[0]?.toUpperCase() ?? "U"}
           </div>
           <div>
             <p className="font-semibold">{profile?.email ?? "DramaWatcher"}</p>
