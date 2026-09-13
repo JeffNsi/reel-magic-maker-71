@@ -185,19 +185,23 @@ function StoryReel() {
     <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
       <Header />
       <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-10 sm:px-6 lg:pt-16">
-        {phase === "create" && (
+        {(phase === "create" || phase === "working") && (
           <>
-            <Hero />
-            <div className="mb-8">
-              <StoryPack
-                style={style}
-                sessionId={sessionId}
-                theme={theme}
-                setTheme={setTheme}
-                onUsePrompt={setIdea}
-                onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
-              />
-            </div>
+            {phase === "create" && (
+              <>
+                <Hero />
+                <div className="mb-8">
+                  <StoryPack
+                    style={style}
+                    sessionId={sessionId}
+                    theme={theme}
+                    setTheme={setTheme}
+                    onUsePrompt={setIdea}
+                    onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
+                  />
+                </div>
+              </>
+            )}
             <div id="create" className="scroll-mt-24" />
             <CoinBar signedIn={!!user} coins={coins} />
             <CreateCard
@@ -210,24 +214,24 @@ function StoryReel() {
               engine={engine}
               setEngine={setEngine}
               onSubmit={submit}
-              pending={generate.isPending || !sessionId}
+              isPending={generate.isPending || !sessionId}
+              phase={phase}
+              statusText={statusText}
+              startedAt={startedAt}
+              queuePosition={queuePosition}
             />
-            <Gallery />
-            <HowItWorks />
-            <SocialProof />
-            <Pricing />
-            <Faq />
-            <LearnHow />
-            <SiteFooter />
+            {phase === "create" && (
+              <>
+                <Gallery />
+                <HowItWorks />
+                <SocialProof />
+                <Pricing />
+                <Faq />
+                <LearnHow />
+                <SiteFooter />
+              </>
+            )}
           </>
-        )}
-
-        {phase === "working" && (
-          <WorkingState
-            statusText={statusText}
-            startedAt={startedAt}
-            queuePosition={queuePosition}
-          />
         )}
 
         {phase === "done" && videoUrl && (
@@ -396,7 +400,11 @@ function CreateCard({
   engine,
   setEngine,
   onSubmit,
-  pending,
+  isPending,
+  phase,
+  statusText,
+  startedAt,
+  queuePosition,
 }: {
   idea: string;
   setIdea: (v: string) => void;
@@ -407,142 +415,241 @@ function CreateCard({
   engine: "lovable" | "fal";
   setEngine: (v: "lovable" | "fal") => void;
   onSubmit: () => void;
-  pending: boolean;
+  isPending: boolean;
+  phase: Phase;
+  statusText: "queued" | "processing";
+  startedAt: number | null;
+  queuePosition: number | null;
 }) {
+  const working = phase === "working";
+  const buttonBusy = working || isPending;
+
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-cinema)] sm:p-8">
       <div className="pointer-events-none absolute -mr-16 -mt-16 right-0 top-0 size-64 rounded-full bg-primary/10 blur-[100px]" />
 
       <div className="relative space-y-8">
-        <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Need inspiration? Try one of these:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {EXAMPLE_PROMPTS.map((example) => (
-              <button
-                key={example}
-                type="button"
-                onClick={() => setIdea(example.slice(0, MAX_IDEA))}
-                className="rounded-full border border-border bg-background/50 px-3.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/60 hover:text-foreground hover:shadow-[0_0_12px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                {example}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-3 flex items-end justify-between">
-            <label
-              htmlFor="idea"
-              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
-            >
-              Your script / prompt
-            </label>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
-              {idea.length} / {MAX_IDEA}
-            </span>
-          </div>
-          <Textarea
-            id="idea"
-            value={idea}
-            onChange={(e) => setIdea(e.target.value.slice(0, MAX_IDEA))}
-            rows={5}
-            maxLength={MAX_IDEA}
-            placeholder="Describe the scene, the characters, and the atmosphere..."
-            className="min-h-40 resize-none rounded-xl border-border bg-background/50 p-4 text-base leading-relaxed focus-visible:border-primary/50"
-          />
-        </div>
-
-        <StylePicker value={style} onChange={setStyle} />
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <fieldset>
-            <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Format
-            </legend>
-            <div className="flex gap-2">
-              {FORMATS.map((format) => (
-                <button
-                  key={format.value}
-                  type="button"
-                  disabled={!format.available}
-                  aria-pressed={format.available}
-                  title={format.available ? undefined : "Coming soon"}
-                  className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    format.available
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-background/40 text-muted-foreground/50"
-                  }`}
-                >
-                  {format.label}
-                  <span className="mt-0.5 block text-[10px] font-normal">
-                    {format.available ? "5 seconds" : "Soon"}
-                  </span>
-                </button>
-              ))}
+        {!working && (
+          <>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Need inspiration? Try one of these:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {EXAMPLE_PROMPTS.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => setIdea(example.slice(0, MAX_IDEA))}
+                    className="rounded-full border border-border bg-background/50 px-3.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/60 hover:text-foreground hover:shadow-[0_0_12px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
             </div>
-          </fieldset>
 
-          <div className="flex items-center justify-between self-end rounded-xl border border-border bg-background/50 px-4 py-3">
-            <label htmlFor="audio" className="text-sm text-muted-foreground">
-              Voice + music
-            </label>
-            <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
-          </div>
-        </div>
-
-        <fieldset>
-          <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Film engine
-          </legend>
-          <div className="grid grid-cols-2 gap-3">
-            {ENGINES.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setEngine(option.value)}
-                aria-pressed={engine === option.value}
-                className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest transition-colors ${
-                  engine === option.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {option.label}
-                <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal">
-                  {option.note}
+            <div>
+              <div className="mb-3 flex items-end justify-between">
+                <label
+                  htmlFor="idea"
+                  className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Your script / prompt
+                </label>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                  {idea.length} / {MAX_IDEA}
                 </span>
-              </button>
-            ))}
+              </div>
+              <Textarea
+                id="idea"
+                value={idea}
+                onChange={(e) => setIdea(e.target.value.slice(0, MAX_IDEA))}
+                rows={5}
+                maxLength={MAX_IDEA}
+                placeholder="Describe the scene, the characters, and the atmosphere..."
+                className="min-h-40 resize-none rounded-xl border-border bg-background/50 p-4 text-base leading-relaxed focus-visible:border-primary/50"
+              />
+            </div>
+
+            <StylePicker value={style} onChange={setStyle} />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <fieldset>
+                <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Format
+                </legend>
+                <div className="flex gap-2">
+                  {FORMATS.map((format) => (
+                    <button
+                      key={format.value}
+                      type="button"
+                      disabled={!format.available}
+                      aria-pressed={format.available}
+                      title={format.available ? undefined : "Coming soon"}
+                      className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        format.available
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border bg-background/40 text-muted-foreground/50"
+                      }`}
+                    >
+                      {format.label}
+                      <span className="mt-0.5 block text-[10px] font-normal">
+                        {format.available ? "5 seconds" : "Soon"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <div className="flex items-center justify-between self-end rounded-xl border border-border bg-background/50 px-4 py-3">
+                <label htmlFor="audio" className="text-sm text-muted-foreground">
+                  Voice + music
+                </label>
+                <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
+              </div>
+            </div>
+
+            <fieldset>
+              <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Film engine
+              </legend>
+              <div className="grid grid-cols-2 gap-3">
+                {ENGINES.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setEngine(option.value)}
+                    aria-pressed={engine === option.value}
+                    className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest transition-colors ${
+                      engine === option.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {option.label}
+                    <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal">
+                      {option.note}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </>
+        )}
+
+        {working && (
+          <div className="py-8 text-center">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border/70">
+              <Film className="size-7 animate-reel text-primary" aria-hidden />
+            </div>
+            <h2 className="mt-6 font-display text-3xl text-foreground">Creating your short film...</h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {statusText === "queued"
+                ? queuePosition !== null
+                  ? `Waiting in line — ${queuePosition} ahead of you`
+                  : "Waiting in line"
+                : "Filming your scene"}{" "}
+              — keep this page open.
+            </p>
           </div>
-        </fieldset>
+        )}
 
         <div>
-          <Button
-            onClick={onSubmit}
-            disabled={pending}
-            className="group h-[52px] w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
-          >
-            {pending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" /> Starting
-              </>
-            ) : (
-              <>
-                Generate video
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
-              </>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              onClick={onSubmit}
+              disabled={buttonBusy}
+              className="group h-[52px] flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
+            >
+              {buttonBusy ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Rendering…
+                </>
+              ) : (
+                <>
+                  Generate video
+                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
+            </Button>
+            {!buttonBusy && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => scrollTo("gallery")}
+                className="h-[52px] rounded-xl px-6 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+              >
+                Watch examples
+              </Button>
             )}
-          </Button>
+          </div>
+
+          {!working && (
+            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+              Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
+              {COIN_COST} coins
+            </p>
+          )}
+
+          {working && (
+            <GenerationProgress startedAt={startedAt} statusText={statusText} queuePosition={queuePosition} />
+          )}
+
           <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
-            Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
-            {COIN_COST} coins
+            No credit card required · 3 free renders
           </p>
         </div>
       </div>
     </section>
+  );
+}
+
+function GenerationProgress({
+  startedAt,
+  statusText,
+  queuePosition,
+}: {
+  startedAt: number | null;
+  statusText: "queued" | "processing";
+  queuePosition: number | null;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const elapsed = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
+  const percent = Math.min(99, Math.round((elapsed / ESTIMATED_SECONDS) * 100));
+  const remaining = Math.max(0, ESTIMATED_SECONDS - elapsed);
+
+  return (
+    <div className="mt-6">
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-label="Generation progress"
+        className="mx-auto h-2 w-full overflow-hidden rounded-full bg-border/60"
+      >
+        <div
+          className="h-full rounded-full bg-gradient-gold transition-[width] duration-1000 ease-linear"
+          style={{ width: `${Math.max(3, percent)}%` }}
+        />
+      </div>
+      <div className="mx-auto mt-3 flex w-full items-center justify-between text-xs text-muted-foreground">
+        <span>{percent}%</span>
+        <span>{formatRemaining(remaining)}</span>
+      </div>
+      {statusText === "queued" && queuePosition !== null && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          {queuePosition} ahead of you in line
+        </p>
+      )}
+    </div>
   );
 }
 
