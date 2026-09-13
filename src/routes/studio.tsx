@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -19,7 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FilmPlayer } from "@/components/film-player";
+import { SeriesPlayer } from "@/components/series-player";
 import { StoryPack } from "@/components/story-pack";
 import { getSessionId } from "@/lib/session";
 import { checkStatus } from "@/lib/storyreel.functions";
@@ -28,9 +36,11 @@ import {
   generateScene,
   getStory,
   listStories,
+  MUSIC_BEDS,
   narrateGeneration,
   saveBible,
   saveScene,
+  VOICES,
   type SceneView,
   type StoryCharacter,
   type StoryView,
@@ -232,6 +242,16 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
     );
   }
 
+  const finished = story.scenes
+    .filter((scene): scene is SceneView & { video_url: string } => !!scene.video_url)
+    .map((scene) => ({
+      id: scene.id,
+      scene_number: scene.scene_number,
+      title: scene.title,
+      video_url: scene.video_url,
+      voice_url: scene.voice_url,
+    }));
+
   return (
     <div className="space-y-8">
       <Link
@@ -243,6 +263,10 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
       </Link>
 
       <BibleCard story={story} sessionId={sessionId} onSaved={setStory} />
+
+      {finished.length > 0 && (
+        <SeriesPlayer title={story.title || "storyreel-series"} scenes={finished} />
+      )}
 
       <div className="space-y-6">
         {story.scenes.map((scene) => (
@@ -400,8 +424,11 @@ function SceneCard({
   const [title, setTitle] = useState(scene.title);
   const [idea, setIdea] = useState(scene.idea);
   const [narration, setNarration] = useState(scene.narration);
-  const [audio, setAudio] = useState(false);
+  const [audio, setAudio] = useState(true);
+  const [voice, setVoice] = useState("alloy");
+  const [music, setMusic] = useState("wonder");
   const [voiceUrl, setVoiceUrl] = useState<string | null>(scene.voice_url);
+  const narratedFor = useRef<string | null>(null);
 
   useEffect(() => setVoiceUrl(scene.voice_url), [scene.voice_url]);
 
@@ -477,6 +504,25 @@ function SceneCard({
     onError: (err: Error) => toast.error(err.message || "Could not record the voice-over."),
   });
 
+  // One run per scene: as soon as the picture is finished, record the voice-over
+  // and store the music bed so the scene plays back complete.
+  const narrateFn = narrateMutation.mutate;
+  useEffect(() => {
+    const line = narration.trim() || idea.trim();
+    if (
+      !audio ||
+      !scene.generation_id ||
+      scene.status !== "completed" ||
+      scene.voice_url ||
+      !line ||
+      narratedFor.current === scene.generation_id
+    ) {
+      return;
+    }
+    narratedFor.current = scene.generation_id;
+    narrateFn({ text: line, voice, music });
+  }, [audio, idea, music, narrateFn, narration, scene.generation_id, scene.status, scene.voice_url, voice]);
+
   const busy = scene.status === "queued" || scene.status === "processing";
 
   return (
@@ -518,12 +564,49 @@ function SceneCard({
         className="mt-3 h-11 rounded-xl border-border bg-background/50 text-sm"
       />
 
-      <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-3">
-        <label htmlFor={`audio-${scene.id}`} className="text-sm text-muted-foreground">
-          Let the video model add its own sound
-        </label>
-        <Switch id={`audio-${scene.id}`} checked={audio} onCheckedChange={setAudio} />
+      <div className="mt-4 space-y-3 rounded-xl border border-border bg-background/40 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor={`audio-${scene.id}`} className="text-sm text-muted-foreground">
+            Generate this scene with voice and music
+          </label>
+          <Switch id={`audio-${scene.id}`} checked={audio} onCheckedChange={setAudio} />
+        </div>
+        {audio && (
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Select value={voice} onValueChange={setVoice}>
+              <SelectTrigger
+                className="h-11 rounded-xl border-border bg-background/60 text-sm sm:flex-1"
+                aria-label="Narrator voice"
+              >
+                <SelectValue placeholder="Voice" />
+              </SelectTrigger>
+              <SelectContent>
+                {VOICES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={music} onValueChange={setMusic}>
+              <SelectTrigger
+                className="h-11 rounded-xl border-border bg-background/60 text-sm sm:flex-1"
+                aria-label="Music bed"
+              >
+                <SelectValue placeholder="Music" />
+              </SelectTrigger>
+              <SelectContent>
+                {MUSIC_BEDS.map((bed) => (
+                  <SelectItem key={bed.value} value={bed.value}>
+                    {bed.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
+
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Button

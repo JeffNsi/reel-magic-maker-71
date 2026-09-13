@@ -22,7 +22,7 @@ const BEDS: Record<string, { notes: number[]; cutoff: number; tremolo: number }>
 
 type Score = { ctx: AudioContext; master: GainNode; stop: () => void };
 
-function startScore(bed: string, volume: number): Score | null {
+export function startScore(bed: string, volume: number): Score | null {
   const spec = BEDS[bed];
   if (!spec) return null;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
