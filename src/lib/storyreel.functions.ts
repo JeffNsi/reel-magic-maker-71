@@ -355,6 +355,14 @@ async function toHistoryItems(
             .createSignedUrl(row.video_url, SIGNED_URL_TTL);
           url = signed?.signedUrl ?? null;
         }
+      rows.map(async (row) => {
+        let url: string | null = null;
+        if (row.status === "completed" && row.video_url) {
+          const { data: signed } = await supabaseAdmin.storage
+            .from(BUCKET)
+            .createSignedUrl(row.video_url, SIGNED_URL_TTL);
+          url = signed?.signedUrl ?? null;
+        }
         return {
           id: row.id,
           idea: row.idea,
@@ -366,6 +374,42 @@ async function toHistoryItems(
         };
       }),
     );
+}
+
+const HISTORY_COLUMNS = "id, idea, style, status, created_at, video_url, error_message";
+
+/** All shorts made in this browser, newest first, with playable links for finished ones. */
+export const listGenerations = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => historyInput.parse(data))
+  .handler(async ({ data }): Promise<HistoryItem[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("generations")
+      .select(HISTORY_COLUMNS)
+      .eq("session_id", data.session_id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw new Error("Could not load your shorts.");
+    return toHistoryItems(supabaseAdmin, rows ?? []);
+  });
+
+/** All shorts on the signed-in account, newest first — survives browser/device changes. */
+export const listMyGenerations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<HistoryItem[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("generations")
+      .select(HISTORY_COLUMNS)
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw new Error("Could not load your shorts.");
+    return toHistoryItems(supabaseAdmin, rows ?? []);
   });
 
 export type ShowcaseShort = {
