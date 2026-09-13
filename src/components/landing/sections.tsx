@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Palette, PenLine, Play, Sparkles } from "lucide-react";
+import {
+  Check,
+  Instagram,
+  Music,
+  Palette,
+  PenLine,
+  Play,
+  Sparkles,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 
 import {
   Accordion,
@@ -284,18 +294,35 @@ export function Faq() {
   );
 }
 
+const FOOTER_LINKS = {
+  Product: [
+    { label: "Generator", href: "#create" },
+    { label: "Gallery", href: "#gallery" },
+    { label: "Pricing", href: "#pricing" },
+  ],
+  Company: [
+    { label: "About", href: "#top" },
+    { label: "Contact", href: "mailto:hello@storyreel.app" },
+    { label: "Careers", href: "#top" },
+  ],
+  Legal: [
+    { label: "Privacy", to: "/privacy" as const },
+    { label: "Terms", to: "/terms" as const },
+  ],
+};
+
 const SOCIALS = [
-  { label: "X", href: "https://x.com" },
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "TikTok", href: "https://tiktok.com" },
-  { label: "YouTube", href: "https://youtube.com" },
+  { label: "X", href: "https://x.com", Icon: Twitter },
+  { label: "Instagram", href: "https://instagram.com", Icon: Instagram },
+  { label: "TikTok", href: "https://tiktok.com", Icon: Music },
+  { label: "YouTube", href: "https://youtube.com", Icon: Youtube },
 ];
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-border pt-10">
-      <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <footer className="mt-24 border-t border-border pt-12">
+      <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-2">
           <p className="font-display text-2xl italic text-primary">STORYREEL</p>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             Cinematic vertical shorts from a single idea.
@@ -305,34 +332,51 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <nav aria-label="Footer" className="grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:flex-1">
-          <a href="#top" className="text-muted-foreground hover:text-foreground">
-            Home
-          </a>
-          <a href="#gallery" className="text-muted-foreground hover:text-foreground">
-            Gallery
-          </a>
-          <a href="#pricing" className="text-muted-foreground hover:text-foreground">
-            Pricing
-          </a>
-          <a href="#faq" className="text-muted-foreground hover:text-foreground">
-            FAQ
-          </a>
-          <a
-            href="mailto:hello@storyreel.app"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            Contact
-          </a>
-          <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
-            Privacy Policy
-          </Link>
-          <Link to="/terms" className="text-muted-foreground hover:text-foreground">
-            Terms of Service
-          </Link>
-        </nav>
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Product</h3>
+          <ul className="mt-4 space-y-2 text-sm">
+            {FOOTER_LINKS.Product.map((item) => (
+              <li key={item.label}>
+                <a href={item.href} className="text-muted-foreground transition-colors hover:text-foreground">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        <ul className="flex gap-4">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Company</h3>
+          <ul className="mt-4 space-y-2 text-sm">
+            {FOOTER_LINKS.Company.map((item) => (
+              <li key={item.label}>
+                <a href={item.href} className="text-muted-foreground transition-colors hover:text-foreground">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Legal</h3>
+          <ul className="mt-4 space-y-2 text-sm">
+            {FOOTER_LINKS.Legal.map((item) => (
+              <li key={item.label}>
+                <Link to={item.to} className="text-muted-foreground transition-colors hover:text-foreground">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+        <p className="text-xs text-muted-foreground/60">
+          © 2026 STORYREEL. All rights reserved.
+        </p>
+        <ul className="flex items-center gap-4">
           {SOCIALS.map((social) => (
             <li key={social.label}>
               <a
@@ -340,17 +384,14 @@ export function SiteFooter() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={social.label}
-                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
+                className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
               >
-                {social.label}
+                <social.Icon className="size-4" aria-hidden />
               </a>
             </li>
           ))}
         </ul>
       </div>
-      <p className="mt-10 pb-10 text-xs text-muted-foreground/60">
-        © {new Date().getFullYear()} STORYREEL. All rights reserved.
-      </p>
     </footer>
   );
 }
