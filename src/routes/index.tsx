@@ -155,6 +155,7 @@ function StoryReel() {
                 onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
               />
             </div>
+            <div id="create" className="scroll-mt-24" />
             <CreateCard
               idea={idea}
               setIdea={setIdea}
@@ -169,6 +170,7 @@ function StoryReel() {
               Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · estimated render time
               2–3 minutes
             </p>
+            <LearnHow />
           </>
         )}
 
@@ -232,19 +234,76 @@ function Header() {
   );
 }
 
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function Hero() {
   return (
     <section className="mb-14 text-center">
       <h1 className="font-display text-5xl italic leading-tight text-foreground sm:text-7xl">
-        Turn your idea into a <span className="text-primary">short film.</span>
+        Create Your Own <span className="text-primary">AI Short Film</span>
       </h1>
       <p className="mx-auto mt-6 max-w-xl text-balance text-lg font-light leading-relaxed text-muted-foreground">
-        Write a prompt, choose your aesthetic, and let the AI director bring your vision to the
-        screen.
+        Turn your idea into a cinematic short with AI.
       </p>
+      <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <Button
+          onClick={() => scrollTo("create")}
+          className="bg-primary text-primary-foreground hover:shadow-[0_0_28px_var(--glow)] h-12 w-full rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em] sm:w-auto"
+        >
+          Create your film
+        </Button>
+        <Button
+          onClick={() => scrollTo("learn")}
+          variant="outline"
+          className="h-12 w-full rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em] sm:w-auto"
+        >
+          Learn how
+        </Button>
+      </div>
     </section>
   );
 }
+
+const LEARN_STEPS = [
+  { title: "Create your idea", body: "One sentence is enough — a person, a place, a want." },
+  { title: "Build your story", body: "Shape a beginning, a turn and an ending you can film." },
+  { title: "Create your characters", body: "Describe faces, clothes and age so they stay the same." },
+  { title: "Create your scenes", body: "Split the story into short beats — one moment per shot." },
+  { title: "Generate your visuals", body: "Write each shot as a prompt with camera, light and mood." },
+  { title: "Add voice and sound", body: "Narration and a music bed lift a silent clip into a film." },
+  { title: "Edit your short", body: "Order the shots, trim the dead air, keep the rhythm tight." },
+  { title: "Publish your film", body: "Export vertical, add a title card, and share it." },
+];
+
+function LearnHow() {
+  return (
+    <section id="learn" className="mt-20 scroll-mt-24">
+      <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
+        How a short film gets made
+      </h2>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        Eight steps from a single sentence to a finished film.
+      </p>
+      <ol className="mt-8 grid gap-3 sm:grid-cols-2">
+        {LEARN_STEPS.map((step, i) => (
+          <li
+            key={step.title}
+            className="surface-cinema rounded-2xl p-5 transition-colors hover:border-primary/40"
+          >
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              Step {i + 1}
+            </span>
+            <h3 className="mt-2 text-base font-medium text-foreground">{step.title}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 
 
 function CreateCard({
