@@ -94,20 +94,26 @@ export function SocialProof() {
     <section className="mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Creators ship faster
+          Loved by creators
         </h2>
       </Reveal>
       <ul className="mt-8 grid gap-3 sm:grid-cols-3">
         {TESTIMONIALS.map((person, i) => (
           <Reveal as="li" key={person.name} delay={i * 80}>
-            <figure className="surface-cinema h-full rounded-2xl p-6">
-              <blockquote className="text-sm leading-relaxed text-foreground/90">
-                “{person.quote}”
+            <figure className="surface-cinema relative h-full overflow-hidden rounded-2xl border border-border/60 p-6">
+              <span
+                aria-hidden
+                className="absolute -right-2 -top-2 font-display text-6xl italic leading-none text-primary/20"
+              >
+                “
+              </span>
+              <blockquote className="relative text-sm leading-relaxed text-foreground/90">
+                {person.quote}
               </blockquote>
               <figcaption className="mt-5 flex items-center gap-3">
                 <span
                   aria-hidden
-                  className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
+                  className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                 >
                   {person.initials}
                 </span>
