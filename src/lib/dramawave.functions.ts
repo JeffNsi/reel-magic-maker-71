@@ -103,18 +103,18 @@ export const unlockEpisode = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { unlocked: true, paid_coins: 0, bonus_coins: 0 };
 
-    const { data: episode, error: epError } = await context.supabase
+    const { data: episode, error: epError } = (await context.supabase
       .from("episodes")
-      .select("id, is_free, coin_cost, is_vip_only, dramas(is_vip_only)")
+      .select("id, is_free, coin_cost, dramas(is_vip_only)")
       .eq("id", data.episode_id)
-      .single();
+      .single()) as any;
     if (epError || !episode) throw new Error("Episode not found.");
 
     const profile = await fetchProfile(context.supabase);
 
     const dramaVipOnly = Array.isArray(episode.dramas)
-      ? (episode.dramas as any[])[0]?.is_vip_only ?? false
-      : (episode.dramas as any)?.is_vip_only ?? false;
+      ? episode.dramas[0]?.is_vip_only ?? false
+      : episode.dramas?.is_vip_only ?? false;
 
     if (episode.is_free || isVipActive(profile)) {
       await context.supabase
