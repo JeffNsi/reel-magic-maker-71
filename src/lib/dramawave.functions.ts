@@ -153,43 +153,9 @@ export const unlockEpisode = createServerFn({ method: "POST" })
     return { unlocked: true, paid_coins: newPaid, bonus_coins: newBonus };
   });
 
-const coinPackInput = z.object({ pack: z.enum(["small", "medium", "large"]) });
+// Purchases go through the payment providers in shop.functions.ts — coins and
+// VIP are only credited after a confirmed payment (see the payments webhook).
 
-export const buyCoins = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => coinPackInput.parse(data))
-  .handler(async ({ data, context }): Promise<Profile> => {
-    const profile = await fetchProfile(context.supabase);
-    const bonus = data.pack === "small" ? 0 : data.pack === "medium" ? 500 : 2000;
-    const paid = data.pack === "small" ? 500 : data.pack === "medium" ? 1000 : 3000;
-    const { data: updated, error } = await context.supabase
-      .from("profiles")
-      .update({
-        paid_coins: profile.paid_coins + paid,
-        bonus_coins: profile.bonus_coins + bonus,
-      })
-      .eq("id", profile.id)
-      .select()
-      .single();
-    if (error || !updated) throw new Error("Could not add coins.");
-    return updated as Profile;
-  });
-
-export const buyVip = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Profile> => {
-    const profile = await fetchProfile(context.supabase);
-    const until = new Date();
-    until.setDate(until.getDate() + 30);
-    const { data: updated, error } = await context.supabase
-      .from("profiles")
-      .update({ is_vip: true, vip_until: until.toISOString() })
-      .eq("id", profile.id)
-      .select()
-      .single();
-    if (error || !updated) throw new Error("Could not activate VIP.");
-    return updated as Profile;
-  });
 
 export const getMyList = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
