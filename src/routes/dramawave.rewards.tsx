@@ -101,7 +101,7 @@ function RewardsPage() {
   );
 }
 
-function CheckInCard({ profile, loading }: { profile?: Profile; loading: boolean }) {
+function CheckInCard({ profile, loading }: { profile: Profile | undefined; loading: boolean }) {
   const queryClient = useQueryClient();
   const claim = useServerFn(claimDailyCheckin);
   const mutation = useMutation({
