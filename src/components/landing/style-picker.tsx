@@ -17,7 +17,7 @@ export const STYLE_THUMBS: Record<string, string> = {
   hyperreal: hyperrealThumb,
 };
 
-/** Visual style chooser with a still frame per look. */
+/** Visual style chooser with thumbnail, name and one-line description. */
 export function StylePicker({
   value,
   onChange,
@@ -30,7 +30,7 @@ export function StylePicker({
       <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Visual style
       </legend>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
         {STYLES.map((option) => {
           const selected = value === option.value;
           return (
@@ -39,24 +39,38 @@ export function StylePicker({
               type="button"
               aria-pressed={selected}
               onClick={() => onChange(option.value)}
-              className={`group relative overflow-hidden rounded-xl border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              className={`group relative flex w-[150px] shrink-0 flex-col overflow-hidden rounded-xl border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-[170px] ${
                 selected
                   ? "border-primary shadow-[0_0_20px_var(--glow)]"
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <img
-                src={STYLE_THUMBS[option.value]}
-                alt={`${option.label} style example frame`}
-                loading="lazy"
-                width={512}
-                height={896}
-                className="aspect-[9/16] w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-background via-background/80 to-transparent px-2 pb-1.5 pt-6 text-[11px] font-medium text-foreground">
-                {option.label}
-                {selected && <Check className="size-3 shrink-0 text-primary" aria-hidden />}
-              </span>
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-background">
+                <img
+                  src={STYLE_THUMBS[option.value]}
+                  alt=""
+                  loading="lazy"
+                  width={320}
+                  height={200}
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <span className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+                {selected && (
+                  <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                    <Check className="size-3" strokeWidth={3} aria-hidden />
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-1 flex-col justify-between bg-card p-3">
+                <div>
+                  <span className="block text-sm font-medium text-foreground">
+                    {option.label}
+                  </span>
+                  <span className="mt-1 block text-xs leading-snug text-muted-foreground">
+                    {option.description}
+                  </span>
+                </div>
+              </div>
             </button>
           );
         })}
