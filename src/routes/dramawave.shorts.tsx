@@ -28,7 +28,6 @@ import {
   ListVideo,
   Lock,
   Crown,
-  Coins,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dramawave/shorts")({
