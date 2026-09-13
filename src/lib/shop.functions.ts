@@ -118,7 +118,7 @@ export const createShopCheckout = createServerFn({ method: "POST" })
           limit: 1,
         });
         if (found.data.length) {
-          customerId = found.data[0].id;
+          customerId = found.data[0]!.id;
         } else {
           const created = await stripe.customers.create({
             ...(email && { email }),
@@ -129,7 +129,7 @@ export const createShopCheckout = createServerFn({ method: "POST" })
 
         const prices = await stripe.prices.list({ lookup_keys: [pack.priceId] });
         if (!prices.data.length) throw new Error("Price not found");
-        const stripePrice = prices.data[0];
+        const stripePrice = prices.data[0]!;
 
         const session = await stripe.checkout.sessions.create({
           line_items: [{ price: stripePrice.id, quantity: 1 }],
