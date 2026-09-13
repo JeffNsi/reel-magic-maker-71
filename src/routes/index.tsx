@@ -558,10 +558,10 @@ function CreateCard({
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
               onClick={onSubmit}
-              disabled={working}
+              disabled={buttonBusy}
               className="group h-[52px] flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
             >
-              {working ? (
+              {buttonBusy ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" /> Rendering…
                 </>
@@ -572,7 +572,7 @@ function CreateCard({
                 </>
               )}
             </Button>
-            {!working && (
+            {!buttonBusy && (
               <Button
                 type="button"
                 variant="ghost"
