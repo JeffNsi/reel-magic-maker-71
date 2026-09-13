@@ -406,43 +406,54 @@ function ResultState({
   videoUrl,
   onReset,
   generationId,
+  sessionId,
+  idea,
 }: {
   videoUrl: string;
   onReset: () => void;
   generationId: string | null;
+  sessionId: string;
+  idea: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const narrate = useServerFn(narrateGeneration);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+
+  const narration = useMutation({
+    mutationFn: (input: { text: string; voice: string; music: string }) =>
+      narrate({
+        data: {
+          session_id: sessionId,
+          generation_id: generationId!,
+          text: input.text,
+          voice: input.voice,
+          music: input.music,
+        },
+      }),
+    onSuccess: (result) => {
+      setVoiceUrl(result.voice_url);
+      toast.success("Voice-over added — press Play film.");
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not record the voice-over."),
+  });
 
   return (
-    <section className="mt-6 text-center">
-      <h2 className="font-display text-3xl text-foreground sm:text-4xl">Your short is ready.</h2>
+    <section className="mt-6">
+      <h2 className="text-center font-display text-3xl text-foreground sm:text-4xl">
+        Your short is ready.
+      </h2>
 
-      <div className="surface-cinema mx-auto mt-6 w-full max-w-sm overflow-hidden rounded-3xl p-2">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          controls
-          playsInline
-          className="aspect-[9/16] w-full rounded-2xl bg-black object-cover"
+      <div className="mt-7">
+        <FilmPlayer
+          videoUrl={videoUrl}
+          voiceUrl={voiceUrl}
+          narration={idea.slice(0, 200)}
+          generationId={generationId}
+          onNarrate={generationId ? (input) => narration.mutate(input) : undefined}
+          narrating={narration.isPending}
         />
       </div>
 
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button
-          onClick={() => videoRef.current?.play()}
-          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
-        >
-          <Play className="mr-2 size-4" /> Play
-        </Button>
-        <Button asChild variant="outline" className="h-12 rounded-2xl px-8">
-          <a
-            href={videoUrl}
-            download={`storyreel-${generationId ?? "short"}.mp4`}
-            className="text-xs font-semibold uppercase tracking-[0.2em]"
-          >
-            <Download className="mr-2 size-4" /> Download
-          </a>
-        </Button>
+      <div className="mt-7 flex justify-center">
         <Button
           onClick={onReset}
           variant="ghost"
