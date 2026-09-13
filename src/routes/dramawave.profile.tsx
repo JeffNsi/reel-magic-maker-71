@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Crown, Coins, LogOut, Settings, Wallet } from "lucide-react";
+import { Crown, Coins, LogOut, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { getProfile, buyVip, type Profile } from "@/lib/dramawave.functions";
+import { getProfile, buyVip } from "@/lib/dramawave.functions";
 import { Button } from "@/components/ui/button";
 import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
 import { useState } from "react";
