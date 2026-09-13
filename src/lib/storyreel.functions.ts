@@ -293,7 +293,7 @@ export const checkStatus = createServerFn({ method: "POST" })
       .update({ status: "completed", video_url: path })
       .eq("id", row.id);
 
-    // Publish the finished short as a free episode in the DramaWave Shorts feed.
+    // Publish the finished short as a free episode in the Jeje Inc Vibe Shorts feed.
     if (!row.episode_id) {
       const { count } = await supabaseAdmin
         .from("episodes")

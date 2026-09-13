@@ -205,7 +205,7 @@ export const isDramaSaved = createServerFn({ method: "POST" })
     return { saved: !!existing };
   });
 
-/** The DramaWave series that every STORYREEL generation is published into. */
+/** The Jeje Inc Vibe series that every STORYREEL generation is published into. */
 export const STORYREEL_DRAMA_ID = "00000000-0000-4000-8000-000000005701";
 
 export type FeedEpisode = {
