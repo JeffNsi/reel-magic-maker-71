@@ -347,16 +347,8 @@ async function toHistoryItems(
   rows: HistoryRow[],
 ): Promise<HistoryItem[]> {
   return Promise.all(
-      (rows ?? []).map(async (row) => {
-        let url: string | null = null;
-        if (row.status === "completed" && row.video_url) {
-          const { data: signed } = await supabaseAdmin.storage
-            .from(BUCKET)
-            .createSignedUrl(row.video_url, SIGNED_URL_TTL);
-          url = signed?.signedUrl ?? null;
-        }
-      rows.map(async (row) => {
-        let url: string | null = null;
+    rows.map(async (row) => {
+      let url: string | null = null;
         if (row.status === "completed" && row.video_url) {
           const { data: signed } = await supabaseAdmin.storage
             .from(BUCKET)
