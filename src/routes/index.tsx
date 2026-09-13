@@ -324,7 +324,7 @@ function scrollTo(id: string) {
 
 function Hero() {
   return (
-    <section className="mb-14 text-center">
+    <section className="mb-14 pt-28 text-center sm:pt-32">
       <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
         <Film className="size-3.5" aria-hidden /> AI short film studio
       </p>
