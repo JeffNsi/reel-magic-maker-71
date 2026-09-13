@@ -1,7 +1,10 @@
 # Roadmap
 
+## Klart
+- [x] SumUp-betalning testad med riktig nyckel — kortkassan monteras live (ej genomfört köp, skarpt läge)
+
 ## Pågående
-- [ ] SumUp-betalning: nycklar sparade, kör testköp i myntshoppen
+- [ ] Riktig videogenerering (ej simulerad) — scener spelas i galleriet
 
 ## Nya (från användaren 17:51)
 - [ ] Riktig videogenerering (ej simulerad) — scener spelas i galleriet (Lovable AI-motorn, fal.ai är balans-blockerad)
