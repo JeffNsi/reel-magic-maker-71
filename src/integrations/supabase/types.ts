@@ -55,9 +55,11 @@ export type Database = {
           episode_number: number
           id: string
           is_free: boolean
+          source_generation_id: string | null
+          storage_path: string | null
           title: string | null
           updated_at: string
-          video_url: string
+          video_url: string | null
         }
         Insert: {
           coin_cost?: number
@@ -66,9 +68,11 @@ export type Database = {
           episode_number: number
           id?: string
           is_free?: boolean
+          source_generation_id?: string | null
+          storage_path?: string | null
           title?: string | null
           updated_at?: string
-          video_url: string
+          video_url?: string | null
         }
         Update: {
           coin_cost?: number
@@ -77,9 +81,11 @@ export type Database = {
           episode_number?: number
           id?: string
           is_free?: boolean
+          source_generation_id?: string | null
+          storage_path?: string | null
           title?: string | null
           updated_at?: string
-          video_url?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -89,11 +95,20 @@ export type Database = {
             referencedRelation: "dramas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "episodes_source_generation_id_fkey"
+            columns: ["source_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       generations: {
         Row: {
+          coins_spent: number
           created_at: string
+          episode_id: string | null
           error_message: string | null
           fal_request_id: string | null
           id: string
@@ -107,11 +122,14 @@ export type Database = {
           story_id: string | null
           style: string
           updated_at: string
+          user_id: string | null
           video_url: string | null
           voiceover_url: string | null
         }
         Insert: {
+          coins_spent?: number
           created_at?: string
+          episode_id?: string | null
           error_message?: string | null
           fal_request_id?: string | null
           id?: string
@@ -125,11 +143,14 @@ export type Database = {
           story_id?: string | null
           style: string
           updated_at?: string
+          user_id?: string | null
           video_url?: string | null
           voiceover_url?: string | null
         }
         Update: {
+          coins_spent?: number
           created_at?: string
+          episode_id?: string | null
           error_message?: string | null
           fal_request_id?: string | null
           id?: string
@@ -143,10 +164,26 @@ export type Database = {
           story_id?: string | null
           style?: string
           updated_at?: string
+          user_id?: string | null
           video_url?: string | null
           voiceover_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "generations_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       my_list: {
         Row: {
