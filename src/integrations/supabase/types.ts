@@ -222,6 +222,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "generations_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "generations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -564,6 +571,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_unlocked_episodes_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_unlocked_episodes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -574,10 +588,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      episodes_public: {
+        Row: {
+          coin_cost: number | null
+          created_at: string | null
+          drama_id: string | null
+          episode_number: number | null
+          id: string | null
+          is_free: boolean | null
+          storage_path: string | null
+          title: string | null
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          coin_cost?: number | null
+          created_at?: string | null
+          drama_id?: string | null
+          episode_number?: number | null
+          id?: string | null
+          is_free?: boolean | null
+          storage_path?: never
+          title?: string | null
+          updated_at?: string | null
+          video_url?: never
+        }
+        Update: {
+          coin_cost?: number | null
+          created_at?: string | null
+          drama_id?: string | null
+          episode_number?: number | null
+          id?: string | null
+          is_free?: boolean | null
+          storage_path?: never
+          title?: string | null
+          updated_at?: string | null
+          video_url?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_drama_id_fkey"
+            columns: ["drama_id"]
+            isOneToOne: false
+            referencedRelation: "dramas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      can_watch_episode: { Args: { p_episode_id: string }; Returns: boolean }
     }
     Enums: {
       team_role: "owner" | "editor" | "viewer"
