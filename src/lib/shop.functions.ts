@@ -195,6 +195,9 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
             currency: "SEK",
             pay_to_email: payToEmail,
             description: `Jeje Inc Vibe — ${pack.name}`,
+            // Required by SumUp for wallet payments (Apple Pay / Google Pay) — the widget
+            // sends the customer here after the payment sheet closes.
+            redirect_url: `${data.origin}/dramawave/profile?shop=return`,
           }),
         });
         return { checkoutId: checkout.id as string };

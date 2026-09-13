@@ -51,7 +51,7 @@ function SumUpCardForm({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const result = await createFn({ data: { pack } });
+      const result = await createFn({ data: { pack, origin: window.location.origin } });
       if ("error" in result) {
         if (!cancelled) setError(result.error);
         return;
