@@ -363,8 +363,8 @@ function Hero() {
 }
 
 const ENGINES = [
-  { value: "lovable" as const, label: "Lovable AI", note: "Included credits" },
-  { value: "fal" as const, label: "fal.ai Kling", note: "Your own account" },
+  { value: "lovable" as const, label: "Ezy", note: "Included credits" },
+  { value: "fal" as const, label: "Strong", note: "Your own account" },
 ];
 
 function CreateCard({
