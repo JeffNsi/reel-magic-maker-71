@@ -19,7 +19,6 @@ import {
   COIN_COST,
   ESTIMATED_SECONDS,
   generateVideo,
-  STYLES,
 } from "@/lib/storyreel.functions";
 import { getProfile } from "@/lib/dramawave.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,16 +26,12 @@ import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
 import { FilmPlayer } from "@/components/film-player";
 import { StoryPack } from "@/components/story-pack";
+import { StylePicker } from "@/components/landing/style-picker";
+import { Gallery } from "@/components/landing/gallery";
+import { Faq, HowItWorks, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,6 +56,19 @@ export const Route = createFileRoute("/")({
 });
 
 const MAX_IDEA = 500;
+
+const EXAMPLE_PROMPTS = [
+  "A lone astronaut walks across a red desert planet as two suns set behind the dunes.",
+  "A young filmmaker arrives in Stockholm with a dream of becoming a director.",
+  "A street cellist plays in the rain while the city lights blur behind her.",
+  "A getaway driver waits outside a neon bank, engine running, eyes on the door.",
+];
+
+const FORMATS = [
+  { value: "9:16", label: "9:16", available: true },
+  { value: "1:1", label: "1:1", available: false },
+  { value: "16:9", label: "16:9", available: false },
+];
 
 type Phase = "create" | "working" | "done" | "error";
 
@@ -173,9 +181,9 @@ function StoryReel() {
   };
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/30">
+    <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
       <Header />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-10 sm:px-6 lg:pt-16">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-10 sm:px-6 lg:pt-16">
         {phase === "create" && (
           <>
             <Hero />
@@ -201,11 +209,13 @@ function StoryReel() {
               onSubmit={submit}
               pending={generate.isPending || !sessionId}
             />
-            <p className="mt-8 text-center text-xs text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · {COIN_COST} coins ·
-              published to DramaWave Shorts when it finishes
-            </p>
+            <Gallery />
+            <HowItWorks />
+            <SocialProof />
+            <Pricing />
+            <Faq />
             <LearnHow />
+            <SiteFooter />
           </>
         )}
 
@@ -245,11 +255,25 @@ function Header() {
         >
           STORYREEL
         </Link>
-        <nav className="flex items-center gap-6">
-          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Film className="size-4" aria-hidden />
-            Create
-          </span>
+        <nav aria-label="Main" className="flex items-center gap-4 sm:gap-6">
+          <a
+            href="#gallery"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
+          >
+            Gallery
+          </a>
+          <a
+            href="#pricing"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
+          >
+            Pricing
+          </a>
+          <a
+            href="#faq"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
+          >
+            FAQ
+          </a>
           <Link
             to="/history"
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -259,10 +283,16 @@ function Header() {
           <Link
             to="/studio"
             search={{ story: undefined }}
-            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="hidden items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex"
           >
             <Clapperboard className="size-4" aria-hidden /> Scene editor
           </Link>
+          <Button
+            onClick={() => scrollTo("create")}
+            className="h-9 rounded-xl bg-primary px-4 text-[11px] font-semibold uppercase tracking-widest text-primary-foreground hover:shadow-[0_0_20px_var(--glow)]"
+          >
+            Generate
+          </Button>
         </nav>
       </div>
     </header>
@@ -276,11 +306,14 @@ function scrollTo(id: string) {
 function Hero() {
   return (
     <section className="mb-14 text-center">
+      <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+        <Film className="size-3.5" aria-hidden /> AI short film studio
+      </p>
       <h1 className="font-display text-5xl italic leading-tight text-foreground sm:text-7xl">
-        Create Your Own <span className="text-primary">AI Short Film</span>
+        Turn your idea into a <span className="text-primary">short film.</span>
       </h1>
       <p className="mx-auto mt-6 max-w-xl text-balance text-lg font-light leading-relaxed text-muted-foreground">
-        Turn your idea into a cinematic short with AI.
+        AI-generated cinematic vertical videos, ready to post — in under 3 minutes.
       </p>
       <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Button
@@ -290,13 +323,16 @@ function Hero() {
           Create your film
         </Button>
         <Button
-          onClick={() => scrollTo("learn")}
+          onClick={() => scrollTo("gallery")}
           variant="outline"
           className="h-12 w-full rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em] sm:w-auto"
         >
-          Learn how
+          Watch examples
         </Button>
       </div>
+      <p className="mt-5 text-xs text-muted-foreground/70">
+        No credit card required · 3 free renders
+      </p>
     </section>
   );
 }
@@ -388,50 +424,83 @@ function CreateCard({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Visual style
-            </p>
-            <Select value={style} onValueChange={setStyle}>
-              <SelectTrigger className="h-[50px] w-full rounded-xl border-border bg-background/50 text-base">
-                <SelectValue placeholder="Choose a style" />
-              </SelectTrigger>
-              <SelectContent>
-                {STYLES.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Try one
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {EXAMPLE_PROMPTS.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => setIdea(example.slice(0, MAX_IDEA))}
+                className="rounded-full border border-border bg-background/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {example.length > 44 ? `${example.slice(0, 44)}…` : example}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/50 px-4 py-3">
-              <label htmlFor="audio" className="text-sm text-muted-foreground">
-                Sound
-              </label>
-              <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
+        <StylePicker value={style} onChange={setStyle} />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <fieldset>
+            <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Format
+            </legend>
+            <div className="flex gap-2">
+              {FORMATS.map((format) => (
+                <button
+                  key={format.value}
+                  type="button"
+                  disabled={!format.available}
+                  aria-pressed={format.available}
+                  title={format.available ? undefined : "Coming soon"}
+                  className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    format.available
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background/40 text-muted-foreground/50"
+                  }`}
+                >
+                  {format.label}
+                  <span className="mt-0.5 block text-[10px] font-normal">
+                    {format.available ? "5 seconds" : "Soon"}
+                  </span>
+                </button>
+              ))}
             </div>
-          </div>
+          </fieldset>
 
-          <div className="flex items-end">
-            <Button
-              onClick={onSubmit}
-              disabled={pending}
-              className="group h-[50px] w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" /> Starting
-                </>
-              ) : (
-                <>
-                  Generate film
-                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
-                </>
-              )}
-            </Button>
+          <div className="flex items-center justify-between self-end rounded-xl border border-border bg-background/50 px-4 py-3">
+            <label htmlFor="audio" className="text-sm text-muted-foreground">
+              Sound
+            </label>
+            <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
           </div>
+        </div>
+
+        <div>
+          <Button
+            onClick={onSubmit}
+            disabled={pending}
+            className="group h-[52px] w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
+          >
+            {pending ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" /> Starting
+              </>
+            ) : (
+              <>
+                Generate video
+                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
+          </Button>
+          <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+            Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · ~2–3 min render ·{" "}
+            {COIN_COST} coins
+          </p>
         </div>
       </div>
     </section>

@@ -19,10 +19,38 @@ const BUCKET = "videos";
 const SIGNED_URL_TTL = 60 * 60 * 6;
 
 export const STYLES = [
-  { value: "cinematic", label: "Cinematic", prefix: "Cinematic, dramatic lighting, film grain: " },
-  { value: "anime", label: "Anime", prefix: "Anime style, vibrant colors, dynamic motion: " },
-  { value: "realistic", label: "Realistic", prefix: "Photorealistic, natural lighting: " },
-  { value: "claymation", label: "Claymation", prefix: "Stop-motion claymation style: " },
+  {
+    value: "cinematic",
+    label: "Cinematic",
+    prefix:
+      "Cinematic lighting, realistic camera movement, dramatic composition, shallow depth of field: ",
+  },
+  {
+    value: "anime",
+    label: "Anime",
+    prefix: "High-quality anime aesthetic, expressive characters, detailed animation: ",
+  },
+  {
+    value: "noir",
+    label: "Noir",
+    prefix:
+      "Black and white film noir, hard chiaroscuro shadows, smoke, 1940s detective cinematography: ",
+  },
+  {
+    value: "documentary",
+    label: "Documentary",
+    prefix: "Observational documentary, handheld camera, natural light, muted realistic colors: ",
+  },
+  {
+    value: "retro",
+    label: "Retro Film",
+    prefix: "Vintage 16mm film look, warm faded colors, heavy grain, halation and light leaks: ",
+  },
+  {
+    value: "hyperreal",
+    label: "Hyperreal",
+    prefix: "Hyperreal photography, ultra sharp detail, high dynamic range, crisp highlights: ",
+  },
 ] as const;
 
 const STYLE_PREFIX: Record<string, string> = Object.fromEntries(
