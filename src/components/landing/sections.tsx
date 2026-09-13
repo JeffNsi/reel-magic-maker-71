@@ -67,19 +67,22 @@ const TESTIMONIALS = [
   {
     name: "Maya Lindqvist",
     role: "Content creator, 180k followers",
-    quote: "I post five shorts a week now. The style presets do the work a whole crew used to do.",
+    quote:
+      "I went from idea to a finished vertical short in under three minutes. The quality is unreal for something that fast.",
     initials: "ML",
   },
   {
     name: "Tobias Ek",
     role: "Marketing lead, Nordwave",
-    quote: "We test three hooks before lunch. Vertical, on brand, no shoot day.",
+    quote:
+      "We used to spend a day shooting one hook. Now we generate three variations before lunch and pick the winner.",
     initials: "TE",
   },
   {
     name: "Amara Osei",
     role: "Screenwriter",
-    quote: "It is the fastest way I have found to see a scene before I commit to writing it.",
+    quote:
+      "It is the easiest way to visualize a scene before I write the full script. The cinematic style presets are genuinely useful.",
     initials: "AO",
   },
 ];
