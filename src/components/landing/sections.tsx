@@ -330,16 +330,53 @@ export function Faq() {
   );
 }
 
+const LEARN_STEPS = [
+  { number: "01", title: "Idea", body: "Describe your concept." },
+  { number: "02", title: "Story", body: "Turn the idea into a story." },
+  { number: "03", title: "Scenes", body: "Break the story into cinematic scenes." },
+  { number: "04", title: "Video", body: "Generate the visual footage." },
+  { number: "05", title: "Edit", body: "Combine your clips and finish your short." },
+];
+
+/** The StoryReel filmmaking workflow — where V1 sits, and where it is heading. */
+export function Learn() {
+  return (
+    <section id="learn" className="mt-20 scroll-mt-24 sm:mt-24">
+      <Reveal>
+        <h2 className="font-display text-2xl italic text-foreground sm:text-3xl">
+          How AI short filmmaking works
+        </h2>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Today StoryReel generates the video from your idea. The full five-step workflow is what
+          we are building next.
+        </p>
+      </Reveal>
+      <ol className="mt-8 space-y-3">
+        {LEARN_STEPS.map((step, i) => (
+          <Reveal as="li" key={step.number} delay={i * 70}>
+            <div className="flex items-baseline gap-4 border-b border-border/60 pb-4">
+              <span className="font-display text-lg italic text-primary">{step.number}</span>
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-foreground">
+                  {step.title}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 const FOOTER_LINKS = {
   Product: [
-    { label: "Generator", href: "#create" },
-    { label: "Gallery", href: "#gallery" },
-    { label: "Pricing", href: "#pricing" },
+    { label: "Create", href: "#create" },
+    { label: "Learn", href: "#learn" },
   ],
   Company: [
-    { label: "About", href: "#top" },
     { label: "Contact", href: "mailto:hello@storyreel.app" },
-    { label: "Careers", href: "#top" },
   ],
   Legal: [
     { label: "Privacy", to: "/privacy" as const },
