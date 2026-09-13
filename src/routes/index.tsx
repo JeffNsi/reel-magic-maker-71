@@ -249,7 +249,7 @@ function WorkingState() {
         aria-label="Creating your short film"
         className="mx-auto mt-8 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-border/60"
       >
-        <div className="h-full w-1/3 animate-[reel-slide_1.6s_ease-in-out_infinite] rounded-full bg-gradient-gold" />
+        <div className="animate-reel-sweep h-full w-1/3 rounded-full bg-gradient-gold" />
       </div>
     </section>
   );
