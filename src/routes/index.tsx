@@ -596,3 +596,34 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     </section>
   );
 }
+
+/** Coin balance and price for one generation, with a route to earn more. */
+function CoinBar({ signedIn, coins }: { signedIn: boolean; coins: number }) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/60 px-4 py-3 text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <Coins className="size-4 text-primary" />
+        {signedIn ? (
+          <>
+            <strong className="text-foreground">{coins}</strong> coins ·{" "}
+            <span>{COIN_COST} per film</span>
+          </>
+        ) : (
+          <>Each film costs {COIN_COST} coins — sign in to use yours.</>
+        )}
+      </span>
+      {signedIn ? (
+        <Link
+          to="/dramawave/rewards"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Earn coins
+        </Link>
+      ) : (
+        <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
+          Sign in
+        </Link>
+      )}
+    </div>
+  );
+}
