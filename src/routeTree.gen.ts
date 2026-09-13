@@ -13,7 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
 import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
 import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
@@ -40,9 +42,19 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DramawaveIndexRoute = DramawaveIndexRouteImport.update({
@@ -76,7 +88,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -87,7 +101,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -100,7 +116,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -114,7 +132,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dramawave'
     | '/history'
+    | '/privacy'
     | '/studio'
+    | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -125,7 +145,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/history'
+    | '/privacy'
     | '/studio'
+    | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -137,7 +159,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dramawave'
     | '/history'
+    | '/privacy'
     | '/studio'
+    | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -150,7 +174,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DramawaveRoute: typeof DramawaveRouteWithChildren
   HistoryRoute: typeof HistoryRoute
+  PrivacyRoute: typeof PrivacyRoute
   StudioRoute: typeof StudioRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,11 +209,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/studio': {
       id: '/studio'
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dramawave/': {
@@ -253,7 +293,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DramawaveRoute: DramawaveRouteWithChildren,
   HistoryRoute: HistoryRoute,
+  PrivacyRoute: PrivacyRoute,
   StudioRoute: StudioRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

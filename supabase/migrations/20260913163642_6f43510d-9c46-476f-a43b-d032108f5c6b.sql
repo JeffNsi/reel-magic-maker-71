@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ALTER COLUMN bonus_coins SET DEFAULT 210;
