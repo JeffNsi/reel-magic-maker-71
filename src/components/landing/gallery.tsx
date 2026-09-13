@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Play } from "lucide-react";
 
 import {
@@ -7,6 +9,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { STYLES, listShowcase } from "@/lib/storyreel.functions";
 import { Reveal } from "./reveal";
 
 type Example = {
@@ -15,6 +18,7 @@ type Example = {
   style: string;
   prompt: string;
   tint: string;
+  video?: string;
 };
 
 const EXAMPLES: Example[] = [
@@ -68,9 +72,45 @@ const EXAMPLES: Example[] = [
   },
 ];
 
-/** "Made with Jeje Inc Vibe" — six example shorts below the generator. */
+const TINTS = [
+  "from-rose-500/20",
+  "from-violet-500/20",
+  "from-neutral-500/20",
+  "from-amber-500/20",
+  "from-orange-500/20",
+  "from-red-500/20",
+];
+
+function styleLabel(value: string) {
+  return STYLES.find((s) => s.value === value)?.label ?? "Cinematic";
+}
+
+function titleFrom(idea: string) {
+  const words = idea.replace(/[.?!]+$/, "").split(/\s+/).slice(0, 5).join(" ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** "Made with Jeje Inc Vibe" — real finished shorts, topped up with example concepts. */
 export function Gallery() {
   const [open, setOpen] = useState<Example | null>(null);
+  const fetchShowcase = useServerFn(listShowcase);
+
+  const { data: real } = useQuery({
+    queryKey: ["showcase"],
+    queryFn: () => fetchShowcase(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const realCards: Example[] = (real ?? []).map((short, i) => ({
+    id: short.id,
+    title: titleFrom(short.idea),
+    style: styleLabel(short.style),
+    prompt: short.idea,
+    tint: TINTS[i % TINTS.length] as string,
+    video: short.video_url,
+  }));
+
+  const cards = [...realCards, ...EXAMPLES].slice(0, 6);
 
   return (
     <section id="gallery" className="mt-24 scroll-mt-24">
@@ -84,7 +124,7 @@ export function Gallery() {
       </Reveal>
 
       <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {EXAMPLES.map((example, i) => (
+        {cards.map((example, i) => (
           <Reveal as="li" key={example.id} delay={i * 60}>
             <button
               type="button"
@@ -93,9 +133,22 @@ export function Gallery() {
               className="group w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_24px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <div className="relative aspect-[9/16] w-full overflow-hidden bg-gradient-to-br from-background to-card">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t ${example.tint} to-transparent opacity-60`}
-                />
+                {example.video ? (
+                  <video
+                    src={example.video}
+                    className="absolute inset-0 size-full object-cover"
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    onMouseEnter={(e) => void e.currentTarget.play().catch(() => {})}
+                    onMouseLeave={(e) => e.currentTarget.pause()}
+                  />
+                ) : (
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t ${example.tint} to-transparent opacity-60`}
+                  />
+                )}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="flex size-14 items-center justify-center rounded-full border border-primary/40 bg-background/60 text-primary backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
                     <Play className="size-5" fill="currentColor" aria-hidden />
@@ -108,6 +161,11 @@ export function Gallery() {
                   <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-primary">
                     {example.style}
                   </span>
+                  {example.video && (
+                    <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      Real render
+                    </span>
+                  )}
                 </div>
                 <h3 className="mt-2 text-base font-medium text-foreground">
                   {example.title}
@@ -130,17 +188,29 @@ export function Gallery() {
               </DialogDescription>
 
               <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-gradient-to-br from-background to-card">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t ${open.tint} to-transparent opacity-60`}
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <span className="flex size-16 items-center justify-center rounded-full border border-primary/40 bg-background/60 text-primary backdrop-blur-sm">
-                    <Play className="size-6" fill="currentColor" aria-hidden />
-                  </span>
-                  <span className="rounded-full bg-background/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-foreground backdrop-blur-sm">
-                    Video placeholder
-                  </span>
-                </div>
+                {open.video ? (
+                  <video
+                    src={open.video}
+                    className="absolute inset-0 size-full object-cover"
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                ) : (
+                  <>
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-t ${open.tint} to-transparent opacity-60`}
+                    />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <span className="flex size-16 items-center justify-center rounded-full border border-primary/40 bg-background/60 text-primary backdrop-blur-sm">
+                        <Play className="size-6" fill="currentColor" aria-hidden />
+                      </span>
+                      <span className="rounded-full bg-background/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-foreground backdrop-blur-sm">
+                        Example concept
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div>
