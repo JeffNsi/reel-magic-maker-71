@@ -59,7 +59,7 @@ export const claimDailyCheckin = createServerFn({ method: "POST" })
     const newStreak = isYesterday(profile.last_checkin_date)
       ? Math.min(7, profile.checkin_streak + 1)
       : 1;
-    const reward = REWARDS[newStreak - 1];
+    const reward = REWARDS[newStreak - 1] ?? 20;
 
     const { data, error } = await context.supabase
       .from("profiles")
