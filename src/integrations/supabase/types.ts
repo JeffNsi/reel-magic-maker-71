@@ -14,86 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
-      films: {
+      generations: {
         Row: {
           created_at: string
-          duration_seconds: number
-          error: string | null
+          error_message: string | null
+          fal_request_id: string | null
           id: string
-          job_id: string | null
-          prompt: string
+          idea: string
+          prompt_final: string | null
+          session_id: string
           status: string
           style: string
           updated_at: string
-          video_path: string | null
-        }
-        Insert: {
-          created_at?: string
-          duration_seconds?: number
-          error?: string | null
-          id?: string
-          job_id?: string | null
-          prompt: string
-          status?: string
-          style: string
-          updated_at?: string
-          video_path?: string | null
-        }
-        Update: {
-          created_at?: string
-          duration_seconds?: number
-          error?: string | null
-          id?: string
-          job_id?: string | null
-          prompt?: string
-          status?: string
-          style?: string
-          updated_at?: string
-          video_path?: string | null
-        }
-        Relationships: []
-      }
-      video_generations: {
-        Row: {
-          aspect_ratio: string
-          completed_at: string | null
-          created_at: string
-          duration_seconds: number
-          error_message: string | null
-          id: string
-          prompt: string
-          provider: string
-          provider_task_id: string | null
-          status: string
-          style: string
           video_url: string | null
         }
         Insert: {
-          aspect_ratio?: string
-          completed_at?: string | null
           created_at?: string
-          duration_seconds?: number
           error_message?: string | null
+          fal_request_id?: string | null
           id?: string
-          prompt: string
-          provider?: string
-          provider_task_id?: string | null
+          idea: string
+          prompt_final?: string | null
+          session_id: string
           status?: string
           style: string
+          updated_at?: string
           video_url?: string | null
         }
         Update: {
-          aspect_ratio?: string
-          completed_at?: string | null
           created_at?: string
-          duration_seconds?: number
           error_message?: string | null
+          fal_request_id?: string | null
           id?: string
-          prompt?: string
-          provider?: string
-          provider_task_id?: string | null
+          idea?: string
+          prompt_final?: string | null
+          session_id?: string
           status?: string
           style?: string
+          updated_at?: string
           video_url?: string | null
         }
         Relationships: []

@@ -1,13 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, Film, Loader2, Play, RotateCcw, Sparkles } from "lucide-react";
 
-import { createShort, getShortStatus, STYLES } from "@/lib/storyreel.functions";
+import { checkStatus, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import { getSessionId } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,66 +39,78 @@ export const Route = createFileRoute("/")({
   component: StoryReel,
 });
 
+const MAX_IDEA = 500;
+
 type Phase = "create" | "working" | "done" | "error";
 
 function StoryReel() {
-  const [prompt, setPrompt] = useState("");
+  const [sessionId, setSessionId] = useState("");
+  const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
-  const [shortId, setShortId] = useState<string | null>(null);
+  const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
+  const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
-  const start = useServerFn(createShort);
-  const check = useServerFn(getShortStatus);
+  useEffect(() => setSessionId(getSessionId()), []);
+
+  const start = useServerFn(generateVideo);
+  const poll = useServerFn(checkStatus);
 
   const generate = useMutation({
-    mutationFn: () => start({ data: { prompt, style } }),
+    mutationFn: () => start({ data: { idea, style, session_id: sessionId } }),
     onSuccess: (result) => {
-      setShortId(result.id);
+      setGenerationId(result.generation_id);
       if (result.status === "failed") {
+        setErrorMessage(result.error_message ?? "Something went wrong.");
         setPhase("error");
-        setErrorMessage(result.errorMessage ?? "Something went wrong.");
       } else {
+        setStatusText("processing");
         setPhase("working");
       }
     },
     onError: (err: Error) => {
-      setPhase("error");
       setErrorMessage(err.message || "Something went wrong.");
+      setPhase("error");
     },
   });
 
   useQuery({
-    queryKey: ["short", shortId],
-    enabled: phase === "working" && !!shortId,
-    refetchInterval: 6000,
+    queryKey: ["generation", generationId],
+    enabled: phase === "working" && !!generationId,
+    refetchInterval: 4000,
     queryFn: async () => {
-      const result = await check({ data: { id: shortId! } });
-      if (result.status === "completed" && result.videoUrl) {
-        setVideoUrl(result.videoUrl);
+      const result = await poll({
+        data: { generation_id: generationId!, session_id: sessionId },
+      });
+      if (result.status === "completed" && result.video_url) {
+        setVideoUrl(result.video_url);
         setPhase("done");
       } else if (result.status === "failed") {
-        setErrorMessage(result.errorMessage ?? "Something went wrong.");
+        setErrorMessage(result.error_message ?? "Something went wrong.");
         setPhase("error");
+      } else {
+        setStatusText(result.status === "queued" ? "queued" : "processing");
       }
       return result;
     },
   });
 
   const submit = () => {
-    if (prompt.trim().length < 10) {
-      toast.error("Describe your story first — a sentence is enough.");
+    if (!idea.trim()) {
+      toast.error("Describe your idea first.");
       return;
     }
     setErrorMessage(null);
     setVideoUrl(null);
+    setStatusText("queued");
     generate.mutate();
   };
 
   const reset = () => {
     setPhase("create");
-    setShortId(null);
+    setGenerationId(null);
     setVideoUrl(null);
     setErrorMessage(null);
   };
@@ -103,20 +123,20 @@ function StoryReel() {
           <>
             <Hero />
             <CreateCard
-              prompt={prompt}
-              setPrompt={setPrompt}
+              idea={idea}
+              setIdea={setIdea}
               style={style}
               setStyle={setStyle}
               onSubmit={submit}
-              pending={generate.isPending}
+              pending={generate.isPending || !sessionId}
             />
           </>
         )}
 
-        {phase === "working" && <WorkingState />}
+        {phase === "working" && <WorkingState statusText={statusText} />}
 
         {phase === "done" && videoUrl && (
-          <ResultState videoUrl={videoUrl} onReset={reset} shortId={shortId} />
+          <ResultState videoUrl={videoUrl} onReset={reset} generationId={generationId} />
         )}
 
         {phase === "error" && (
@@ -155,15 +175,15 @@ function Hero() {
 }
 
 function CreateCard({
-  prompt,
-  setPrompt,
+  idea,
+  setIdea,
   style,
   setStyle,
   onSubmit,
   pending,
 }: {
-  prompt: string;
-  setPrompt: (v: string) => void;
+  idea: string;
+  setIdea: (v: string) => void;
   style: string;
   setStyle: (v: string) => void;
   onSubmit: () => void;
@@ -174,46 +194,30 @@ function CreateCard({
       <h2 className="font-display text-2xl text-foreground">Describe your story</h2>
 
       <Textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
+        value={idea}
+        onChange={(e) => setIdea(e.target.value.slice(0, MAX_IDEA))}
         rows={5}
-        maxLength={1500}
+        maxLength={MAX_IDEA}
         placeholder="Example: A young filmmaker arrives in Stockholm at midnight with only a suitcase and a dream."
         className="mt-4 min-h-36 resize-none rounded-2xl bg-background/60 text-base leading-relaxed"
       />
+      <p className="mt-2 text-right text-xs text-muted-foreground">
+        {idea.length}/{MAX_IDEA}
+      </p>
 
-      <p className="mt-6 text-xs uppercase tracking-[0.2em] text-muted-foreground">Style</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {STYLES.map((option) => {
-          const active = option.value === style;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setStyle(option.value)}
-              aria-pressed={active}
-              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                active
-                  ? "border-transparent bg-gradient-gold text-background"
-                  : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-              }`}
-            >
+      <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">Style</p>
+      <Select value={style} onValueChange={setStyle}>
+        <SelectTrigger className="mt-3 h-12 rounded-2xl bg-background/60 text-base">
+          <SelectValue placeholder="Choose a style" />
+        </SelectTrigger>
+        <SelectContent>
+          {STYLES.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
               {option.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Format</p>
-          <p className="mt-1 text-sm text-foreground">9:16 vertical</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Duration</p>
-          <p className="mt-1 text-sm text-foreground">5 seconds</p>
-        </div>
-      </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <Button
         onClick={onSubmit}
@@ -226,7 +230,7 @@ function CreateCard({
           </>
         ) : (
           <>
-            <Sparkles className="mr-2 size-4" /> Generate short
+            <Sparkles className="mr-2 size-4" /> Generate
           </>
         )}
       </Button>
@@ -234,7 +238,7 @@ function CreateCard({
   );
 }
 
-function WorkingState() {
+function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
   return (
     <section className="surface-cinema mt-6 rounded-3xl p-8 text-center">
       <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border/70">
@@ -242,7 +246,8 @@ function WorkingState() {
       </div>
       <h2 className="mt-6 font-display text-3xl text-foreground">Creating your short film...</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        This usually takes a couple of minutes. Keep this page open.
+        {statusText === "queued" ? "Waiting in line" : "Filming your scene"} — this usually takes a
+        couple of minutes. Keep this page open.
       </p>
       <div
         role="status"
@@ -258,11 +263,11 @@ function WorkingState() {
 function ResultState({
   videoUrl,
   onReset,
-  shortId,
+  generationId,
 }: {
   videoUrl: string;
   onReset: () => void;
-  shortId: string | null;
+  generationId: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -290,7 +295,7 @@ function ResultState({
         <Button asChild variant="outline" className="h-12 rounded-2xl px-8">
           <a
             href={videoUrl}
-            download={`storyreel-${shortId ?? "short"}.mp4`}
+            download={`storyreel-${generationId ?? "short"}.mp4`}
             className="text-xs font-semibold uppercase tracking-[0.2em]"
           >
             <Download className="mr-2 size-4" /> Download
