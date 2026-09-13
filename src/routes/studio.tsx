@@ -425,6 +425,7 @@ function SceneCard({
   const [idea, setIdea] = useState(scene.idea);
   const [narration, setNarration] = useState(scene.narration);
   const [audio, setAudio] = useState(true);
+  const [engine, setEngine] = useState<"lovable" | "fal">("lovable");
   const [voice, setVoice] = useState("alloy");
   const [music, setMusic] = useState("wonder");
   const [voiceUrl, setVoiceUrl] = useState<string | null>(scene.voice_url);
@@ -476,7 +477,7 @@ function SceneCard({
         },
       });
       return render({
-        data: { story_id: story.id, session_id: sessionId, scene_id: scene.id, audio },
+        data: { story_id: story.id, session_id: sessionId, scene_id: scene.id, audio, engine },
       });
     },
     onSuccess: (result) => {
@@ -605,6 +606,18 @@ function SceneCard({
             </Select>
           </div>
         )}
+        <Select value={engine} onValueChange={(v) => setEngine(v as "lovable" | "fal")}>
+          <SelectTrigger
+            className="h-11 rounded-xl border-border bg-background/60 text-sm"
+            aria-label="Film engine"
+          >
+            <SelectValue placeholder="Film engine" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="lovable">Lovable AI — included credits</SelectItem>
+            <SelectItem value="fal">fal.ai Kling — your own account</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
 

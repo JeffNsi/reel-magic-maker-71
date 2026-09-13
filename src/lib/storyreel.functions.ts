@@ -13,8 +13,6 @@ export const COIN_COST = 70;
  * Kept modular so story generation, scenes, voice-over etc. can be added later.
  */
 
-const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
-const FAL_QUEUE_BASE = "https://queue.fal.run";
 const BUCKET = "videos";
 const SIGNED_URL_TTL = 60 * 60 * 6;
 
@@ -63,8 +61,10 @@ const generateInput = z.object({
   idea: z.string().trim().min(1, "Describe your idea first.").max(500),
   style: z.enum(styleValues),
   session_id: z.string().uuid(),
-  /** When true, fal.ai generates a soundtrack for the clip. */
+  /** When true, the video model generates a soundtrack for the clip. */
   audio: z.boolean().optional().default(false),
+  /** Which film engine renders the clip: Lovable AI, or the project's own fal.ai account. */
+  engine: z.enum(["lovable", "fal"]).optional().default("lovable"),
 });
 
 const statusInput = z.object({
@@ -96,16 +96,6 @@ export type HistoryItem = {
   error_message: string | null;
 };
 
-
-function falHeaders(key: string) {
-  return { Authorization: `Key ${key}`, "Content-Type": "application/json" };
-}
-
-function readFalKey() {
-  const key = process.env["FAL_KEY"];
-  if (!key) throw new Error("Video generation isn't configured yet.");
-  return key;
-}
 
 /** Start a generation: charge coins, store it, submit it to fal.ai, remember the request id. */
 export const generateVideo = createServerFn({ method: "POST" })
@@ -158,6 +148,7 @@ export const generateVideo = createServerFn({ method: "POST" })
         style: data.style,
         prompt_final: promptFinal,
         status: "queued",
+        provider: data.engine,
       })
       .select("id")
       .single();
@@ -168,40 +159,12 @@ export const generateVideo = createServerFn({ method: "POST" })
     }
 
     try {
-      const key = readFalKey();
-      const res = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}`, {
-        method: "POST",
-        headers: falHeaders(key),
-        body: JSON.stringify({
-          prompt: promptFinal,
-          duration: "5",
-          aspect_ratio: "9:16",
-          generate_audio: data.audio === true,
-        }),
-      });
-
-      const payload = (await res.json().catch(() => null)) as
-        | { request_id?: string; detail?: unknown }
-        | null;
-
-      if (!res.ok || !payload?.request_id) {
-        console.error("fal submit failed", res.status, JSON.stringify(payload));
-        const detail = typeof payload?.detail === "string" ? payload.detail : "";
-        throw new Error(
-          /balance|locked|credit/i.test(detail)
-            ? "The video account is out of credit. Top up the fal.ai balance and try again."
-            : res.status === 401 || res.status === 403
-              ? "The video service rejected our credentials."
-              : res.status === 429
-                ? "The video service is busy right now. Please try again in a moment."
-                : "The video service could not start this generation.",
-        );
-      }
-
+      const { submitVideo } = await import("@/lib/storyreel-core.server");
+      const taskId = await submitVideo(data.engine, promptFinal, data.audio === true);
 
       await supabaseAdmin
         .from("generations")
-        .update({ fal_request_id: payload.request_id, status: "processing" })
+        .update({ fal_request_id: taskId, status: "processing" })
         .eq("id", row.id);
 
       return {
@@ -229,7 +192,7 @@ export const checkStatus = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
-      .select("id, idea, status, fal_request_id, video_url, error_message, created_at, episode_id")
+      .select("id, idea, status, provider, fal_request_id, video_url, error_message, created_at, episode_id")
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .single();
@@ -284,71 +247,36 @@ export const checkStatus = createServerFn({ method: "POST" })
       };
     }
 
-    let key: string;
+    const { providerProgress } = await import("@/lib/storyreel-core.server");
+    const provider = row.provider === "fal" ? "fal" : "lovable";
+
+    let progress;
     try {
-      key = readFalKey();
+      progress = await providerProgress(provider, row.fal_request_id);
     } catch (err) {
-      return fail(err instanceof Error ? err.message : "Video generation isn't configured yet.");
+      return fail(err instanceof Error ? err.message : "Film generation isn't configured yet.");
     }
 
-    const statusRes = await fetch(
-      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.fal_request_id}/status`,
-      { headers: falHeaders(key) },
-    );
-    const statusBody = (await statusRes.json().catch(() => null)) as
-      | { status?: string; queue_position?: number }
-      | null;
+    if (progress.state === "failed") return fail(progress.message);
 
-    if (!statusRes.ok) {
-      console.error("fal status failed", statusRes.status, JSON.stringify(statusBody));
-      if (statusRes.status >= 500 || statusRes.status === 429) {
-        return {
-          generation_id: row.id,
-          status: "processing",
-          video_url: null,
-          error_message: null,
-          created_at: row.created_at,
-        };
-      }
-      return fail("The video service lost this generation.");
-    }
-
-    if (statusBody?.status !== "COMPLETED") {
-      if (row.status !== "processing") {
+    if (progress.state !== "completed") {
+      if (row.status !== "processing" && progress.state === "processing") {
         await supabaseAdmin.from("generations").update({ status: "processing" }).eq("id", row.id);
       }
       return {
         generation_id: row.id,
-        status: statusBody?.status === "IN_QUEUE" ? "queued" : "processing",
+        status: progress.state,
         video_url: null,
         error_message: null,
         created_at: row.created_at,
-        queue_position: statusBody?.queue_position ?? null,
+        queue_position: progress.queue_position ?? null,
       };
     }
-
-    const resultRes = await fetch(
-      `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${row.fal_request_id}`,
-      { headers: falHeaders(key) },
-    );
-    const result = (await resultRes.json().catch(() => null)) as
-      | { video?: { url?: string } }
-      | null;
-
-    const sourceUrl = result?.video?.url;
-    if (!resultRes.ok || !sourceUrl) {
-      console.error("fal result failed", resultRes.status, JSON.stringify(result));
-      return fail("The video finished but could not be collected. Please try again.");
-    }
-
-    const download = await fetch(sourceUrl);
-    if (!download.ok) return fail("The finished video could not be downloaded.");
-    const bytes = await download.arrayBuffer();
 
     const path = `${row.id}.mp4`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET)
-      .upload(path, bytes, { contentType: "video/mp4", upsert: true });
+      .upload(path, progress.bytes, { contentType: "video/mp4", upsert: true });
     if (uploadError) {
       console.error("storage upload failed", uploadError);
       return fail("The finished video could not be saved.");

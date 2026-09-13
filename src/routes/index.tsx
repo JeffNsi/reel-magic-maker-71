@@ -77,6 +77,7 @@ function StoryReel() {
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
   const [audio, setAudio] = useState(true);
+  const [engine, setEngine] = useState<"lovable" | "fal">("lovable");
   const [theme, setTheme] = useState("");
   const navigate = useNavigate();
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -107,7 +108,7 @@ function StoryReel() {
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
 
   const generate = useMutation({
-    mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
+    mutationFn: () => start({ data: { idea, style, audio, engine, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       void refetchProfile();
@@ -206,6 +207,8 @@ function StoryReel() {
               setStyle={setStyle}
               audio={audio}
               setAudio={setAudio}
+              engine={engine}
+              setEngine={setEngine}
               onSubmit={submit}
               pending={generate.isPending || !sessionId}
             />
@@ -378,6 +381,11 @@ function LearnHow() {
 
 
 
+const ENGINES = [
+  { value: "lovable" as const, label: "Lovable AI", note: "Included credits" },
+  { value: "fal" as const, label: "fal.ai Kling", note: "Your own account" },
+];
+
 function CreateCard({
   idea,
   setIdea,
@@ -385,6 +393,8 @@ function CreateCard({
   setStyle,
   audio,
   setAudio,
+  engine,
+  setEngine,
   onSubmit,
   pending,
 }: {
@@ -394,6 +404,8 @@ function CreateCard({
   setStyle: (v: string) => void;
   audio: boolean;
   setAudio: (v: boolean) => void;
+  engine: "lovable" | "fal";
+  setEngine: (v: "lovable" | "fal") => void;
   onSubmit: () => void;
   pending: boolean;
 }) {
@@ -480,6 +492,32 @@ function CreateCard({
             <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
           </div>
         </div>
+
+        <fieldset>
+          <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Film engine
+          </legend>
+          <div className="grid grid-cols-2 gap-3">
+            {ENGINES.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setEngine(option.value)}
+                aria-pressed={engine === option.value}
+                className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest transition-colors ${
+                  engine === option.value
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {option.label}
+                <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal">
+                  {option.note}
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         <div>
           <Button
