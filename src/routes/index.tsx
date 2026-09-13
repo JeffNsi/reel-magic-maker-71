@@ -20,7 +20,7 @@ import {
   ESTIMATED_SECONDS,
   generateVideo,
 } from "@/lib/storyreel.functions";
-import { getProfile } from "@/lib/dramawave.functions";
+import { getProfile } from "@/lib/vibe.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
@@ -163,7 +163,7 @@ function StoryReel() {
     }
     if (coins < COIN_COST) {
       toast.error(`A film costs ${COIN_COST} coins. You have ${coins}.`);
-      navigate({ to: "/dramawave/rewards" });
+      navigate({ to: "/vibe/rewards" });
       return;
     }
     setErrorMessage(null);
@@ -818,7 +818,7 @@ function CoinBar({ signedIn, coins }: { signedIn: boolean; coins: number }) {
       </span>
       {signedIn ? (
         <Link
-          to="/dramawave/rewards"
+          to="/vibe/rewards"
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Earn coins
