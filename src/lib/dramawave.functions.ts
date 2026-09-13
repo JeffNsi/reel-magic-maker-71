@@ -217,7 +217,7 @@ export const toggleMyList = createServerFn({ method: "POST" })
       await context.supabase.from("my_list").delete().eq("drama_id", data.drama_id);
       return { saved: false };
     }
-    await context.supabase.from("my_list").insert({ drama_id: data.drama_id });
+    await context.supabase.from("my_list").insert({ drama_id: data.drama_id, user_id: context.userId });
     return { saved: true };
   });
 
