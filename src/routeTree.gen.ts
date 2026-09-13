@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
 import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
 import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
@@ -37,6 +38,11 @@ const DramawaveRoute = DramawaveRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DramawaveIndexRoute = DramawaveIndexRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/studio': typeof StudioRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/studio': typeof StudioRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/studio': typeof StudioRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
   '/dramawave/rewards': typeof DramawaveRewardsRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dramawave'
     | '/history'
+    | '/studio'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/history'
+    | '/studio'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dramawave'
     | '/history'
+    | '/studio'
     | '/dramawave/my-list'
     | '/dramawave/profile'
     | '/dramawave/rewards'
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DramawaveRoute: typeof DramawaveRouteWithChildren
   HistoryRoute: typeof HistoryRoute
+  StudioRoute: typeof StudioRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dramawave/': {
@@ -233,6 +253,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DramawaveRoute: DramawaveRouteWithChildren,
   HistoryRoute: HistoryRoute,
+  StudioRoute: StudioRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
