@@ -202,7 +202,28 @@
   }
 }
 
-@utility animate-reel {
-  animation: reel-sweep 1.8s ease-in-out infinite;
+@keyframes reel-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
 }
+
+@utility animate-reel {
+  animation: reel-pulse 1.8s ease-in-out infinite;
+}
+
+@utility animate-reel-sweep {
+  animation: reel-sweep 1.6s ease-in-out infinite;
+}
+
+@utility bg-gradient-gold {
+  background-image: var(--gradient-gold);
+}
+
 
