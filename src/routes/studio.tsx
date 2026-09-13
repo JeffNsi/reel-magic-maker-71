@@ -100,6 +100,23 @@ function Studio() {
               </p>
             </header>
 
+            <div className="mb-10 rounded-3xl border border-border bg-card/60 p-6 text-center sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+                Studio plan — $99/month
+              </p>
+              <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+                The multi-scene scene editor with locked cast and setting, per-scene voice-over and
+                music is part of the Studio plan. Free and Creator accounts can explore the editor;
+                publishing full series requires Studio.
+              </p>
+              <Button
+                asChild
+                className="mt-5 h-11 rounded-full bg-primary px-8 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
+              >
+                <Link to="/auth" search={{ plan: "studio" }}>Sign up for Studio</Link>
+              </Button>
+            </div>
+
             {sessionId && (
               <>
                 <StoryPack
@@ -146,6 +163,12 @@ function StudioHeader() {
           >
             <HistoryIcon className="size-4" aria-hidden /> My shorts
           </Link>
+          <Button
+            asChild
+            className="h-9 rounded-full bg-primary px-5 text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:shadow-[0_0_20px_var(--glow)]"
+          >
+            <Link to="/auth" search={{ plan: "studio" }}>Sign up</Link>
+          </Button>
         </nav>
       </div>
     </header>

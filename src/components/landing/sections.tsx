@@ -199,7 +199,7 @@ const TIERS = [
     highlight: false,
     features: ["3 renders", "5-second videos", "Jeje Inc Vibe watermark"],
     cta: "Start free",
-    to: "/auth" as const,
+    plan: "free" as const,
   },
   {
     name: "Creator",
@@ -208,7 +208,7 @@ const TIERS = [
     highlight: true,
     features: ["Unlimited renders", "No watermark", "Priority render queue"],
     cta: "Go Creator",
-    to: "/dramawave/rewards" as const,
+    plan: "creator" as const,
   },
   {
     name: "Studio",
@@ -216,8 +216,8 @@ const TIERS = [
     cadence: "per month",
     highlight: false,
     features: ["Team seats", "Longer durations", "API access"],
-    cta: "Contact us",
-    to: "/auth" as const,
+    cta: "Go Studio",
+    plan: "studio" as const,
   },
 ];
 
@@ -267,7 +267,7 @@ export function Pricing() {
                     : ""
                 }`}
               >
-                <Link to={tier.to}>{tier.cta}</Link>
+                <Link to="/auth" search={{ plan: tier.plan }}>{tier.cta}</Link>
               </Button>
             </div>
           </Reveal>

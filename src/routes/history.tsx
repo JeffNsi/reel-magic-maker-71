@@ -4,8 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Film, Loader2 } from "lucide-react";
 
-import { listGenerations, STYLES, type HistoryItem } from "@/lib/storyreel.functions";
+import {
+  listGenerations,
+  listMyGenerations,
+  STYLES,
+  type HistoryItem,
+} from "@/lib/storyreel.functions";
 import { getSessionId } from "@/lib/session";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/history")({
@@ -41,15 +47,25 @@ const STATUS_LABEL: Record<HistoryItem["status"], string> = {
 
 function History() {
   const [sessionId, setSessionId] = useState("");
-  useEffect(() => setSessionId(getSessionId()), []);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    setSessionId(getSessionId());
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const load = useServerFn(listGenerations);
+  const loadMine = useServerFn(listMyGenerations);
 
   const { data, isPending } = useQuery({
-    queryKey: ["history", sessionId],
-    enabled: !!sessionId,
+    queryKey: ["history", userId ?? sessionId],
+    enabled: !!userId || !!sessionId,
     refetchInterval: 15000,
-    queryFn: () => load({ data: { session_id: sessionId } }),
+    queryFn: () =>
+      userId ? loadMine() : load({ data: { session_id: sessionId } }),
   });
 
   return (
@@ -70,8 +86,17 @@ function History() {
       <main className="mx-auto w-full max-w-2xl px-5 pb-24 pt-10">
         <h1 className="font-display text-4xl text-foreground">Your shorts</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Every film you have made in this browser.
+          {userId
+            ? "Every film saved to your account."
+            : "Every film you have made in this browser — sign in to keep them on your account."}
         </p>
+        {!userId && (
+          <Button asChild variant="outline" className="mt-4 h-10 rounded-full px-6">
+            <Link to="/auth" search={{}} className="text-xs uppercase tracking-[0.2em]">
+              Sign in to save your shorts
+            </Link>
+          </Button>
+        )}
 
         {isPending && (
           <p className="mt-10 flex items-center gap-2 text-sm text-muted-foreground">
