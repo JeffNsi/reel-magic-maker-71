@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { STORYREEL_DRAMA_ID } from "@/lib/dramawave.functions";
+import { STORYREEL_DRAMA_ID } from "@/lib/vibe.functions";
 
 /** Coins burned by one generation. Coins are earned in Rewards or bought in the coin shop. */
 export const COIN_COST = 70;
