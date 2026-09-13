@@ -154,6 +154,8 @@ function ShortsPage() {
     );
   }
 
+  if (!episode) return null;
+
   const isUnlocked = (ep: Episode) =>
     ep.is_free || isVipActive(profile) || (unlocks?.has(ep.id) ?? false);
 
