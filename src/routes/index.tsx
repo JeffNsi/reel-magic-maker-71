@@ -58,10 +58,10 @@ export const Route = createFileRoute("/")({
 const MAX_IDEA = 500;
 
 const EXAMPLE_PROMPTS = [
-  "A lone astronaut walks across a red desert planet as two suns set behind the dunes.",
-  "A young filmmaker arrives in Stockholm with a dream of becoming a director.",
-  "A street cellist plays in the rain while the city lights blur behind her.",
-  "A getaway driver waits outside a neon bank, engine running, eyes on the door.",
+  "A lone astronaut on a desert planet at sunset",
+  "A neon-soaked Tokyo alley in the rain",
+  "A dragon circling a medieval castle at dawn",
+  "An old lighthouse in a storm, cinematic wide shot",
 ];
 
 const FORMATS = [
@@ -415,6 +415,24 @@ function CreateCard({
 
       <div className="relative space-y-8">
         <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Need inspiration? Try one of these:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {EXAMPLE_PROMPTS.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => setIdea(example.slice(0, MAX_IDEA))}
+                className="rounded-full border border-border bg-background/50 px-3.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/60 hover:text-foreground hover:shadow-[0_0_12px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
           <div className="mb-3 flex items-end justify-between">
             <label
               htmlFor="idea"
@@ -435,24 +453,6 @@ function CreateCard({
             placeholder="Describe the scene, the characters, and the atmosphere..."
             className="min-h-40 resize-none rounded-xl border-border bg-background/50 p-4 text-base leading-relaxed focus-visible:border-primary/50"
           />
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Try one
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {EXAMPLE_PROMPTS.map((example) => (
-              <button
-                key={example}
-                type="button"
-                onClick={() => setIdea(example.slice(0, MAX_IDEA))}
-                className="rounded-full border border-border bg-background/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                {example.length > 44 ? `${example.slice(0, 44)}…` : example}
-              </button>
-            ))}
-          </div>
         </div>
 
         <StylePicker value={style} onChange={setStyle} />
