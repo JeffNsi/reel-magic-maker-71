@@ -68,8 +68,7 @@ export const claimDailyCheckin = createServerFn({ method: "POST" })
       : 1;
     const reward = REWARDS[newStreak - 1] ?? 20;
 
-    const { data, error } = await context.supabase
-      .from("profiles")
+    const { data, error } = await (await adminProfiles())
       .update({
         last_checkin_date: todayStr,
         checkin_streak: newStreak,
@@ -87,8 +86,7 @@ export const watchAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Balance> => {
     const profile = await fetchProfile(context.supabase);
-    const { data, error } = await context.supabase
-      .from("profiles")
+    const { data, error } = await (await adminProfiles())
       .update({ bonus_coins: profile.bonus_coins + 15 })
       .eq("id", profile.id)
       .select("paid_coins, bonus_coins")
