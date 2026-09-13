@@ -91,7 +91,7 @@ function StoryReel() {
         setErrorMessage(result.error_message ?? "Something went wrong.");
         setPhase("error");
       } else {
-        setStatusText(result.status);
+        setStatusText(result.status === "queued" ? "queued" : "processing");
       }
       return result;
     },
