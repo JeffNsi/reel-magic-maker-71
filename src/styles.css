@@ -63,6 +63,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* DramaWave semantic colors */
+  --color-dw-background: var(--dw-background);
+  --color-dw-card: var(--dw-card);
+  --color-dw-card-hover: var(--dw-card-hover);
+  --color-dw-border: var(--dw-border);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-2: var(--dw-primary-2);
+  --color-dw-gold: var(--dw-gold);
+  --color-dw-gold-2: var(--dw-gold-2);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-muted: var(--dw-muted);
 }
 
 :root {
