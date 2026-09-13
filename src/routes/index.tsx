@@ -1,32 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight,
-  ChevronRight,
-  Download,
+  Clapperboard,
   Film,
   History as HistoryIcon,
   Loader2,
-  Play,
   RotateCcw,
-  Sparkles,
-  Wand2,
 } from "lucide-react";
 
 
-import {
-  checkStatus,
-  ESTIMATED_SECONDS,
-  generateStory,
-  generateVideo,
-  STYLES,
-} from "@/lib/storyreel.functions";
+import { checkStatus, ESTIMATED_SECONDS, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
+import { FilmPlayer } from "@/components/film-player";
+import { StoryPack } from "@/components/story-pack";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -151,7 +143,16 @@ function StoryReel() {
         {phase === "create" && (
           <>
             <Hero />
-            <StoryWriter style={style} onUse={setIdea} />
+            <div className="mb-8">
+              <StoryPack
+                style={style}
+                sessionId={sessionId}
+                theme={theme}
+                setTheme={setTheme}
+                onUsePrompt={setIdea}
+                onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
+              />
+            </div>
             <CreateCard
               idea={idea}
               setIdea={setIdea}
