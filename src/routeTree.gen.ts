@@ -15,6 +15,7 @@ import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
 import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
@@ -51,6 +52,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/studio': typeof StudioRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/dramawave/my-list': typeof DramawaveMyListRoute
   '/dramawave/profile': typeof DramawaveProfileRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/privacy'
     | '/studio'
+    | '/team'
     | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/privacy'
     | '/studio'
+    | '/team'
     | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/privacy'
     | '/studio'
+    | '/team'
     | '/terms'
     | '/dramawave/my-list'
     | '/dramawave/profile'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
   StudioRoute: typeof StudioRoute
+  TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -316,6 +336,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
   StudioRoute: StudioRoute,
+  TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
