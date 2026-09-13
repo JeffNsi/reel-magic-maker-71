@@ -35,10 +35,10 @@ import {
 export const Route = createFileRoute("/vibe/shorts")({
   head: () => ({
     meta: [
-      { title: "Shorts — Jeje Inc Vibe" },
-      { name: "description", content: "Watch vertical short films on Jeje Inc Vibe." },
-      { property: "og:title", content: "Shorts — Jeje Inc Vibe" },
-      { property: "og:description", content: "Watch vertical short films on Jeje Inc Vibe." },
+      { title: "Shorts — STORYREEL" },
+      { name: "description", content: "Watch vertical short films on STORYREEL." },
+      { property: "og:title", content: "Shorts — STORYREEL" },
+      { property: "og:description", content: "Watch vertical short films on STORYREEL." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -58,9 +58,9 @@ type Episode = {
 };
 
 function getDrama(ep: Episode) {
-  if (!ep.dramas) return { title: "Jeje Inc Vibe", cover_url: "" };
+  if (!ep.dramas) return { title: "STORYREEL", cover_url: "" };
   return Array.isArray(ep.dramas)
-    ? (ep.dramas[0] ?? { title: "Jeje Inc Vibe", cover_url: "" })
+    ? (ep.dramas[0] ?? { title: "STORYREEL", cover_url: "" })
     : ep.dramas;
 }
 

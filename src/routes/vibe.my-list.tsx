@@ -8,10 +8,10 @@ import { getMyList } from "@/lib/vibe.functions";
 export const Route = createFileRoute("/vibe/my-list")({
   head: () => ({
     meta: [
-      { title: "My List — Jeje Inc Vibe" },
-      { name: "description", content: "Your saved films on Jeje Inc Vibe." },
-      { property: "og:title", content: "My List — Jeje Inc Vibe" },
-      { property: "og:description", content: "Your saved films on Jeje Inc Vibe." },
+      { title: "My List — STORYREEL" },
+      { name: "description", content: "Your saved films on STORYREEL." },
+      { property: "og:title", content: "My List — STORYREEL" },
+      { property: "og:description", content: "Your saved films on STORYREEL." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

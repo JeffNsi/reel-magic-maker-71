@@ -17,17 +17,17 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "Your shorts — Jeje Inc Vibe film history" },
+      { title: "Your shorts — STORYREEL film history" },
       {
         name: "description",
         content:
-          "Revisit every short film you made with Jeje Inc Vibe: the idea behind it, the visual style, its status and the finished video.",
+          "Revisit every short film you made with STORYREEL: the idea behind it, the visual style, its status and the finished video.",
       },
-      { property: "og:title", content: "Your shorts — Jeje Inc Vibe film history" },
+      { property: "og:title", content: "Your shorts — STORYREEL film history" },
       {
         property: "og:description",
         content:
-          "Revisit every short film you made with Jeje Inc Vibe: the idea behind it, the visual style, its status and the finished video.",
+          "Revisit every short film you made with STORYREEL: the idea behind it, the visual style, its status and the finished video.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -73,7 +73,7 @@ function History() {
       <header className="border-b border-border/60">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-5">
           <Link to="/" className="font-display text-2xl italic tracking-tight text-primary">
-            Jeje Inc Vibe
+            STORYREEL
           </Link>
           <Button asChild variant="ghost" className="h-9 rounded-full px-4">
             <Link to="/" className="text-xs uppercase tracking-[0.2em]">
