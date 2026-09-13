@@ -60,6 +60,8 @@ function StoryReel() {
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
   const [audio, setAudio] = useState(false);
+  const [theme, setTheme] = useState("");
+  const navigate = useNavigate();
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
@@ -179,7 +181,13 @@ function StoryReel() {
         )}
 
         {phase === "done" && videoUrl && (
-          <ResultState videoUrl={videoUrl} onReset={reset} generationId={generationId} />
+          <ResultState
+            videoUrl={videoUrl}
+            onReset={reset}
+            generationId={generationId}
+            sessionId={sessionId}
+            idea={idea}
+          />
         )}
 
         {phase === "error" && (
@@ -210,6 +218,13 @@ function Header() {
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <HistoryIcon className="size-4" aria-hidden /> My shorts
+          </Link>
+          <Link
+            to="/studio"
+            search={{ story: undefined }}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Clapperboard className="size-4" aria-hidden /> Scene editor
           </Link>
         </nav>
       </div>
