@@ -349,7 +349,7 @@ function Hero() {
           Watch examples
         </Button>
       </div>
-      <p className="mt-5 text-xs text-muted-foreground/70">
+      <p className="mt-5 text-xs text-muted-foreground">
         No credit card required · 3 free renders
       </p>
     </section>
@@ -369,7 +369,7 @@ const LEARN_STEPS = [
 
 function LearnHow() {
   return (
-    <section id="learn" className="mt-20 scroll-mt-24">
+    <section id="learn" className="mt-24 scroll-mt-24">
       <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
         How a short film gets made
       </h2>
@@ -468,7 +468,7 @@ function CreateCard({
                 >
                   Your script / prompt
                 </label>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {idea.length} / {MAX_IDEA}
                 </span>
               </div>
@@ -597,7 +597,7 @@ function CreateCard({
           </div>
 
           {!working && (
-            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+            <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
               Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
               {COIN_COST} coins
             </p>
@@ -607,7 +607,7 @@ function CreateCard({
             <GenerationProgress startedAt={startedAt} statusText={statusText} queuePosition={queuePosition} />
           )}
 
-          <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
+          <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
             No credit card required · 3 free renders
           </p>
         </div>
