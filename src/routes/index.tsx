@@ -84,6 +84,20 @@ function StoryReel() {
   const start = useServerFn(generateVideo);
   const poll = useServerFn(checkStatus);
 
+  const { data: user } = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
+  });
+
+  const fetchProfile = useServerFn(getProfile);
+  const { data: profile, refetch: refetchProfile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: fetchProfile,
+  });
+
+  const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
+
   const generate = useMutation({
     mutationFn: () => start({ data: { idea, style, audio, session_id: sessionId } }),
     onSuccess: (result) => {
