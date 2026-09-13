@@ -52,6 +52,32 @@ function AuthPage() {
     }
   };
 
+  /** Coming back from Google: the session is already set, so continue straight away. */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) afterSignIn();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth${plan ? `?plan=${plan}` : ""}`,
+      });
+      if (result.error) throw result.error;
+      if (!("redirected" in result && result.redirected)) {
+        toast.success("Welcome to Jeje Inc Vibe!");
+        afterSignIn();
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
