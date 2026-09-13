@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DramawaveRouteImport } from './routes/dramawave'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as DramawaveIndexRouteImport } from './routes/dramawave.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,38 +35,45 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DramawaveIndexRoute = DramawaveIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DramawaveRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dramawave': typeof DramawaveRoute
+  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/dramawave/': typeof DramawaveIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dramawave': typeof DramawaveRoute
   '/history': typeof HistoryRoute
+  '/dramawave': typeof DramawaveIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dramawave': typeof DramawaveRoute
+  '/dramawave': typeof DramawaveRouteWithChildren
   '/history': typeof HistoryRoute
+  '/dramawave/': typeof DramawaveIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dramawave' | '/history'
+  fullPaths: '/' | '/auth' | '/dramawave' | '/history' | '/dramawave/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dramawave' | '/history'
-  id: '__root__' | '/' | '/auth' | '/dramawave' | '/history'
+  to: '/' | '/auth' | '/history' | '/dramawave'
+  id: '__root__' | '/' | '/auth' | '/dramawave' | '/history' | '/dramawave/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  DramawaveRoute: typeof DramawaveRoute
+  DramawaveRoute: typeof DramawaveRouteWithChildren
   HistoryRoute: typeof HistoryRoute
 }
 
@@ -99,13 +107,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dramawave/': {
+      id: '/dramawave/'
+      path: '/'
+      fullPath: '/dramawave/'
+      preLoaderRoute: typeof DramawaveIndexRouteImport
+      parentRoute: typeof DramawaveRoute
+    }
   }
 }
+
+interface DramawaveRouteChildren {
+  DramawaveIndexRoute: typeof DramawaveIndexRoute
+}
+
+const DramawaveRouteChildren: DramawaveRouteChildren = {
+  DramawaveIndexRoute: DramawaveIndexRoute,
+}
+
+const DramawaveRouteWithChildren = DramawaveRoute._addFileChildren(
+  DramawaveRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  DramawaveRoute: DramawaveRoute,
+  DramawaveRoute: DramawaveRouteWithChildren,
   HistoryRoute: HistoryRoute,
 }
 export const routeTree = rootRouteImport
