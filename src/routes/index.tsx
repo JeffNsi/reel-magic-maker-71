@@ -4,6 +4,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  ArrowRight,
+  ChevronRight,
   Download,
   Film,
   History as HistoryIcon,
@@ -13,6 +15,7 @@ import {
   Sparkles,
   Wand2,
 } from "lucide-react";
+
 
 import {
   checkStatus,
@@ -140,9 +143,9 @@ function StoryReel() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background selection:bg-primary/30">
       <Header />
-      <main className="mx-auto w-full max-w-2xl px-5 pb-24 pt-10 sm:pt-16">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-10 sm:px-6 lg:pt-16">
         {phase === "create" && (
           <>
             <Hero />
@@ -155,6 +158,9 @@ function StoryReel() {
               onSubmit={submit}
               pending={generate.isPending || !sessionId}
             />
+            <p className="mt-8 text-center text-xs text-muted-foreground/70">
+              Vertical 9:16 · 5 seconds · estimated render time 2–3 minutes
+            </p>
           </>
         )}
 
@@ -180,19 +186,25 @@ function StoryReel() {
 
 function Header() {
   return (
-    <header className="border-b border-border/60">
-      <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-5">
-        <span className="font-display text-2xl tracking-wide text-gold">STORYREEL</span>
-        <nav className="flex items-center gap-1">
-          <span className="flex items-center gap-2 px-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+        <Link
+          to="/"
+          className="font-display text-2xl italic tracking-tight text-primary transition-opacity hover:opacity-80"
+        >
+          STORYREEL
+        </Link>
+        <nav className="flex items-center gap-6">
+          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Film className="size-4" aria-hidden />
             Create
           </span>
-          <Button asChild variant="ghost" className="h-9 rounded-full px-4">
-            <Link to="/history" className="text-xs uppercase tracking-[0.2em]">
-              <HistoryIcon className="mr-2 size-4" /> My shorts
-            </Link>
-          </Button>
+          <Link
+            to="/history"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <HistoryIcon className="size-4" aria-hidden /> My shorts
+          </Link>
         </nav>
       </div>
     </header>
@@ -201,18 +213,20 @@ function Header() {
 
 function Hero() {
   return (
-    <div className="text-center">
-      <h1 className="font-display text-4xl leading-tight text-foreground sm:text-5xl">
-        Turn your idea into a short film.
+    <section className="mb-14 text-center">
+      <h1 className="font-display text-5xl italic leading-tight text-foreground sm:text-7xl">
+        Turn your idea into a <span className="text-primary">short film.</span>
       </h1>
-      <p className="mx-auto mt-4 max-w-md text-balance text-muted-foreground">
-        Create cinematic AI videos from a simple idea.
+      <p className="mx-auto mt-6 max-w-xl text-balance text-lg font-light leading-relaxed text-muted-foreground">
+        Write a prompt, choose your aesthetic, and let the AI director bring your vision to the
+        screen.
       </p>
-    </div>
+    </section>
   );
 }
 
 function StoryWriter({ style, onUse }: { style: string; onUse: (idea: string) => void }) {
+  const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState("");
   const write = useServerFn(generateStory);
 
@@ -220,50 +234,74 @@ function StoryWriter({ style, onUse }: { style: string; onUse: (idea: string) =>
     mutationFn: () => write({ data: { theme, style } }),
     onSuccess: (result) => {
       onUse(result.idea);
+      setOpen(false);
       toast.success("Story written — edit it or hit Generate.");
     },
     onError: (err: Error) => toast.error(err.message || "The story writer had a hiccup."),
   });
 
   return (
-    <section className="surface-cinema mt-10 rounded-3xl p-5 sm:p-7">
-      <h2 className="font-display text-xl text-foreground">Need a story? Give me a theme.</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        A few words is enough — we write the full film description for you.
-      </p>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <Input
-          value={theme}
-          onChange={(e) => setTheme(e.target.value.slice(0, 200))}
-          placeholder="Lonely lighthouse keeper"
-          className="h-12 rounded-2xl bg-background/60 text-base"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && theme.trim() && !story.isPending) story.mutate();
-          }}
+    <section className="mb-8 rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/30">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="group flex w-full items-center justify-between gap-4 text-left"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Sparkles className="size-5" aria-hidden />
+          </span>
+          <span>
+            <span className="block text-sm font-medium text-foreground">Stuck on a concept?</span>
+            <span className="block text-xs text-muted-foreground">
+              Use the AI story writer to flesh out your idea.
+            </span>
+          </span>
+        </span>
+        <ChevronRight
+          className={`size-5 shrink-0 text-muted-foreground/50 transition-all group-hover:text-primary ${
+            open ? "rotate-90" : ""
+          }`}
+          aria-hidden
         />
-        <Button
-          onClick={() => {
-            if (!theme.trim()) {
-              toast.error("Give me a theme first.");
-              return;
-            }
-            story.mutate();
-          }}
-          disabled={story.isPending}
-          variant="outline"
-          className="h-12 shrink-0 rounded-2xl px-6 text-xs font-semibold uppercase tracking-[0.2em]"
-        >
-          {story.isPending ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" /> Writing
-            </>
-          ) : (
-            <>
-              <Wand2 className="mr-2 size-4" /> Write story
-            </>
-          )}
-        </Button>
-      </div>
+      </button>
+
+      {open && (
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <Input
+            value={theme}
+            onChange={(e) => setTheme(e.target.value.slice(0, 200))}
+            placeholder="Lonely lighthouse keeper"
+            className="h-12 rounded-xl border-border bg-background/60 text-base"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && theme.trim() && !story.isPending) story.mutate();
+            }}
+          />
+          <Button
+            onClick={() => {
+              if (!theme.trim()) {
+                toast.error("Give me a theme first.");
+                return;
+              }
+              story.mutate();
+            }}
+            disabled={story.isPending}
+            variant="outline"
+            className="h-12 shrink-0 rounded-xl px-6 text-xs font-semibold uppercase tracking-[0.2em]"
+          >
+            {story.isPending ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" /> Writing
+              </>
+            ) : (
+              <>
+                <Wand2 className="mr-2 size-4" /> Write story
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
@@ -284,53 +322,76 @@ function CreateCard({
   pending: boolean;
 }) {
   return (
-    <section className="surface-cinema mt-6 rounded-3xl p-5 sm:p-7">
-      <h2 className="font-display text-2xl text-foreground">Describe your story</h2>
+    <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-cinema)] sm:p-8">
+      <div className="pointer-events-none absolute -mr-16 -mt-16 right-0 top-0 size-64 rounded-full bg-primary/10 blur-[100px]" />
 
-      <Textarea
-        value={idea}
-        onChange={(e) => setIdea(e.target.value.slice(0, MAX_IDEA))}
-        rows={5}
-        maxLength={MAX_IDEA}
-        placeholder="Example: A young filmmaker arrives in Stockholm at midnight with only a suitcase and a dream."
-        className="mt-4 min-h-36 resize-none rounded-2xl bg-background/60 text-base leading-relaxed"
-      />
-      <p className="mt-2 text-right text-xs text-muted-foreground">
-        {idea.length}/{MAX_IDEA}
-      </p>
+      <div className="relative space-y-8">
+        <div>
+          <div className="mb-3 flex items-end justify-between">
+            <label
+              htmlFor="idea"
+              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+            >
+              Your script / prompt
+            </label>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+              {idea.length} / {MAX_IDEA}
+            </span>
+          </div>
+          <Textarea
+            id="idea"
+            value={idea}
+            onChange={(e) => setIdea(e.target.value.slice(0, MAX_IDEA))}
+            rows={5}
+            maxLength={MAX_IDEA}
+            placeholder="Describe the scene, the characters, and the atmosphere..."
+            className="min-h-40 resize-none rounded-xl border-border bg-background/50 p-4 text-base leading-relaxed focus-visible:border-primary/50"
+          />
+        </div>
 
-      <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">Style</p>
-      <Select value={style} onValueChange={setStyle}>
-        <SelectTrigger className="mt-3 h-12 rounded-2xl bg-background/60 text-base">
-          <SelectValue placeholder="Choose a style" />
-        </SelectTrigger>
-        <SelectContent>
-          {STYLES.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Visual style
+            </p>
+            <Select value={style} onValueChange={setStyle}>
+              <SelectTrigger className="h-[50px] w-full rounded-xl border-border bg-background/50 text-base">
+                <SelectValue placeholder="Choose a style" />
+              </SelectTrigger>
+              <SelectContent>
+                {STYLES.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <Button
-        onClick={onSubmit}
-        disabled={pending}
-        className="btn-gold mt-8 h-14 w-full rounded-2xl text-sm font-semibold uppercase tracking-[0.2em]"
-      >
-        {pending ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" /> Starting
-          </>
-        ) : (
-          <>
-            <Sparkles className="mr-2 size-4" /> Generate
-          </>
-        )}
-      </Button>
+          <div className="flex items-end">
+            <Button
+              onClick={onSubmit}
+              disabled={pending}
+              className="group h-[50px] w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:shadow-[0_0_24px_var(--glow)] active:scale-[0.98]"
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Starting
+                </>
+              ) : (
+                <>
+                  Generate film
+                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
+
 
 function formatRemaining(seconds: number) {
   if (seconds <= 0) return "any moment now";
@@ -364,7 +425,7 @@ function WorkingState({
   return (
     <section className="surface-cinema mt-6 rounded-3xl p-8 text-center">
       <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border/70">
-        <Film className="size-7 animate-reel text-gold" aria-hidden />
+        <Film className="size-7 animate-reel text-primary" aria-hidden />
       </div>
       <h2 className="mt-6 font-display text-3xl text-foreground">Creating your short film...</h2>
       <p className="mt-3 text-sm text-muted-foreground">
@@ -432,7 +493,7 @@ function ResultState({
       <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button
           onClick={() => videoRef.current?.play()}
-          className="btn-gold h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
         >
           <Play className="mr-2 size-4" /> Play
         </Button>
@@ -465,7 +526,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <Button
           onClick={onRetry}
-          className="btn-gold h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
         >
           <RotateCcw className="mr-2 size-4" /> Try again
         </Button>

@@ -56,7 +56,7 @@ function History() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-5">
-          <Link to="/" className="font-display text-2xl tracking-wide text-gold">
+          <Link to="/" className="font-display text-2xl italic tracking-tight text-primary">
             STORYREEL
           </Link>
           <Button asChild variant="ghost" className="h-9 rounded-full px-4">
@@ -81,11 +81,11 @@ function History() {
 
         {!isPending && (data?.length ?? 0) === 0 && (
           <div className="surface-cinema mt-8 rounded-3xl p-8 text-center">
-            <Film className="mx-auto size-7 text-gold" aria-hidden />
+            <Film className="mx-auto size-7 text-primary" aria-hidden />
             <p className="mt-4 text-sm text-muted-foreground">
               No shorts yet. Make your first one.
             </p>
-            <Button asChild className="btn-gold mt-6 h-12 rounded-2xl px-8">
+            <Button asChild className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] mt-6 h-12 rounded-2xl px-8">
               <Link to="/" className="text-xs font-semibold uppercase tracking-[0.2em]">
                 Create a short
               </Link>
@@ -113,7 +113,7 @@ function History() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em]">
-                    <span className="text-gold">{STYLE_LABEL[item.style] ?? item.style}</span>
+                    <span className="text-primary">{STYLE_LABEL[item.style] ?? item.style}</span>
                     <span
                       className={
                         item.status === "failed" ? "text-destructive" : "text-muted-foreground"
@@ -133,7 +133,7 @@ function History() {
                     <a
                       href={item.video_url}
                       download={`storyreel-${item.id}.mp4`}
-                      className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.2em] text-gold underline-offset-4 hover:underline"
+                      className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary underline-offset-4 hover:underline"
                     >
                       Download
                     </a>
