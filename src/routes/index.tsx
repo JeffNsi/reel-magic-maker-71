@@ -214,6 +214,7 @@ function StoryReel() {
               engine={engine}
               setEngine={setEngine}
               onSubmit={submit}
+              isPending={generate.isPending || !sessionId}
               phase={phase}
               statusText={statusText}
               startedAt={startedAt}
