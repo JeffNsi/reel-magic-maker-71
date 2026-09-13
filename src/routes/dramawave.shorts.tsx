@@ -267,18 +267,21 @@ function ShortsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={togglePlay}
+                aria-label={playing ? "Pause" : "Play"}
                 className="flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md"
               >
-                {playing ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
+                {playing ? <Pause className="size-5" aria-hidden /> : <Play className="size-5 fill-current" aria-hidden />}
               </button>
               <button
                 onClick={handlePrev}
+                aria-label="Previous episode"
                 className="flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md"
               >
                 <SkipBack className="size-5" aria-hidden />
               </button>
               <button
                 onClick={handleNext}
+                aria-label="Next episode"
                 className="flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md"
               >
                 <SkipForward className="size-5" aria-hidden />
