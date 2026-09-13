@@ -90,18 +90,24 @@ export const generateVideo = createServerFn({ method: "POST" })
         }),
       });
 
-      const payload = (await res.json().catch(() => null)) as { request_id?: string } | null;
+      const payload = (await res.json().catch(() => null)) as
+        | { request_id?: string; detail?: unknown }
+        | null;
 
       if (!res.ok || !payload?.request_id) {
         console.error("fal submit failed", res.status, JSON.stringify(payload));
+        const detail = typeof payload?.detail === "string" ? payload.detail : "";
         throw new Error(
-          res.status === 401 || res.status === 403
-            ? "The video service rejected our credentials."
-            : res.status === 429
-              ? "The video service is busy right now. Please try again in a moment."
-              : "The video service could not start this generation.",
+          /balance|locked|credit/i.test(detail)
+            ? "The video account is out of credit. Top up the fal.ai balance and try again."
+            : res.status === 401 || res.status === 403
+              ? "The video service rejected our credentials."
+              : res.status === 429
+                ? "The video service is busy right now. Please try again in a moment."
+                : "The video service could not start this generation.",
         );
       }
+
 
       await supabaseAdmin
         .from("generations")
