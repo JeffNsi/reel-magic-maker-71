@@ -21,6 +21,7 @@ import { Route as DramawaveMyListRouteImport } from './routes/dramawave.my-list'
 import { Route as DramawaveProfileRouteImport } from './routes/dramawave.profile'
 import { Route as DramawaveRewardsRouteImport } from './routes/dramawave.rewards'
 import { Route as DramawaveShortsRouteImport } from './routes/dramawave.shorts'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,12 @@ const DramawaveShortsRoute = DramawaveShortsRouteImport.update({
   path: '/shorts',
   getParentRoute: () => DramawaveRoute,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave/': typeof DramawaveIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave': typeof DramawaveIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/dramawave/rewards': typeof DramawaveRewardsRoute
   '/dramawave/shorts': typeof DramawaveShortsRoute
   '/dramawave/': typeof DramawaveIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave/'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -167,6 +179,7 @@ export interface FileRouteTypes {
     | '/dramawave/rewards'
     | '/dramawave/shorts'
     | '/dramawave/'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,6 +190,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   StudioRoute: typeof StudioRoute
   TermsRoute: typeof TermsRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -265,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DramawaveShortsRouteImport
       parentRoute: typeof DramawaveRoute
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -296,6 +317,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   StudioRoute: StudioRoute,
   TermsRoute: TermsRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
