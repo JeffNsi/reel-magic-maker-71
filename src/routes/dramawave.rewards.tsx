@@ -105,7 +105,7 @@ function CheckInCard({ profile, loading }: { profile: Profile | undefined; loadi
   const queryClient = useQueryClient();
   const claim = useServerFn(claimDailyCheckin);
   const mutation = useMutation({
-    mutationFn: claim,
+    mutationFn: () => claim({} as any),
     onSuccess: (data) => {
       queryClient.setQueryData(["profile", data.id], data);
       toast.success(`Checked in! +${data.reward} coins`);
