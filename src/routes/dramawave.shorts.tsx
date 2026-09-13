@@ -57,7 +57,9 @@ type Episode = {
 
 function getDrama(ep: Episode) {
   if (!ep.dramas) return { title: "DramaWave", cover_url: "" };
-  return Array.isArray(ep.dramas) ? ep.dramas[0] : ep.dramas;
+  return Array.isArray(ep.dramas)
+    ? (ep.dramas[0] ?? { title: "DramaWave", cover_url: "" })
+    : ep.dramas;
 }
 
 function isVipActive(profile?: Profile) {
