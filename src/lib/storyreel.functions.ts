@@ -201,7 +201,7 @@ export const checkStatus = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
-      .select("id, status, fal_request_id, video_url, error_message, created_at")
+      .select("id, idea, status, fal_request_id, video_url, error_message, created_at, episode_id")
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .single();
