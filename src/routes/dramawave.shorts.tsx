@@ -85,22 +85,17 @@ function ShortsPage() {
     },
   });
 
-  const { data: episodes, error: episodesError } = useQuery({
+  const { data: episodes } = useQuery({
     queryKey: ["episodes"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("episodes")
         .select("*, dramas(title, cover_url)")
         .order("episode_number");
-      console.log("episodes data", data, "error", error);
       if (error) throw error;
       return data as Episode[];
     },
   });
-
-  if (episodesError) {
-    console.error("episodes query error", episodesError);
-  }
 
   const fetchProfile = useServerFn(getProfile);
   const { data: profile } = useQuery({
