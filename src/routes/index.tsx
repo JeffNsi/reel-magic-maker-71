@@ -1,13 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Download, Film, Loader2, Play, RotateCcw, Sparkles } from "lucide-react";
+import {
+  Download,
+  Film,
+  History as HistoryIcon,
+  Loader2,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 
-import { checkStatus, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import {
+  checkStatus,
+  ESTIMATED_SECONDS,
+  generateStory,
+  generateVideo,
+  STYLES,
+} from "@/lib/storyreel.functions";
 import { getSessionId } from "@/lib/session";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -50,6 +66,8 @@ function StoryReel() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -67,6 +85,7 @@ function StoryReel() {
         setPhase("error");
       } else {
         setStatusText("processing");
+        setStartedAt(Date.now());
         setPhase("working");
       }
     },
@@ -92,6 +111,8 @@ function StoryReel() {
         setPhase("error");
       } else {
         setStatusText(result.status === "queued" ? "queued" : "processing");
+        setQueuePosition(result.queue_position ?? null);
+        if (result.created_at) setStartedAt(new Date(result.created_at).getTime());
       }
       return result;
     },
@@ -105,6 +126,7 @@ function StoryReel() {
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
+    setQueuePosition(null);
     generate.mutate();
   };
 
@@ -113,6 +135,8 @@ function StoryReel() {
     setGenerationId(null);
     setVideoUrl(null);
     setErrorMessage(null);
+    setStartedAt(null);
+    setQueuePosition(null);
   };
 
   return (
@@ -122,6 +146,7 @@ function StoryReel() {
         {phase === "create" && (
           <>
             <Hero />
+            <StoryWriter style={style} onUse={setIdea} />
             <CreateCard
               idea={idea}
               setIdea={setIdea}
@@ -133,7 +158,13 @@ function StoryReel() {
           </>
         )}
 
-        {phase === "working" && <WorkingState statusText={statusText} />}
+        {phase === "working" && (
+          <WorkingState
+            statusText={statusText}
+            startedAt={startedAt}
+            queuePosition={queuePosition}
+          />
+        )}
 
         {phase === "done" && videoUrl && (
           <ResultState videoUrl={videoUrl} onReset={reset} generationId={generationId} />
@@ -152,9 +183,16 @@ function Header() {
     <header className="border-b border-border/60">
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-5">
         <span className="font-display text-2xl tracking-wide text-gold">STORYREEL</span>
-        <nav className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          <Film className="size-4" aria-hidden />
-          <span>Create</span>
+        <nav className="flex items-center gap-1">
+          <span className="flex items-center gap-2 px-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <Film className="size-4" aria-hidden />
+            Create
+          </span>
+          <Button asChild variant="ghost" className="h-9 rounded-full px-4">
+            <Link to="/history" className="text-xs uppercase tracking-[0.2em]">
+              <HistoryIcon className="mr-2 size-4" /> My shorts
+            </Link>
+          </Button>
         </nav>
       </div>
     </header>
@@ -174,6 +212,62 @@ function Hero() {
   );
 }
 
+function StoryWriter({ style, onUse }: { style: string; onUse: (idea: string) => void }) {
+  const [theme, setTheme] = useState("");
+  const write = useServerFn(generateStory);
+
+  const story = useMutation({
+    mutationFn: () => write({ data: { theme, style } }),
+    onSuccess: (result) => {
+      onUse(result.idea);
+      toast.success("Story written — edit it or hit Generate.");
+    },
+    onError: (err: Error) => toast.error(err.message || "The story writer had a hiccup."),
+  });
+
+  return (
+    <section className="surface-cinema mt-10 rounded-3xl p-5 sm:p-7">
+      <h2 className="font-display text-xl text-foreground">Need a story? Give me a theme.</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        A few words is enough — we write the full film description for you.
+      </p>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <Input
+          value={theme}
+          onChange={(e) => setTheme(e.target.value.slice(0, 200))}
+          placeholder="Lonely lighthouse keeper"
+          className="h-12 rounded-2xl bg-background/60 text-base"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && theme.trim() && !story.isPending) story.mutate();
+          }}
+        />
+        <Button
+          onClick={() => {
+            if (!theme.trim()) {
+              toast.error("Give me a theme first.");
+              return;
+            }
+            story.mutate();
+          }}
+          disabled={story.isPending}
+          variant="outline"
+          className="h-12 shrink-0 rounded-2xl px-6 text-xs font-semibold uppercase tracking-[0.2em]"
+        >
+          {story.isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" /> Writing
+            </>
+          ) : (
+            <>
+              <Wand2 className="mr-2 size-4" /> Write story
+            </>
+          )}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 function CreateCard({
   idea,
   setIdea,
@@ -190,7 +284,7 @@ function CreateCard({
   pending: boolean;
 }) {
   return (
-    <section className="surface-cinema mt-10 rounded-3xl p-5 sm:p-7">
+    <section className="surface-cinema mt-6 rounded-3xl p-5 sm:p-7">
       <h2 className="font-display text-2xl text-foreground">Describe your story</h2>
 
       <Textarea
@@ -238,7 +332,35 @@ function CreateCard({
   );
 }
 
-function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
+function formatRemaining(seconds: number) {
+  if (seconds <= 0) return "any moment now";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins === 0) return `about ${secs}s left`;
+  return `about ${mins}m ${String(secs).padStart(2, "0")}s left`;
+}
+
+function WorkingState({
+  statusText,
+  startedAt,
+  queuePosition,
+}: {
+  statusText: "queued" | "processing";
+  startedAt: number | null;
+  queuePosition: number | null;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const elapsed = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
+  // Real elapsed time against a typical render length, held below 99% until the video lands.
+  const percent = Math.min(99, Math.round((elapsed / ESTIMATED_SECONDS) * 100));
+  const remaining = Math.max(0, ESTIMATED_SECONDS - elapsed);
+
   return (
     <section className="surface-cinema mt-6 rounded-3xl p-8 text-center">
       <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border/70">
@@ -246,16 +368,38 @@ function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
       </div>
       <h2 className="mt-6 font-display text-3xl text-foreground">Creating your short film...</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        {statusText === "queued" ? "Waiting in line" : "Filming your scene"} — this usually takes a
-        couple of minutes. Keep this page open.
+        {statusText === "queued"
+          ? queuePosition !== null
+            ? `Waiting in line — ${queuePosition} ahead of you`
+            : "Waiting in line"
+          : "Filming your scene"}{" "}
+        — keep this page open.
       </p>
+
       <div
-        role="status"
-        aria-label="Creating your short film"
-        className="mx-auto mt-8 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-border/60"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-label="Generation progress"
+        className="mx-auto mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-border/60"
       >
-        <div className="animate-reel-sweep h-full w-1/3 rounded-full bg-gradient-gold" />
+        <div
+          className="h-full rounded-full bg-gradient-gold transition-[width] duration-1000 ease-linear"
+          style={{ width: `${Math.max(3, percent)}%` }}
+        />
       </div>
+
+      <div className="mx-auto mt-3 flex w-full max-w-xs items-center justify-between text-xs text-muted-foreground">
+        <span>{percent}%</span>
+        <span>{formatRemaining(remaining)}</span>
+      </div>
+
+      {remaining === 0 && (
+        <p className="mt-4 text-xs text-muted-foreground">
+          Taking a little longer than usual — still working.
+        </p>
+      )}
     </section>
   );
 }
@@ -318,12 +462,19 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     <section className="surface-cinema mt-6 rounded-3xl p-8 text-center">
       <h2 className="font-display text-3xl text-foreground">Something went wrong.</h2>
       <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">{message}</p>
-      <Button
-        onClick={onRetry}
-        className="btn-gold mt-8 h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
-      >
-        <RotateCcw className="mr-2 size-4" /> Try again
-      </Button>
+      <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+        <Button
+          onClick={onRetry}
+          className="btn-gold h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
+        >
+          <RotateCcw className="mr-2 size-4" /> Try again
+        </Button>
+        <Button asChild variant="ghost" className="h-12 rounded-2xl px-8">
+          <Link to="/history" className="text-xs font-semibold uppercase tracking-[0.2em]">
+            <HistoryIcon className="mr-2 size-4" /> My shorts
+          </Link>
+        </Button>
+      </div>
     </section>
   );
 }
