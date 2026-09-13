@@ -190,6 +190,7 @@ function StoryReel() {
               />
             </div>
             <div id="create" className="scroll-mt-24" />
+            <CoinBar signedIn={!!user} coins={coins} />
             <CreateCard
               idea={idea}
               setIdea={setIdea}
