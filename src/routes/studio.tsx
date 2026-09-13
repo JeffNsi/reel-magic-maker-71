@@ -146,6 +146,12 @@ function StudioHeader() {
           >
             <HistoryIcon className="size-4" aria-hidden /> My shorts
           </Link>
+          <Button
+            asChild
+            className="h-9 rounded-full bg-primary px-5 text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:shadow-[0_0_20px_var(--glow)]"
+          >
+            <Link to="/auth" search={{ plan: "studio" }}>Sign up</Link>
+          </Button>
         </nav>
       </div>
     </header>

@@ -7,9 +7,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { getProfile } from "@/lib/dramawave.functions";
 import { Button } from "@/components/ui/button";
 import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dramawave/profile")({
+  validateSearch: (search: Record<string, unknown>): { shop?: string } => ({
+    shop: typeof search["shop"] === "string" ? (search["shop"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Profile — DramaWave" },
@@ -25,8 +28,14 @@ export const Route = createFileRoute("/dramawave/profile")({
 
 function ProfilePage() {
   const navigate = useNavigate();
+  const { shop } = Route.useSearch();
   const [shopOpen, setShopOpen] = useState(false);
   const fetchProfile = useServerFn(getProfile);
+
+  // Arriving from a plan sign-up opens the coin shop automatically.
+  useEffect(() => {
+    if (shop) setShopOpen(true);
+  }, [shop]);
 
   const { data: user } = useQuery({
     queryKey: ["auth-user"],
