@@ -16,7 +16,7 @@ const PLAN_LABEL: Record<Plan, string> = {
 };
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { plan?: Plan } => ({
+  validateSearch: (search: Record<string, unknown>): { plan?: Plan | undefined } => ({
     plan:
       search["plan"] === "creator" || search["plan"] === "studio" || search["plan"] === "free"
         ? (search["plan"] as Plan)

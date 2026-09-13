@@ -92,7 +92,7 @@ function History() {
         </p>
         {!userId && (
           <Button asChild variant="outline" className="mt-4 h-10 rounded-full px-6">
-            <Link to="/auth" search={{ plan: undefined }} className="text-xs uppercase tracking-[0.2em]">
+            <Link to="/auth" search={{}} className="text-xs uppercase tracking-[0.2em]">
               Sign in to save your shorts
             </Link>
           </Button>

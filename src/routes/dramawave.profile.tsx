@@ -10,7 +10,7 @@ import { CoinShopModal } from "@/components/dramawave/coin-shop-modal";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dramawave/profile")({
-  validateSearch: (search: Record<string, unknown>): { shop?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { shop?: string | undefined } => ({
     shop: typeof search["shop"] === "string" ? (search["shop"] as string) : undefined,
   }),
   head: () => ({
