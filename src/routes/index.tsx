@@ -184,7 +184,7 @@ function StoryReel() {
   return (
     <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
       <Header />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-10 sm:px-6 lg:pt-16">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-8 pt-0 sm:px-6">
         {(phase === "create" || phase === "working") && (
           <>
             {phase === "create" && (
