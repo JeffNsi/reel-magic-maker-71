@@ -167,7 +167,7 @@ function WatchAdCard() {
   const [countdown, setCountdown] = useState(0);
   const watch = useServerFn(watchAd);
   const mutation = useMutation({
-    mutationFn: watch,
+    mutationFn: () => watch({} as any),
     onSuccess: (balance) => {
       queryClient.setQueryData(["profile"], (old: any) =>
         old ? { ...old, ...balance } : old,
