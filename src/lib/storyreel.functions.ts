@@ -20,33 +20,39 @@ export const STYLES = [
   {
     value: "cinematic",
     label: "Cinematic",
+    description: "Moody lighting, film grain, wide shots",
     prefix:
       "Cinematic lighting, realistic camera movement, dramatic composition, shallow depth of field: ",
   },
   {
     value: "anime",
     label: "Anime",
+    description: "Expressive characters, detailed animation, bold color",
     prefix: "High-quality anime aesthetic, expressive characters, detailed animation: ",
   },
   {
     value: "noir",
     label: "Noir",
+    description: "Hard shadows, smoke, black-and-white tension",
     prefix:
       "Black and white film noir, hard chiaroscuro shadows, smoke, 1940s detective cinematography: ",
   },
   {
     value: "documentary",
     label: "Documentary",
+    description: "Handheld camera, natural light, real world",
     prefix: "Observational documentary, handheld camera, natural light, muted realistic colors: ",
   },
   {
     value: "retro",
     label: "Retro Film",
+    description: "16mm grain, warm fade, light leaks",
     prefix: "Vintage 16mm film look, warm faded colors, heavy grain, halation and light leaks: ",
   },
   {
     value: "hyperreal",
     label: "Hyperreal",
+    description: "Ultra sharp detail, crisp highlights",
     prefix: "Hyperreal photography, ultra sharp detail, high dynamic range, crisp highlights: ",
   },
 ] as const;
