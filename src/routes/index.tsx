@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowRight,
   Clapperboard,
+  Coins,
   Film,
   History as HistoryIcon,
   Loader2,
@@ -13,7 +14,15 @@ import {
 } from "lucide-react";
 
 
-import { checkStatus, ESTIMATED_SECONDS, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import {
+  checkStatus,
+  COIN_COST,
+  ESTIMATED_SECONDS,
+  generateVideo,
+  STYLES,
+} from "@/lib/storyreel.functions";
+import { getProfile } from "@/lib/dramawave.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
 import { FilmPlayer } from "@/components/film-player";
