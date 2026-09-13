@@ -1,32 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight,
-  ChevronRight,
-  Download,
+  Clapperboard,
   Film,
   History as HistoryIcon,
   Loader2,
-  Play,
   RotateCcw,
-  Sparkles,
-  Wand2,
 } from "lucide-react";
 
 
-import {
-  checkStatus,
-  ESTIMATED_SECONDS,
-  generateStory,
-  generateVideo,
-  STYLES,
-} from "@/lib/storyreel.functions";
+import { checkStatus, ESTIMATED_SECONDS, generateVideo, STYLES } from "@/lib/storyreel.functions";
+import { narrateGeneration } from "@/lib/story.functions";
 import { getSessionId } from "@/lib/session";
+import { FilmPlayer } from "@/components/film-player";
+import { StoryPack } from "@/components/story-pack";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -68,6 +60,8 @@ function StoryReel() {
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
   const [audio, setAudio] = useState(false);
+  const [theme, setTheme] = useState("");
+  const navigate = useNavigate();
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
@@ -151,7 +145,16 @@ function StoryReel() {
         {phase === "create" && (
           <>
             <Hero />
-            <StoryWriter style={style} onUse={setIdea} />
+            <div className="mb-8">
+              <StoryPack
+                style={style}
+                sessionId={sessionId}
+                theme={theme}
+                setTheme={setTheme}
+                onUsePrompt={setIdea}
+                onOpenStudio={(id) => navigate({ to: "/studio", search: { story: id } })}
+              />
+            </div>
             <CreateCard
               idea={idea}
               setIdea={setIdea}
@@ -178,7 +181,13 @@ function StoryReel() {
         )}
 
         {phase === "done" && videoUrl && (
-          <ResultState videoUrl={videoUrl} onReset={reset} generationId={generationId} />
+          <ResultState
+            videoUrl={videoUrl}
+            onReset={reset}
+            generationId={generationId}
+            sessionId={sessionId}
+            idea={idea}
+          />
         )}
 
         {phase === "error" && (
@@ -210,6 +219,13 @@ function Header() {
           >
             <HistoryIcon className="size-4" aria-hidden /> My shorts
           </Link>
+          <Link
+            to="/studio"
+            search={{ story: undefined }}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Clapperboard className="size-4" aria-hidden /> Scene editor
+          </Link>
         </nav>
       </div>
     </header>
@@ -230,86 +246,6 @@ function Hero() {
   );
 }
 
-function StoryWriter({ style, onUse }: { style: string; onUse: (idea: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState("");
-  const write = useServerFn(generateStory);
-
-  const story = useMutation({
-    mutationFn: () => write({ data: { theme, style } }),
-    onSuccess: (result) => {
-      onUse(result.idea);
-      setOpen(false);
-      toast.success("Story written — edit it or hit Generate.");
-    },
-    onError: (err: Error) => toast.error(err.message || "The story writer had a hiccup."),
-  });
-
-  return (
-    <section className="mb-8 rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/30">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="group flex w-full items-center justify-between gap-4 text-left"
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Sparkles className="size-5" aria-hidden />
-          </span>
-          <span>
-            <span className="block text-sm font-medium text-foreground">Stuck on a concept?</span>
-            <span className="block text-xs text-muted-foreground">
-              Use the AI story writer to flesh out your idea.
-            </span>
-          </span>
-        </span>
-        <ChevronRight
-          className={`size-5 shrink-0 text-muted-foreground/50 transition-all group-hover:text-primary ${
-            open ? "rotate-90" : ""
-          }`}
-          aria-hidden
-        />
-      </button>
-
-      {open && (
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Input
-            value={theme}
-            onChange={(e) => setTheme(e.target.value.slice(0, 200))}
-            placeholder="Lonely lighthouse keeper"
-            className="h-12 rounded-xl border-border bg-background/60 text-base"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && theme.trim() && !story.isPending) story.mutate();
-            }}
-          />
-          <Button
-            onClick={() => {
-              if (!theme.trim()) {
-                toast.error("Give me a theme first.");
-                return;
-              }
-              story.mutate();
-            }}
-            disabled={story.isPending}
-            variant="outline"
-            className="h-12 shrink-0 rounded-xl px-6 text-xs font-semibold uppercase tracking-[0.2em]"
-          >
-            {story.isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" /> Writing
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 size-4" /> Write story
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-    </section>
-  );
-}
 
 function CreateCard({
   idea,
@@ -485,43 +421,54 @@ function ResultState({
   videoUrl,
   onReset,
   generationId,
+  sessionId,
+  idea,
 }: {
   videoUrl: string;
   onReset: () => void;
   generationId: string | null;
+  sessionId: string;
+  idea: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const narrate = useServerFn(narrateGeneration);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+
+  const narration = useMutation({
+    mutationFn: (input: { text: string; voice: string; music: string }) =>
+      narrate({
+        data: {
+          session_id: sessionId,
+          generation_id: generationId!,
+          text: input.text,
+          voice: input.voice,
+          music: input.music,
+        },
+      }),
+    onSuccess: (result) => {
+      setVoiceUrl(result.voice_url);
+      toast.success("Voice-over added — press Play film.");
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not record the voice-over."),
+  });
 
   return (
-    <section className="mt-6 text-center">
-      <h2 className="font-display text-3xl text-foreground sm:text-4xl">Your short is ready.</h2>
+    <section className="mt-6">
+      <h2 className="text-center font-display text-3xl text-foreground sm:text-4xl">
+        Your short is ready.
+      </h2>
 
-      <div className="surface-cinema mx-auto mt-6 w-full max-w-sm overflow-hidden rounded-3xl p-2">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          controls
-          playsInline
-          className="aspect-[9/16] w-full rounded-2xl bg-black object-cover"
+      <div className="mt-7">
+        <FilmPlayer
+          videoUrl={videoUrl}
+          voiceUrl={voiceUrl}
+          narration={idea.slice(0, 200)}
+          generationId={generationId}
+          onNarrate={generationId ? (input) => narration.mutate(input) : undefined}
+          narrating={narration.isPending}
         />
       </div>
 
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button
-          onClick={() => videoRef.current?.play()}
-          className="bg-primary text-primary-foreground hover:shadow-[0_0_24px_var(--glow)] h-12 rounded-2xl px-8 text-xs font-semibold uppercase tracking-[0.2em]"
-        >
-          <Play className="mr-2 size-4" /> Play
-        </Button>
-        <Button asChild variant="outline" className="h-12 rounded-2xl px-8">
-          <a
-            href={videoUrl}
-            download={`storyreel-${generationId ?? "short"}.mp4`}
-            className="text-xs font-semibold uppercase tracking-[0.2em]"
-          >
-            <Download className="mr-2 size-4" /> Download
-          </a>
-        </Button>
+      <div className="mt-7 flex justify-center">
         <Button
           onClick={onReset}
           variant="ghost"

@@ -98,12 +98,17 @@ export type Database = {
           fal_request_id: string | null
           id: string
           idea: string
+          music_track: string | null
+          narration: string | null
           prompt_final: string | null
+          scene_number: number | null
           session_id: string
           status: string
+          story_id: string | null
           style: string
           updated_at: string
           video_url: string | null
+          voiceover_url: string | null
         }
         Insert: {
           created_at?: string
@@ -111,12 +116,17 @@ export type Database = {
           fal_request_id?: string | null
           id?: string
           idea: string
+          music_track?: string | null
+          narration?: string | null
           prompt_final?: string | null
+          scene_number?: number | null
           session_id: string
           status?: string
+          story_id?: string | null
           style: string
           updated_at?: string
           video_url?: string | null
+          voiceover_url?: string | null
         }
         Update: {
           created_at?: string
@@ -124,12 +134,17 @@ export type Database = {
           fal_request_id?: string | null
           id?: string
           idea?: string
+          music_track?: string | null
+          narration?: string | null
           prompt_final?: string | null
+          scene_number?: number | null
           session_id?: string
           status?: string
+          story_id?: string | null
           style?: string
           updated_at?: string
           video_url?: string | null
+          voiceover_url?: string | null
         }
         Relationships: []
       }
@@ -207,6 +222,89 @@ export type Database = {
           vip_until?: string | null
         }
         Relationships: []
+      }
+      stories: {
+        Row: {
+          characters: Json
+          created_at: string
+          id: string
+          logline: string
+          session_id: string
+          setting: string
+          style: string
+          theme: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          characters?: Json
+          created_at?: string
+          id?: string
+          logline?: string
+          session_id: string
+          setting?: string
+          style?: string
+          theme?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          characters?: Json
+          created_at?: string
+          id?: string
+          logline?: string
+          session_id?: string
+          setting?: string
+          style?: string
+          theme?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      story_scenes: {
+        Row: {
+          created_at: string
+          generation_id: string | null
+          id: string
+          idea: string
+          narration: string
+          scene_number: number
+          story_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          idea?: string
+          narration?: string
+          scene_number: number
+          story_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          idea?: string
+          narration?: string
+          scene_number?: number
+          story_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_scenes_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_unlocked_episodes: {
         Row: {
