@@ -165,7 +165,7 @@ function StoryReel() {
       </a>
       <Header signedIn={!!user} />
 
-      <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-24 sm:px-6 sm:pt-28">
+      <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-10 sm:px-6 sm:pt-16">
         {(phase === "create" || phase === "working") && (
           <>
             <section className="text-center">
@@ -225,7 +225,7 @@ function Header({ signedIn }: { signedIn: boolean }) {
 
   return (
     <header
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled ? "border-b border-border bg-background/85 backdrop-blur-xl" : "bg-transparent"
       }`}
     >
