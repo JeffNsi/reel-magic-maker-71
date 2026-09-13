@@ -17,10 +17,10 @@ import { Check, Gift, Clock, Share2, Film, Coins, Crown } from "lucide-react";
 export const Route = createFileRoute("/dramawave/rewards")({
   head: () => ({
     meta: [
-      { title: "Rewards — DramaWave" },
-      { name: "description", content: "Earn coins and unlock VIP on DramaWave." },
-      { property: "og:title", content: "Rewards — DramaWave" },
-      { property: "og:description", content: "Earn coins and unlock VIP on DramaWave." },
+      { title: "Rewards — Jeje Inc Vibe" },
+      { name: "description", content: "Earn coins and unlock VIP on Jeje Inc Vibe." },
+      { property: "og:title", content: "Rewards — Jeje Inc Vibe" },
+      { property: "og:description", content: "Earn coins and unlock VIP on Jeje Inc Vibe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

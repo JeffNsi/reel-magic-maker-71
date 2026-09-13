@@ -7,10 +7,10 @@ import type { Database } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/dramawave/")({
   head: () => ({
     meta: [
-      { title: "Home — DramaWave" },
-      { name: "description", content: "Discover trending vertical short dramas on DramaWave." },
-      { property: "og:title", content: "Home — DramaWave" },
-      { property: "og:description", content: "Discover trending vertical short dramas on DramaWave." },
+      { title: "Home — Jeje Inc Vibe" },
+      { name: "description", content: "Discover trending vertical short films on Jeje Inc Vibe." },
+      { property: "og:title", content: "Home — Jeje Inc Vibe" },
+      { property: "og:description", content: "Discover trending vertical short films on Jeje Inc Vibe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -42,7 +42,7 @@ function HomePage() {
     <div className="min-h-screen bg-dw-background pb-6">
       <header className="sticky top-0 z-40 border-b border-dw-border bg-dw-background/95 px-5 py-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight dw-gradient-text">DramaWave</h1>
+          <h1 className="text-2xl font-bold tracking-tight dw-gradient-text">Jeje Inc Vibe</h1>
           <Link
             to="/dramawave/profile"
             className="flex size-9 items-center justify-center rounded-full bg-dw-card text-dw-foreground"

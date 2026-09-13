@@ -4,10 +4,10 @@ import { Home, Film, Gift, Heart, User } from "lucide-react";
 export const Route = createFileRoute("/dramawave")({
   head: () => ({
     meta: [
-      { title: "DramaWave" },
-      { name: "description", content: "Binge vertical short dramas on DramaWave." },
-      { property: "og:title", content: "DramaWave" },
-      { property: "og:description", content: "Binge vertical short dramas on DramaWave." },
+      { title: "Jeje Inc Vibe" },
+      { name: "description", content: "Binge vertical short films on Jeje Inc Vibe." },
+      { property: "og:title", content: "Jeje Inc Vibe" },
+      { property: "og:description", content: "Binge vertical short films on Jeje Inc Vibe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

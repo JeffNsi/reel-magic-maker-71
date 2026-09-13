@@ -8,10 +8,10 @@ import { getMyList } from "@/lib/dramawave.functions";
 export const Route = createFileRoute("/dramawave/my-list")({
   head: () => ({
     meta: [
-      { title: "My List — DramaWave" },
-      { name: "description", content: "Your saved dramas on DramaWave." },
-      { property: "og:title", content: "My List — DramaWave" },
-      { property: "og:description", content: "Your saved dramas on DramaWave." },
+      { title: "My List — Jeje Inc Vibe" },
+      { name: "description", content: "Your saved films on Jeje Inc Vibe." },
+      { property: "og:title", content: "My List — Jeje Inc Vibe" },
+      { property: "og:description", content: "Your saved films on Jeje Inc Vibe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
