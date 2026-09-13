@@ -76,7 +76,7 @@ function StoryReel() {
   const [sessionId, setSessionId] = useState("");
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState<string>("cinematic");
-  const [audio, setAudio] = useState(false);
+  const [audio, setAudio] = useState(true);
   const [theme, setTheme] = useState("");
   const navigate = useNavigate();
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -234,6 +234,7 @@ function StoryReel() {
             generationId={generationId}
             sessionId={sessionId}
             idea={idea}
+            withSound={audio}
           />
         )}
 
@@ -474,7 +475,7 @@ function CreateCard({
 
           <div className="flex items-center justify-between self-end rounded-xl border border-border bg-background/50 px-4 py-3">
             <label htmlFor="audio" className="text-sm text-muted-foreground">
-              Sound
+              Voice + music
             </label>
             <Switch id="audio" checked={audio} onCheckedChange={setAudio} />
           </div>
@@ -498,7 +499,7 @@ function CreateCard({
             )}
           </Button>
           <p className="mt-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground/60">
-            Vertical 9:16 · 5 seconds · {audio ? "with sound" : "silent"} · ~2–3 min render ·{" "}
+            Vertical 9:16 · 5 seconds · {audio ? "voice + music" : "silent"} · ~2–3 min render ·{" "}
             {COIN_COST} coins
           </p>
         </div>
@@ -586,15 +587,18 @@ function ResultState({
   generationId,
   sessionId,
   idea,
+  withSound,
 }: {
   videoUrl: string;
   onReset: () => void;
   generationId: string | null;
   sessionId: string;
   idea: string;
+  withSound: boolean;
 }) {
   const narrate = useServerFn(narrateGeneration);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const narrated = useRef(false);
 
   const narration = useMutation({
     mutationFn: (input: { text: string; voice: string; music: string }) =>
@@ -613,6 +617,15 @@ function ResultState({
     },
     onError: (err: Error) => toast.error(err.message || "Could not record the voice-over."),
   });
+
+  // Sound was requested up front, so mix the voice and music in the same run —
+  // no faders to match by hand.
+  const startNarration = narration.mutate;
+  useEffect(() => {
+    if (!withSound || !generationId || narrated.current || !idea.trim()) return;
+    narrated.current = true;
+    startNarration({ text: idea.trim().slice(0, 200), voice: "alloy", music: "wonder" });
+  }, [generationId, idea, startNarration, withSound]);
 
   return (
     <section className="mt-6">
