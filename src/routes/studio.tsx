@@ -503,7 +503,7 @@ function SceneCard({
   const [idea, setIdea] = useState(scene.idea);
   const [narration, setNarration] = useState(scene.narration);
   const [audio, setAudio] = useState(true);
-  const [engine, setEngine] = useState<"lovable" | "fal">("lovable");
+  const [engine, setEngine] = useState<"lovable" | "fal" | "live">("lovable");
   const [voice, setVoice] = useState("alloy");
   const [music, setMusic] = useState("wonder");
   const [voiceUrl, setVoiceUrl] = useState<string | null>(scene.voice_url);
@@ -684,7 +684,7 @@ function SceneCard({
             </Select>
           </div>
         )}
-        <Select value={engine} onValueChange={(v) => setEngine(v as "lovable" | "fal")}>
+        <Select value={engine} onValueChange={(v) => setEngine(v as "lovable" | "fal" | "live")}>
           <SelectTrigger
             className="h-11 rounded-xl border-border bg-background/60 text-sm"
             aria-label="Film engine"
@@ -694,6 +694,7 @@ function SceneCard({
           <SelectContent>
             <SelectItem value="lovable">Ezy — included credits</SelectItem>
             <SelectItem value="fal">Strong — your own account</SelectItem>
+            <SelectItem value="live">Live — realtime engine</SelectItem>
           </SelectContent>
         </Select>
       </div>
