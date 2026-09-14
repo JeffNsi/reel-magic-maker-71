@@ -247,6 +247,8 @@ function StoryReel() {
               setIdea={setIdea}
               style={style}
               setStyle={setStyle}
+              engine={engine}
+              setEngine={setEngine}
               onSubmit={submit}
               busy={generate.isPending || !sessionId || phase === "working"}
               working={phase === "working"}
@@ -344,6 +346,8 @@ function CreateCard({
   setIdea,
   style,
   setStyle,
+  engine,
+  setEngine,
   onSubmit,
   busy,
   working,
@@ -353,6 +357,8 @@ function CreateCard({
   setIdea: (v: string) => void;
   style: string;
   setStyle: (v: string) => void;
+  engine: Engine;
+  setEngine: (v: Engine) => void;
   onSubmit: () => void;
   busy: boolean;
   working: boolean;
