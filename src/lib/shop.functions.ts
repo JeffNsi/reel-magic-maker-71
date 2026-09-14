@@ -181,7 +181,10 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => sumupCreateInput.parse(data))
   .handler(
-    async ({ data, context }): Promise<{ checkoutId: string } | { error: string }> => {
+    async ({
+      data,
+      context,
+    }): Promise<{ checkoutId: string; amount: number } | { error: string }> => {
       const pack = PACKS[data.pack];
       try {
         const payToEmail = process.env["SUMUP_PAY_TO_EMAIL"];
@@ -200,7 +203,7 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
             redirect_url: `${data.origin}/vibe/profile?shop=return`,
           }),
         });
-        return { checkoutId: checkout.id as string };
+        return { checkoutId: checkout.id as string, amount: pack.amountSek };
       } catch (error: any) {
         if (error?.message === "SUMUP_NOT_CONNECTED") {
           return { error: "SumUp is not connected yet. Add your SumUp API key to enable it." };
