@@ -339,7 +339,7 @@ async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<
   if (start < 0 || end <= start) throw new Error("The creative director came back empty.");
 
   try {
-    return JSON.parse(raw.slice(start, end + 1)) as AiReply;
+    return JSON.parse(raw.slice(start, end + 1)) as T;
   } catch {
     throw new Error("The creative director came back empty.");
   }
