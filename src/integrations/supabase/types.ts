@@ -56,6 +56,106 @@ export type Database = {
         }
         Relationships: []
       }
+      director_sessions: {
+        Row: {
+          blueprint: string | null
+          confidence: Json
+          created_at: string
+          film_bible: Json | null
+          id: string
+          idea: string
+          question_count: number
+          session_id: string
+          status: string
+          style: string
+          understanding: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          blueprint?: string | null
+          confidence?: Json
+          created_at?: string
+          film_bible?: Json | null
+          id?: string
+          idea: string
+          question_count?: number
+          session_id: string
+          status?: string
+          style?: string
+          understanding?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          blueprint?: string | null
+          confidence?: Json
+          created_at?: string
+          film_bible?: Json | null
+          id?: string
+          idea?: string
+          question_count?: number
+          session_id?: string
+          status?: string
+          style?: string
+          understanding?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "director_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      director_turns: {
+        Row: {
+          answer: string
+          created_at: string
+          dimension: string
+          director_session_id: string
+          id: string
+          position: number
+          question: string
+          skipped: boolean
+          updated_at: string
+        }
+        Insert: {
+          answer?: string
+          created_at?: string
+          dimension?: string
+          director_session_id: string
+          id?: string
+          position: number
+          question: string
+          skipped?: boolean
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          dimension?: string
+          director_session_id?: string
+          id?: string
+          position?: number
+          question?: string
+          skipped?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "director_turns_director_session_id_fkey"
+            columns: ["director_session_id"]
+            isOneToOne: false
+            referencedRelation: "director_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dramas: {
         Row: {
           cover_url: string
@@ -150,6 +250,7 @@ export type Database = {
         Row: {
           coins_spent: number
           created_at: string
+          director_session_id: string | null
           episode_id: string | null
           error_message: string | null
           fal_request_id: string | null
@@ -172,6 +273,7 @@ export type Database = {
         Insert: {
           coins_spent?: number
           created_at?: string
+          director_session_id?: string | null
           episode_id?: string | null
           error_message?: string | null
           fal_request_id?: string | null
@@ -194,6 +296,7 @@ export type Database = {
         Update: {
           coins_spent?: number
           created_at?: string
+          director_session_id?: string | null
           episode_id?: string | null
           error_message?: string | null
           fal_request_id?: string | null
@@ -214,6 +317,13 @@ export type Database = {
           voiceover_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "generations_director_session_id_fkey"
+            columns: ["director_session_id"]
+            isOneToOne: false
+            referencedRelation: "director_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "generations_episode_id_fkey"
             columns: ["episode_id"]
