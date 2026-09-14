@@ -4,6 +4,8 @@
  */
 
 export const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
+/** LIVE engine: fal.ai's realtime director model, run through the same queue transport. */
+export const FAL_LIVE_MODEL_ID = "fal-ai/minimax/h3-max/director";
 export const FAL_QUEUE_BASE = "https://queue.fal.run";
 export const BUCKET = "videos";
 export const SIGNED_URL_TTL = 60 * 60 * 6;
