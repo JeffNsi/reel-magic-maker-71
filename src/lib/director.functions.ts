@@ -191,6 +191,7 @@ export type DirectorState = {
   recommendation: Recommendation | null;
   film_bible: FilmBible | null;
   blueprint: string | null;
+  challenge: Challenge | null;
 };
 
 /** What a blueprint edit would ripple into. */
