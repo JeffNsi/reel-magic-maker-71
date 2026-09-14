@@ -301,7 +301,13 @@ function StoryReel() {
 
 
         {phase === "done" && videoUrl && (
-          <ResultState videoUrl={videoUrl} generationId={generationId} onReset={reset} />
+          <ResultState
+            videoUrl={videoUrl}
+            generationId={generationId}
+            sessionId={sessionId}
+            directorSessionId={directorSessionId}
+            onReset={reset}
+          />
         )}
 
         {phase === "error" && (
