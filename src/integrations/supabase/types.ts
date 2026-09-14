@@ -60,13 +60,16 @@ export type Database = {
         Row: {
           blueprint: string | null
           breakthrough: string | null
+          breakthroughs: Json
           confidence: Json
           created_at: string
+          evolution: Json | null
           film_bible: Json | null
           film_model: Json | null
           id: string
           idea: string
           question_count: number
+          recommendation: Json | null
           session_id: string
           status: string
           style: string
@@ -77,13 +80,16 @@ export type Database = {
         Insert: {
           blueprint?: string | null
           breakthrough?: string | null
+          breakthroughs?: Json
           confidence?: Json
           created_at?: string
+          evolution?: Json | null
           film_bible?: Json | null
           film_model?: Json | null
           id?: string
           idea: string
           question_count?: number
+          recommendation?: Json | null
           session_id: string
           status?: string
           style?: string
@@ -94,13 +100,16 @@ export type Database = {
         Update: {
           blueprint?: string | null
           breakthrough?: string | null
+          breakthroughs?: Json
           confidence?: Json
           created_at?: string
+          evolution?: Json | null
           film_bible?: Json | null
           film_model?: Json | null
           id?: string
           idea?: string
           question_count?: number
+          recommendation?: Json | null
           session_id?: string
           status?: string
           style?: string
