@@ -65,7 +65,7 @@ function SumUpCardForm({
           locale: "sv-SE",
           country: "SE",
           currency: "SEK",
-          amount: pack.amountSek,
+          amount: result.amount,
           showAmount: true,
           // Wallet buttons (Apple Pay on Safari/iOS, Google Pay elsewhere).
           applePay: true,
