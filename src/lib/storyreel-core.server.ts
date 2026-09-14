@@ -142,9 +142,10 @@ export async function providerProgress(
   provider: VideoProvider,
   taskId: string,
 ): Promise<ProviderProgress> {
-  if (provider === "fal") {
+  if (provider === "fal" || provider === "live") {
     const key = readFalKey();
-    const statusRes = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${taskId}/status`, {
+    const falModel = falModelFor(provider);
+    const statusRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}/status`, {
       headers: falHeaders(key),
     });
     const statusBody = (await statusRes.json().catch(() => null)) as
