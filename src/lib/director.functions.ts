@@ -1045,10 +1045,15 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
         : "ready";
 
   /** The verdict has to match the findings, not just the label the model chose. */
-  if (verdict === "ready" && (weakness || opportunity || generation_risk)) {
+  if (
+    verdict === "ready" &&
+    (weakness || opportunity || generation_risk || reality?.five_second_risk)
+  ) {
     verdict = "recommendation";
   }
-  if (verdict === "revision" && !weakness && !generation_risk) verdict = "recommendation";
+  if (verdict === "revision" && !weakness && !generation_risk && !reality?.five_second_risk) {
+    verdict = "recommendation";
+  }
 
   const predictabilityRaw = String(reply.predictability ?? "").toLowerCase();
   const predictability =
