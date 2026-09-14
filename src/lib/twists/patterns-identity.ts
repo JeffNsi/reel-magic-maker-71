@@ -1,0 +1,38 @@
+import { buildFamily, type RawTwist } from "./types";
+
+const rows: RawTwist[] = [
+  ["victim-is-self","Protagonist is the victim","self","the person being searched for is the searcher","dread of self-recognition","mystery,thriller,drama","self,stranger","search,missing,body,identity",8,9,4,6,8],
+  ["killer-is-self","Protagonist is the killer","self","the investigator committed the act and does not know it","horror of complicity","crime,thriller,psychological","self,investigator","crime,guilt,memory,blood",7,9,5,8,7],
+  ["already-dead","Protagonist is already dead","afterlife","the world has been treating the protagonist as absent all along","gentle devastation","drama,supernatural","self,family","ghost,absence,ignored,mirror",8,9,5,9,7],
+  ["own-future-self","Protagonist meets their own future self","doubling","the stranger is the protagonist decades later","awe and fear of fate","sci-fi,drama,thriller","self","future,age,double,scar",9,8,6,5,6],
+  ["own-past-self","Protagonist meets their own past self","doubling","the child or younger adult in frame is the protagonist","tender grief for a life lived","drama,sci-fi","self","childhood,memory,platform,mirror",9,8,6,5,6],
+  ["two-are-one","Two apparently different characters are one person","split","the two people never share a frame because they are the same person","vertigo","psychological,thriller","self,rival","double,mirror,alias,reflection",8,9,7,8,5],
+  ["antagonist-is-variant","Antagonist is another version of the protagonist","doubling","the opponent is the protagonist from another path","self-hatred made visible","sci-fi,thriller","self,rival","double,choice,parallel,mask",8,7,7,6,6],
+  ["missing-is-self","The missing person is the protagonist","self","the search is for the searcher's own erased identity","dissociation","psychological,mystery","self","poster,missing,name,record",8,8,6,6,7],
+  ["stranger-is-family","The stranger is secretly family","kinship","a passing figure shares blood with the protagonist","longing answered too late","drama,romance","parent,sibling,child","stranger,resemblance,photo,gesture",8,8,3,5,8],
+  ["child-is-future-link","A child is tied to the protagonist's future","kinship","the child will become or bear the protagonist's story","fragile hope","drama,sci-fi","child,parent","child,drawing,name,toy",8,8,4,5,8],
+  ["narrator-is-protagonist","The narrator is the protagonist","voice","the voice describing events belongs to the person inside them","intimacy turning to guilt","drama,thriller","self","voice,letter,recording,diary",5,7,4,6,7],
+  ["investigating-self","The protagonist has been investigating themselves","self","every clue leads back to the investigator","cold realisation","crime,psychological","self,investigator","clue,file,fingerprint,handwriting",7,9,5,6,7],
+  ["impostor-protagonist","The protagonist took another person's life story","substitution","the identity worn is borrowed from someone real","shame under composure","drama,thriller","self,stranger","passport,photo,name,uniform",7,8,5,6,7],
+  ["twin-substitution","A twin has replaced the person we followed","twins","the sibling stepped into the other's life","betrayal inside sameness","thriller,drama","sibling","twin,ring,scar,handwriting",8,8,5,7,7],
+  ["mask-is-loved-one","The masked figure is someone loved","concealment","the threatening figure is a person the protagonist protects","split loyalty","thriller,horror","lover,family","mask,helmet,voice,hands",9,7,4,6,8],
+  ["hero-is-cause","The rescuer created the danger","reversal","the one saving everyone caused the disaster","moral collapse","thriller,drama","ally,self","rescue,fire,accident,record",7,8,5,6,7],
+  ["patient-is-doctor","The patient and the carer are the same person","split","the treatment is self-administered inside one mind","lonely tenderness","psychological,drama","self,carer","hospital,chart,mirror,pill",8,8,6,7,6],
+  ["prisoner-is-guard","The prisoner and the guard are one","split","captivity is self-imposed","claustrophobic irony","psychological,thriller","self","cell,key,uniform,door",8,7,6,7,7],
+  ["adopted-truth","The protagonist learns whose child they are","kinship","parentage is not what the protagonist believed","ground shifting underfoot","drama","parent,child","letter,record,photo,blood",6,8,3,6,8],
+  ["parent-is-stranger","The parent has been living a second identity","concealment","the parent's other life surfaces","betrayal of childhood","drama,crime","parent,child","second phone,keys,receipt,address",7,8,4,5,8],
+  ["name-not-theirs","The name everyone uses is not the protagonist's","naming","identity was assigned, not owned","erasure","psychological,drama","self,stranger","name,badge,form,gravestone",7,9,4,5,8],
+  ["face-is-borrowed","The face in the mirror is not their own","body","the reflection belongs to someone else","primal dread","horror,sci-fi","self","mirror,reflection,window,glass",10,8,6,6,7],
+  ["clone-reveal","The protagonist is a copy","duplication","there was an original","displaced grief","sci-fi","self","serial,number,identical,room",8,7,7,6,6],
+  ["ai-reveal","The protagonist is not human","artificial","behaviour we read as human was manufactured","empathy then chill","sci-fi","self","reflection,circuit,repetition,glitch",8,8,6,7,6],
+  ["witness-is-culprit","The witness is the culprit","reversal","the helpful observer did it","betrayal of trust","crime,mystery","ally,investigator","statement,timeline,shoes,mud",6,9,4,6,8],
+  ["victim-was-hunter","The victim was hunting the protagonist","reversal","the dead person was the aggressor","fear rewritten","thriller,crime","stranger,rival","weapon,photo,file,map",7,8,4,6,7],
+  ["saviour-is-victim","The person saved is the one who was lost","reversal","the rescue came too late to matter","hollow victory","drama,thriller","ally,family","water,blanket,phone,silence",8,7,4,5,8],
+  ["forgotten-sibling","A sibling was hidden from the protagonist","kinship","the family removed someone from the record","betrayal by omission","drama","sibling,parent","album,cut photo,attic,letter",9,9,3,5,9],
+  ["second-family","The protagonist's parent had a second family","concealment","another household existed in parallel","displacement","drama","parent,sibling","photo,school run,address,keys",7,8,4,5,8],
+  ["stolen-childhood","The protagonist was taken as a child","abduction","the family they know is not the family they were born to","grief and gratitude at once","drama,thriller","parent,child","poster,birthmark,song,toy",8,9,5,6,8],
+  ["double-life-lover","The lover has a whole other identity","concealment","two lives were being run at once","intimacy revealed as performance","romance,thriller","lover","ring,phone,receipt,uniform",7,8,4,5,8],
+  ["self-portrait","The portrait is the protagonist","art","an old artwork depicts them precisely","uncanny recognition","drama,supernatural","self","painting,frame,museum,date",10,9,4,5,8],
+];
+
+export const IDENTITY_TWISTS = buildFamily("identity", rows);

@@ -1,0 +1,38 @@
+import { buildFamily, type RawTwist } from "./types";
+
+const rows: RawTwist[] = [
+  ["friend-betrays","The closest friend is the betrayer","betrayal","trust was the delivery method","intimate wound","drama,thriller","ally,friend","toast,note,keys,phone",7,9,3,6,8],
+  ["enemy-protects","The enemy has been protecting them","reversal","hostility was a shield","shame and gratitude","drama,thriller","rival","injury,distance,letter,watch",7,9,4,5,8],
+  ["lover-manipulates","The lover has been steering them","manipulation","affection served another purpose","violation of intimacy","romance,thriller","lover","file,phone,list,mirror",7,9,4,6,8],
+  ["parent-is-antagonist","The parent is the antagonist","family","the opposition comes from home","childhood inverted","drama,thriller","parent,child","door,belt,ledger,photo",7,8,4,5,8],
+  ["antagonist-protects","The antagonist is protecting them","reversal","obstruction was care","reframed fear","drama,thriller","rival,carer","lock,warning,scar,letter",7,9,4,5,8],
+  ["victim-knew-them","Victim and protagonist knew each other","hidden link","the connection was concealed","dread of buried history","crime,drama","stranger,lover","photo,letter,ring,ticket",8,9,4,5,8],
+  ["rescued-refuses","The person rescued does not want rescue","refusal","saving is not wanted","helpless love","drama,thriller","family,ally","hand pulled back,door,boat,rope",9,7,4,4,8],
+  ["stranger-knows-them","The stranger knows them intimately","asymmetry","one side of the relationship remembers everything","exposure","thriller,drama","stranger,lover","nickname,gesture,order,scar",8,9,3,5,9],
+  ["trusted-caused-it","The trusted person created the problem","betrayal","the fixer was the cause","corrosive doubt","thriller,drama","ally,carer","invoice,key,signature,timeline",6,9,4,5,8],
+  ["misread-motive","The protagonist misread someone's motive","misreading","the other person acted from love, not malice","regret","drama","family,ally","letter,payment,photo,bruise",7,9,3,4,9],
+  ["sibling-rivalry-sacrifice","The rival sibling sacrificed for them","family","the resented one gave something up","overwhelming guilt","drama","sibling","letter,scar,school,money",7,9,3,4,9],
+  ["carer-is-captor","The carer is the captor","care","protection has become confinement","suffocating tenderness","psychological,thriller","carer,family","medicine,lock,curtain,window",9,9,4,5,8],
+  ["mentor-uses-them","The mentor is using the protagonist","power","guidance served the mentor's need","disillusion","drama,thriller","mentor","notebook,award,letter,tape",6,8,4,5,8],
+  ["child-protects-parent","The child has been protecting the parent","reversal","the smaller person carries the weight","aching admiration","drama","parent,child","meal,alarm,bill,bed",9,9,3,4,9],
+  ["marriage-arranged-lie","The relationship was arranged around a lie","contract","the union exists for another reason","cold intimacy","drama,romance","lover,family","document,ring,ledger,photo",7,8,4,5,8],
+  ["stranger-is-donor","A stranger carries part of them","body","an organ or blood ties two strangers","uncanny kinship","drama,medical","stranger","scar,heartbeat,record,letter",8,9,4,5,8],
+  ["friend-is-informant","A friend has been reporting on them","surveillance","proximity was employment","paranoid grief","thriller,drama","friend,ally","notebook,phone,car,receipt",7,9,4,5,8],
+  ["ex-was-right","The person they dismissed was right","vindication","the ignored warning was accurate","humiliated clarity","drama,thriller","lover,ally","letter,voicemail,map,photo",6,8,3,4,9],
+  ["rival-is-family","The rival is family","kinship","competition hides blood","complicated tenderness","drama","sibling,rival","resemblance,name,photo,gesture",8,8,3,5,8],
+  ["debt-of-loyalty","Their loyalty was bought","transaction","the bond was purchased","cheapened history","crime,drama","ally","envelope,ledger,handshake,car",6,8,4,5,8],
+  ["protector-is-gone","The protector has been dead the whole time","absence","the guardian is no longer present","tender grief","drama,supernatural","family,ally","chair,coat,voicemail,plate",10,9,4,7,8],
+  ["twin-loyalty","One twin took the other's punishment","substitution","the wrong sibling paid","fierce love","drama,crime","sibling","cell,ring,scar,photo",8,8,4,5,8],
+  ["neighbour-witness","The neighbour has watched everything","observer","the periphery holds the truth","exposure","thriller,drama","stranger","window,curtain,binoculars,notes",9,9,3,4,9],
+  ["partner-knew","The partner knew all along","complicity","the silence was chosen","cold reappraisal","drama,thriller","lover","glance,drawer,receipt,ring",8,9,3,5,9],
+  ["employer-family","The employer is a relative","hidden link","the professional bond hides kinship","recalibration","drama","parent,child","photo,name,handwriting,ring",6,8,3,5,8],
+  ["saved-by-victim","The person they wronged saved them","reversal","the injured party chose mercy","unbearable shame","drama","rival,stranger","bandage,water,coat,silence",8,8,3,4,9],
+  ["stranger-was-waiting","The stranger has waited years for them","patience","the meeting was long prepared","eerie warmth","drama,thriller","stranger","bench,file,photo,letter",9,9,3,4,9],
+  ["family-erased-member","The family removed someone","omission","a member was written out","cold anger","drama","family,sibling","album,cut photo,attic,letter",9,9,3,4,9],
+  ["lover-is-rival","The lover works for the opposition","allegiance","affection crosses a line of war","torn loyalty","thriller,romance","lover,rival","badge,radio,uniform,key",7,8,4,6,8],
+  ["friend-is-imaginary","The friend exists only for them","projection","one companion was never real","loneliness laid bare","psychological,drama","friend,self","two cups,no reflection,one chair,echo",9,9,5,7,7],
+  ["parent-swapped-child","A child was swapped at birth","substitution","the family raised another's child","fragile identity","drama","parent,child","bracelet,record,birthmark,photo",8,9,4,6,8],
+  ["forgiveness-was-goodbye","The reconciliation was a farewell","reversal","the peace offering marked an ending","tender devastation","drama","family,lover","gift,letter,packed bag,door",9,9,3,4,9],
+];
+
+export const RELATIONSHIP_TWISTS = buildFamily("relationship", rows);
