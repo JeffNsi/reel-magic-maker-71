@@ -73,6 +73,27 @@ export type FilmModel = {
   open_questions: string[];
 };
 
+/**
+ * A story turn the director found by searching the twist library against this
+ * story. Only an accepted or recommended turn is written here, and it is always
+ * expressed as filmable visual information — never as "plot twist: ...".
+ */
+export type Twist = {
+  /** The library pattern it was adapted from, for traceability. */
+  pattern: string;
+  /** The turn in one plain sentence, in story terms. */
+  statement: string;
+  /** Why the story is emotionally stronger with it. */
+  emotional_purpose: string;
+  /** 2-4 things the audience could notice earlier without understanding them. */
+  foreshadowing: string[];
+  /** The moment the audience understands. */
+  reveal: string;
+  /** The single image that carries the reveal. */
+  visual_clue: string;
+  ending_implication: string;
+};
+
 export type FilmBible = {
   title: string;
   premise: string;
