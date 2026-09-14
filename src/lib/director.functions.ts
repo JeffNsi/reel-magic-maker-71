@@ -677,6 +677,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
     recommendation,
     film_bible: bible,
     blueprint,
+    challenge: null,
   };
 }
 
