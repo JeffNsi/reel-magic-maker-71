@@ -645,6 +645,8 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
       evolution,
       recommendation,
       blueprint,
+      /** A new bible invalidates any earlier challenge — it is re-run on the new one. */
+      challenge: null,
       question_count: turns.length + (question ? 1 : 0),
     })
     .eq("id", row.id);
