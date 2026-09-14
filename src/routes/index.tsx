@@ -417,6 +417,42 @@ function CreateCard({
           <StylePicker value={style} onChange={setStyle} only={V1_STYLES} />
 
           <div>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              Film engine
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {ENGINES.map((item) => {
+                const active = engine === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setEngine(item.id)}
+                    disabled={busy}
+                    aria-pressed={active}
+                    className={`rounded-2xl border px-3 py-2.5 text-left transition-colors disabled:opacity-50 ${
+                      active
+                        ? "border-primary/60 bg-primary/10"
+                        : "border-border/70 bg-background/40 hover:border-primary/40"
+                    }`}
+                  >
+                    <span
+                      className={`block text-xs font-semibold uppercase tracking-[0.18em] ${
+                        active ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground/70">
+                      {item.note}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
             <Button
               onClick={onSubmit}
               disabled={busy}
