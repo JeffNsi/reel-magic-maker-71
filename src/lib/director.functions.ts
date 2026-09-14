@@ -383,7 +383,7 @@ function transcript(
   return lines.join("\n");
 }
 
-async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
+export async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("The creative director isn't available right now.");
 
