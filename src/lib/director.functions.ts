@@ -109,6 +109,8 @@ export type FilmBible = {
   discoveries: string[];
   recommendations: string[];
   open_questions: string[];
+  /** The accepted story turn, when this story has one. Null is a valid answer. */
+  twist: Twist | null;
 };
 
 /** How the original idea became the story the interview arrived at. */
