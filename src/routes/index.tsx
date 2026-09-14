@@ -12,6 +12,7 @@ import { getSessionId } from "@/lib/session";
 import { StylePicker } from "@/components/landing/style-picker";
 import { Faq, HowItWorks, Learn, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
 import { Gallery } from "@/components/landing/gallery";
+import { DirectorPanel } from "@/components/director/director-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -98,7 +99,7 @@ const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
   },
 ];
 
-type Phase = "create" | "working" | "done" | "error";
+type Phase = "create" | "director" | "working" | "done" | "error";
 
 type Engine = "lovable" | "fal" | "live";
 
@@ -153,8 +154,17 @@ function StoryReel() {
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
 
   const generate = useMutation({
-    mutationFn: () =>
-      start({ data: { idea, style, audio: true, engine, session_id: sessionId } }),
+    mutationFn: (input: { prompt: string; directorSessionId?: string | undefined }) =>
+      start({
+        data: {
+          idea: input.prompt,
+          style,
+          audio: true,
+          engine,
+          session_id: sessionId,
+          director_session_id: input.directorSessionId,
+        },
+      }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       void refetchProfile();
@@ -193,11 +203,8 @@ function StoryReel() {
     },
   });
 
-  const submit = () => {
-    if (!idea.trim()) {
-      toast.error("Describe your story first.");
-      return;
-    }
+  /** Generation itself is unchanged — only the prompt it receives differs. */
+  const render = (prompt: string, directorSessionId?: string) => {
     if (!user) {
       navigate({ to: "/auth" });
       return;
@@ -209,7 +216,26 @@ function StoryReel() {
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
-    generate.mutate();
+    generate.mutate({ prompt, directorSessionId });
+  };
+
+  /** The idea box opens the director instead of rendering straight away. */
+  const submit = () => {
+    if (!idea.trim()) {
+      toast.error("Describe your story first.");
+      return;
+    }
+    setErrorMessage(null);
+    setVideoUrl(null);
+    setPhase("director");
+  };
+
+  const submitDirect = () => {
+    if (!idea.trim()) {
+      toast.error("Describe your story first.");
+      return;
+    }
+    render(idea);
   };
 
   const reset = () => {
@@ -250,6 +276,7 @@ function StoryReel() {
               engine={engine}
               setEngine={setEngine}
               onSubmit={submit}
+              onSubmitDirect={submitDirect}
               busy={generate.isPending || !sessionId || phase === "working"}
               working={phase === "working"}
               statusText={statusText}
@@ -258,6 +285,18 @@ function StoryReel() {
             {phase === "create" && <Learn />}
           </>
         )}
+
+        {phase === "director" && sessionId && (
+          <DirectorPanel
+            sessionId={sessionId}
+            idea={idea}
+            style={style}
+            generating={generate.isPending}
+            onGenerate={(blueprint, directorSessionId) => render(blueprint, directorSessionId)}
+            onCancel={() => setPhase("create")}
+          />
+        )}
+
 
         {phase === "done" && videoUrl && (
           <ResultState videoUrl={videoUrl} generationId={generationId} onReset={reset} />
@@ -349,6 +388,7 @@ function CreateCard({
   engine,
   setEngine,
   onSubmit,
+  onSubmitDirect,
   busy,
   working,
   statusText,
@@ -360,6 +400,7 @@ function CreateCard({
   engine: Engine;
   setEngine: (v: Engine) => void;
   onSubmit: () => void;
+  onSubmitDirect: () => void;
   busy: boolean;
   working: boolean;
   statusText: "queued" | "processing";
@@ -464,11 +505,19 @@ function CreateCard({
                 </>
               ) : (
                 <>
-                  Generate short
+                  Direct my film
                   <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </Button>
+            <button
+              type="button"
+              onClick={onSubmitDirect}
+              disabled={busy}
+              className="mt-3 w-full text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              Skip the director — generate now
+            </button>
             <p className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
               Vertical 9:16 · 5 seconds
             </p>

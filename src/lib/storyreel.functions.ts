@@ -85,6 +85,8 @@ const generateInput = z.object({
   audio: z.boolean().optional().default(false),
   /** Which film engine renders the clip: Lovable AI, or the project's own fal.ai account. */
   engine: z.enum(["lovable", "fal", "live"]).optional().default("lovable"),
+  /** The creative director conversation this film came out of, when there was one. */
+  director_session_id: z.string().uuid().optional(),
 });
 
 const statusInput = z.object({
@@ -169,6 +171,7 @@ export const generateVideo = createServerFn({ method: "POST" })
         prompt_final: promptFinal,
         status: "queued",
         provider: data.engine,
+        director_session_id: data.director_session_id ?? null,
       })
       .select("id")
       .single();
