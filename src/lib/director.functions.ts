@@ -4,33 +4,59 @@ import { z } from "zod";
 import { STYLES } from "@/lib/storyreel.functions";
 
 /**
- * Adaptive AI Creative Director.
+ * Adaptive AI Creative Director — the intelligence layer.
  *
- * The model receives the idea plus every answer so far and decides — on each turn —
- * which single question would most improve the finished film. There is no fixed
- * questionnaire: the next question is always re-derived from the whole conversation.
- * When it has enough signal (or the creator asks for the film now) it returns a
- * Film Bible and a Creative Blueprint — the shot description that is generated.
+ * Every turn the model rebuilds an internal film model from the idea plus every
+ * answer so far, ranks the questions it *could* ask by how much each would
+ * improve the finished film, and asks only the single highest-value one. Facts
+ * are remembered and labelled as the creator's decision or the director's own
+ * assumption, so nothing already known is ever asked again and no creator choice
+ * is silently overwritten. It also follows the thread an answer opens, flags a
+ * breakthrough that redirects the story, surfaces contradictions instead of
+ * resolving them quietly, and stops as soon as the remaining unknowns no longer
+ * matter — the question cap is only a safety net, never the plan.
+ *
+ * Output is a Film Bible (source of truth) plus a Creative Blueprint: the single
+ * shot description handed to the unchanged generation pipeline.
  */
 
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3.8-flash";
 
-/** Hard cap so an interview can never run away from the creator. */
-export const MAX_QUESTIONS = 6;
+/** Safety net only — the interview normally ends when the model has enough. */
+export const MAX_QUESTIONS = 8;
 
 export const DIMENSIONS = [
-  "subject",
-  "setting",
-  "time",
-  "mood",
-  "look",
+  "story",
+  "character",
+  "emotion",
+  "world",
   "camera",
+  "audience",
   "turn",
   "ending",
 ] as const;
 
 export type Confidence = { dimension: string; score: number };
+
+/** Every remembered fact is either the creator's call or the director's. */
+export type FactSource = "user_decision" | "ai_assumption";
+
+export type Fact = { key: string; value: string; source: FactSource };
+
+export type FilmModel = {
+  story: string;
+  characters: string;
+  world: string;
+  time: string;
+  emotion: string;
+  camera: string;
+  audience: string;
+  ending: string;
+  facts: Fact[];
+  continuity: string[];
+  open_questions: string[];
+};
 
 export type FilmBible = {
   title: string;
@@ -39,14 +65,24 @@ export type FilmBible = {
   setting: string;
   mood: string;
   look: string;
+  camera: string;
+  emotional_arc: string;
+  ending: string;
+  decisions: string[];
+  assumptions: string[];
 };
 
 export type DirectorQuestion = {
+  /** Conversational lead-in: what the director already understands. */
+  preface: string;
   text: string;
   dimension: string;
   why: string;
   suggestions: string[];
 };
+
+/** A conflict between two answers — the creator resolves it, never the model. */
+export type DirectorConflict = { message: string; options: string[] };
 
 export type DirectorState = {
   id: string;
@@ -57,31 +93,54 @@ export type DirectorState = {
   confidence: Confidence[];
   question: DirectorQuestion | null;
   question_count: number;
+  film_model: FilmModel | null;
+  breakthrough: string | null;
+  conflict: DirectorConflict | null;
   film_bible: FilmBible | null;
   blueprint: string | null;
 };
 
 type Turn = { question: string; answer: string; skipped: boolean };
 
-const SYSTEM = `You are an adaptive creative director for a tool that renders ONE continuous 5-second vertical (9:16) shot from a text prompt.
+const SYSTEM = `You are a professional film director interviewing a creator. The tool renders ONE continuous 5-second vertical (9:16) shot from a single text prompt, so every creative choice must be visible in that one shot.
 
-Your job each turn: read the creator's idea and every answer so far, then decide the SINGLE question that would most improve the finished film. Never use a fixed questionnaire, never repeat a question already asked, never ask more than one thing at a time. Prefer the creative dimension you are least confident about AND that would visibly change the shot. Questions must be short, plain, non-technical and answerable in a few words. Never ask about models, resolutions, aspect ratio, duration, credits or settings.
+Each turn you run this loop:
+1 UNDERSTAND the idea and every answer so far.
+2 REBUILD the internal film model (story, characters, world, time, emotion, camera, audience, ending).
+3 LIST what is still missing.
+4 RANK the questions you could ask by value = creative impact + story impact + visual impact + continuity impact + generation impact + uncertainty reduction.
+5 ASK ONLY the single highest-value question.
 
-Score your confidence 0-100 for each dimension: subject, setting, time, mood, look, camera, turn, ending.
+Never work through a fixed questionnaire. Never repeat a question, and never ask something you already know, can safely infer, or that would barely change the film — say you have enough instead. Prefer depth over surface: not "what colour is the car" but what the car means to the character. Ask about story, character, emotion, world, camera language, audience or ending — whichever is genuinely blocking you now. Follow the thread an answer opens: if an answer implies a bigger unknown ("his daughter is alive"), ask about that unknown next. Questions are short, plain, non-technical, answerable in a few words. Never ask about models, resolution, aspect ratio, duration, credits or settings.
 
-Set "done" to true only when the remaining unknowns would no longer meaningfully change the film, or when told to finish.
+MEMORY: the film model you return is your memory. Facts already in it are known — asking about them again is a failure. Record every fact with source "user_decision" (the creator said it) or "ai_assumption" (you chose it). You may revise your own assumptions freely; never silently overwrite a user_decision.
 
-When done (or told to finish), fill "film_bible" and "blueprint". The blueprint is ONE paragraph under 400 characters describing a single continuous shot: clear subject, setting, camera movement, lighting, mood and — when the story has one — the visible turn. No scene lists, no dialogue, no titles, no quotation marks, no markdown, no camera brand names.
+BREAKTHROUGH: when a new answer fundamentally changes the story direction, set "breakthrough" to one sentence naming the change, revisit your assumptions, and pick the next question from the NEW direction — not the old path.
+
+CONTRADICTION: when two answers cannot both be true, fill "conflict" with a plain-language message quoting both and give 2-3 resolution options, and make your question the one that asks the creator to choose. Never resolve it yourself.
+
+TERMINATION: set "done" true as soon as the story has a beginning, a development and a payoff, the important characters and their motivation are clear, the emotional and visual direction are clear, continuity holds and the shot can be described for a generator. Before finishing, check exactly that; if one critical thing is missing, ask that one question instead. Fewer, better questions beat more questions.
+
+When done (or told to finish), fill every gap with strong choices of your own recorded as ai_assumption, then fill "film_bible" and "blueprint". The blueprint is ONE paragraph under 400 characters describing a single continuous shot: subject, setting, camera movement, lighting, mood and — when the story has one — the visible turn. No scene lists, no dialogue, no titles, no quotation marks, no markdown, no camera brand names.
 
 Reply with JSON only, matching exactly:
-{"understanding":"one or two sentences on what the film is right now","confidence":[{"dimension":"subject","score":0}],"done":false,"question":{"text":"","dimension":"","why":"","suggestions":["","",""]},"film_bible":{"title":"","premise":"","cast":[""],"setting":"","mood":"","look":""},"blueprint":""}
-Use null for "question" when done, and null for "film_bible"/"blueprint" when not done. "suggestions" holds 2-3 short example answers.`;
+{"understanding":"one or two sentences on what the film is right now","confidence":[{"dimension":"story","score":0}],"film_model":{"story":"","characters":"","world":"","time":"","emotion":"","camera":"","audience":"","ending":"","facts":[{"key":"","value":"","source":"user_decision"}],"continuity":[""],"open_questions":[""]},"breakthrough":null,"conflict":null,"done":false,"question":{"preface":"one short sentence on what you already understand","text":"the single question","dimension":"story","why":"why this matters for the film","suggestions":["","",""]},"film_bible":{"title":"","premise":"","cast":[""],"setting":"","mood":"","look":"","camera":"","emotional_arc":"","ending":"","decisions":[""],"assumptions":[""]},"blueprint":""}
+Confidence dimensions are exactly: story, character, emotion, world, camera, audience, turn, ending. Use null for "question" when done, null for "film_bible"/"blueprint" when not done, and null for "breakthrough"/"conflict" when there is none. "suggestions" holds 2-3 short example answers, "decisions" the creator's choices and "assumptions" yours.`;
 
 type AiReply = {
   understanding?: string;
   confidence?: { dimension?: string; score?: number }[];
+  film_model?: Partial<FilmModel> | null;
+  breakthrough?: string | null;
+  conflict?: { message?: string; options?: unknown } | null;
   done?: boolean;
-  question?: { text?: string; dimension?: string; why?: string; suggestions?: unknown } | null;
+  question?: {
+    preface?: string;
+    text?: string;
+    dimension?: string;
+    why?: string;
+    suggestions?: unknown;
+  } | null;
   film_bible?: Partial<FilmBible> | null;
   blueprint?: string | null;
 };
@@ -90,19 +149,29 @@ function styleLabel(style: string) {
   return STYLES.find((s) => s.value === style)?.label ?? "Cinematic";
 }
 
-function transcript(idea: string, style: string, turns: Turn[]) {
+/** The whole conversation plus the director's own memory of it. */
+function transcript(
+  idea: string,
+  style: string,
+  turns: Turn[],
+  model: FilmModel | null,
+  understanding: string,
+) {
   const lines = [`Idea: ${idea}`, `Visual style: ${styleLabel(style)}`];
+  if (understanding) lines.push(`Your understanding after the last turn: ${understanding}`);
+  if (model) lines.push(`Your film model so far (memory): ${JSON.stringify(model)}`);
   turns.forEach((turn, index) => {
     lines.push(`Q${index + 1}: ${turn.question}`);
-    lines.push(`A${index + 1}: ${turn.skipped ? "(skipped — decide this yourself)" : turn.answer}`);
+    lines.push(
+      `A${index + 1}: ${turn.skipped ? "(the creator said you decide — record your choice as an ai_assumption)" : turn.answer}`,
+    );
   });
   return lines.join("\n");
 }
 
 /** Ask the model for the next question, or for the finished bible + blueprint. */
 async function think(
-  idea: string,
-  style: string,
+  row: SessionRow,
   turns: Turn[],
   finish: boolean,
 ): Promise<AiReply> {
@@ -110,10 +179,10 @@ async function think(
   if (!key) throw new Error("The creative director isn't available right now.");
 
   const instruction = finish
-    ? "The creator wants the film now. Set done to true and deliver the film bible and blueprint, filling any gaps with strong choices of your own."
+    ? "The creator wants the film now. Ask nothing more: set done to true, close every gap with your own strong choices recorded as ai_assumption, and deliver the film bible and blueprint."
     : turns.length >= MAX_QUESTIONS
-      ? "You have asked enough questions. Set done to true and deliver the film bible and blueprint."
-      : "Decide the single most valuable next question, or set done to true if you have enough.";
+      ? "You have used your whole question budget. Set done to true and deliver the film bible and blueprint."
+      : "Run the loop and either ask the single highest-value question, or set done to true if the remaining unknowns would no longer meaningfully change this film.";
 
   const res = await fetch(AI_GATEWAY, {
     method: "POST",
@@ -123,7 +192,10 @@ async function think(
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM },
-        { role: "user", content: `${transcript(idea, style, turns)}\n\n${instruction}` },
+        {
+          role: "user",
+          content: `${transcript(row.idea, row.style, turns, readModel(row.film_model), row.understanding ?? "")}\n\n${instruction}`,
+        },
       ],
     }),
   });
@@ -154,6 +226,21 @@ async function think(
   }
 }
 
+function text(value: unknown, max: number) {
+  return String(value ?? "")
+    .trim()
+    .slice(0, max);
+}
+
+function list(value: unknown, max: number, length: number) {
+  return Array.isArray(value)
+    ? value
+        .map((entry) => text(entry, length))
+        .filter(Boolean)
+        .slice(0, max)
+    : [];
+}
+
 function cleanConfidence(input: AiReply["confidence"]): Confidence[] {
   const scores = new Map<string, number>();
   for (const entry of input ?? []) {
@@ -164,33 +251,96 @@ function cleanConfidence(input: AiReply["confidence"]): Confidence[] {
   return DIMENSIONS.map((dimension) => ({ dimension, score: scores.get(dimension) ?? 0 }));
 }
 
+/** Facts carry who decided them, so a creator's call is never overwritten. */
+function cleanFacts(input: unknown): Fact[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const facts: Fact[] = [];
+  for (const entry of input) {
+    const item = entry as { key?: unknown; value?: unknown; source?: unknown };
+    const key = text(item?.key, 60);
+    const value = text(item?.value, 200);
+    if (!key || !value || seen.has(key.toLowerCase())) continue;
+    seen.add(key.toLowerCase());
+    facts.push({
+      key,
+      value,
+      source: item?.source === "user_decision" ? "user_decision" : "ai_assumption",
+    });
+    if (facts.length >= 30) break;
+  }
+  return facts;
+}
+
+function cleanModel(input: AiReply["film_model"], previous: FilmModel | null): FilmModel | null {
+  if (!input && !previous) return null;
+  const merged: FilmModel = {
+    story: text(input?.story, 400) || previous?.story || "",
+    characters: text(input?.characters, 400) || previous?.characters || "",
+    world: text(input?.world, 300) || previous?.world || "",
+    time: text(input?.time, 200) || previous?.time || "",
+    emotion: text(input?.emotion, 300) || previous?.emotion || "",
+    camera: text(input?.camera, 300) || previous?.camera || "",
+    audience: text(input?.audience, 120) || previous?.audience || "",
+    ending: text(input?.ending, 300) || previous?.ending || "",
+    facts: cleanFacts(input?.facts),
+    continuity: list(input?.continuity, 8, 200),
+    open_questions: list(input?.open_questions, 8, 200),
+  };
+  if (merged.facts.length === 0 && previous) merged.facts = previous.facts;
+  if (merged.continuity.length === 0 && previous) merged.continuity = previous.continuity;
+  return merged;
+}
+
 function cleanQuestion(input: AiReply["question"]): DirectorQuestion | null {
-  const text = String(input?.text ?? "").trim();
-  if (!text) return null;
-  const suggestions = Array.isArray(input?.suggestions)
-    ? input.suggestions
-        .map((s) => String(s ?? "").trim())
-        .filter(Boolean)
-        .slice(0, 3)
-    : [];
+  const body = text(input?.text, 240);
+  if (!body) return null;
   return {
-    text: text.slice(0, 240),
-    dimension: String(input?.dimension ?? "").toLowerCase().slice(0, 40),
-    why: String(input?.why ?? "").trim().slice(0, 200),
-    suggestions,
+    preface: text(input?.preface, 200),
+    text: body,
+    dimension: text(input?.dimension, 40).toLowerCase(),
+    why: text(input?.why, 200),
+    suggestions: list(input?.suggestions, 4, 60),
   };
 }
 
-function cleanBible(input: AiReply["film_bible"], idea: string): FilmBible {
+function cleanConflict(input: AiReply["conflict"]): DirectorConflict | null {
+  const message = text(input?.message, 300);
+  if (!message) return null;
+  const options = list(input?.options, 3, 60);
+  return { message, options };
+}
+
+function cleanBible(
+  input: AiReply["film_bible"],
+  idea: string,
+  model: FilmModel | null,
+): FilmBible {
+  const facts = model?.facts ?? [];
   return {
-    title: String(input?.title ?? "").trim().slice(0, 90) || idea.slice(0, 60),
-    premise: String(input?.premise ?? "").trim().slice(0, 400),
-    cast: Array.isArray(input?.cast)
-      ? input.cast.map((c) => String(c ?? "").trim()).filter(Boolean).slice(0, 6)
-      : [],
-    setting: String(input?.setting ?? "").trim().slice(0, 200),
-    mood: String(input?.mood ?? "").trim().slice(0, 200),
-    look: String(input?.look ?? "").trim().slice(0, 200),
+    title: text(input?.title, 90) || idea.slice(0, 60),
+    premise: text(input?.premise, 400) || model?.story || "",
+    cast: list(input?.cast, 6, 120),
+    setting: text(input?.setting, 200) || model?.world || "",
+    mood: text(input?.mood, 200) || model?.emotion || "",
+    look: text(input?.look, 200),
+    camera: text(input?.camera, 200) || model?.camera || "",
+    emotional_arc: text(input?.emotional_arc, 300) || model?.emotion || "",
+    ending: text(input?.ending, 200) || model?.ending || "",
+    decisions:
+      list(input?.decisions, 10, 160).length > 0
+        ? list(input?.decisions, 10, 160)
+        : facts
+            .filter((fact) => fact.source === "user_decision")
+            .map((fact) => `${fact.key}: ${fact.value}`)
+            .slice(0, 10),
+    assumptions:
+      list(input?.assumptions, 10, 160).length > 0
+        ? list(input?.assumptions, 10, 160)
+        : facts
+            .filter((fact) => fact.source === "ai_assumption")
+            .map((fact) => `${fact.key}: ${fact.value}`)
+            .slice(0, 10),
   };
 }
 
@@ -201,32 +351,40 @@ type SessionRow = {
   status: string;
   understanding: string;
   confidence: unknown;
+  film_model: unknown;
   film_bible: unknown;
   blueprint: string | null;
   question_count: number;
 };
 
 const SESSION_COLUMNS =
-  "id, idea, style, status, understanding, confidence, film_bible, blueprint, question_count";
+  "id, idea, style, status, understanding, confidence, film_model, film_bible, blueprint, question_count";
+
+function readModel(value: unknown): FilmModel | null {
+  return value && typeof value === "object" ? (value as FilmModel) : null;
+}
 
 /** Apply one model reply to the session row and hand the UI a complete state. */
-async function advance(
-  row: SessionRow,
-  turns: Turn[],
-  finish: boolean,
-): Promise<DirectorState> {
+async function advance(row: SessionRow, turns: Turn[], finish: boolean): Promise<DirectorState> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const reply = await think(row.idea, row.style, turns, finish);
+  const reply = await think(row, turns, finish);
   const confidence = cleanConfidence(reply.confidence);
-  const understanding = String(reply.understanding ?? "").trim().slice(0, 500);
-  const forced = finish || turns.length >= MAX_QUESTIONS;
-  const question = forced ? null : cleanQuestion(reply.question);
-  const done = reply.done === true || forced || !question;
+  const understanding = text(reply.understanding, 500);
+  const filmModel = cleanModel(reply.film_model, readModel(row.film_model));
+  const breakthrough = text(reply.breakthrough, 240) || null;
+  const conflict = cleanConflict(reply.conflict);
+  const question = finish || turns.length >= MAX_QUESTIONS ? null : cleanQuestion(reply.question);
 
-  const bible = done ? cleanBible(reply.film_bible, row.idea) : null;
+  /**
+   * A contradiction is never resolved silently: while one is open the interview
+   * keeps going so the creator can choose, unless they asked to finish now.
+   */
+  const done = !question || (reply.done === true && !conflict);
+
+  const bible = done ? cleanBible(reply.film_bible, row.idea, filmModel) : null;
   const blueprint = done
-    ? String(reply.blueprint ?? "").trim().slice(0, 500) ||
+    ? text(reply.blueprint, 500) ||
       `${bible?.premise ?? row.idea} ${bible?.look ?? ""}`.trim().slice(0, 500)
     : null;
 
@@ -236,6 +394,8 @@ async function advance(
       status: done ? "ready" : "interviewing",
       understanding,
       confidence,
+      film_model: filmModel,
+      breakthrough,
       film_bible: bible,
       blueprint,
       question_count: turns.length + (question ? 1 : 0),
@@ -258,8 +418,11 @@ async function advance(
     status: done ? "ready" : "interviewing",
     understanding,
     confidence,
-    question,
+    question: done ? null : question,
     question_count: turns.length + (question ? 1 : 0),
+    film_model: filmModel,
+    breakthrough,
+    conflict: done ? null : conflict,
     film_bible: bible,
     blueprint,
   };
