@@ -154,7 +154,7 @@ function StoryReel() {
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
 
   const generate = useMutation({
-    mutationFn: (input: { prompt: string; directorSessionId?: string }) =>
+    mutationFn: (input: { prompt: string; directorSessionId?: string | undefined }) =>
       start({
         data: {
           idea: input.prompt,
