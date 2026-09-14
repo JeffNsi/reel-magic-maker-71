@@ -64,6 +64,7 @@ export type Database = {
           challenge: Json | null
           confidence: Json
           created_at: string
+          creative_truth: Json | null
           evolution: Json | null
           film_bible: Json | null
           film_model: Json | null
@@ -86,6 +87,7 @@ export type Database = {
           challenge?: Json | null
           confidence?: Json
           created_at?: string
+          creative_truth?: Json | null
           evolution?: Json | null
           film_bible?: Json | null
           film_model?: Json | null
@@ -108,6 +110,7 @@ export type Database = {
           challenge?: Json | null
           confidence?: Json
           created_at?: string
+          creative_truth?: Json | null
           evolution?: Json | null
           film_bible?: Json | null
           film_model?: Json | null
@@ -526,6 +529,7 @@ export type Database = {
           scene_number: number
           story_id: string
           title: string
+          truth: Json | null
           updated_at: string
         }
         Insert: {
@@ -543,6 +547,7 @@ export type Database = {
           scene_number: number
           story_id: string
           title?: string
+          truth?: Json | null
           updated_at?: string
         }
         Update: {
@@ -560,6 +565,7 @@ export type Database = {
           scene_number?: number
           story_id?: string
           title?: string
+          truth?: Json | null
           updated_at?: string
         }
         Relationships: [
