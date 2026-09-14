@@ -355,6 +355,25 @@ function CreateCard({
             />
           </div>
 
+          <div>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              True stories — tap to try
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {EXAMPLE_PROMPTS.map((example) => (
+                <button
+                  key={example.label}
+                  type="button"
+                  onClick={() => setIdea(example.prompt)}
+                  disabled={busy}
+                  className="rounded-full border border-border/70 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <StylePicker value={style} onChange={setStyle} only={V1_STYLES} />
 
           <div>
