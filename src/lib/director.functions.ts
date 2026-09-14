@@ -149,9 +149,15 @@ export type FiveSecondRisk = {
 export type Execution = {
   /** What the film is trying to make the audience feel or understand. */
   intention: string;
+  /**
+   * The one thing the scene must communicate. Inviolable: an execution may be
+   * restaged, re-framed or made metaphorical, but never chosen because it drops
+   * this payoff.
+   */
+  emotional_core: string;
   /** The version that is hard to generate, when there is one. */
   risky_execution: string;
-  /** The same intention, simpler to render. */
+  /** The strongest execution that keeps the payoff and can still be rendered. */
   safer_execution: string;
 };
 
