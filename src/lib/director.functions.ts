@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { STYLES } from "@/lib/storyreel.functions";
+import { searchTwists, twistShortlistBrief, wantsNoTwist } from "@/lib/twists";
 
 /**
  * Adaptive AI Creative Director — the intelligence layer.
@@ -380,6 +381,24 @@ function transcript(
       `A${index + 1}: ${turn.skipped ? "(the creator said you decide — record your choice as an ai_assumption)" : turn.answer}`,
     );
   });
+
+  /**
+   * Twist intelligence: a shortlist of story-turn patterns that plausibly
+   * belong to THIS story, searched from the library by relevance. Never sent
+   * when the creator asked for no twist, and never mandatory when it is sent.
+   */
+  const answers = turns.map((turn) => turn.answer).join(" ");
+  if (!wantsNoTwist(idea, answers)) {
+    const shortlist = twistShortlistBrief(
+      searchTwists({
+        idea,
+        understanding,
+        answers,
+        model: model ? JSON.stringify(model) : "",
+      }),
+    );
+    if (shortlist) lines.push(shortlist);
+  }
   return lines.join("\n");
 }
 
