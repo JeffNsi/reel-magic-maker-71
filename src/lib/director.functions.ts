@@ -26,15 +26,16 @@ const MODEL = "google/gemini-3.8-flash";
 /** Safety net only — the interview normally ends when the model has enough. */
 export const MAX_QUESTIONS = 8;
 
+/**
+ * Confidence is about how well the director understands the creator's intended
+ * direction — not video quality, not odds of success.
+ */
 export const DIMENSIONS = [
   "story",
   "character",
   "emotion",
-  "world",
-  "camera",
-  "audience",
-  "turn",
-  "ending",
+  "visual",
+  "generation",
 ] as const;
 
 export type Confidence = { dimension: string; score: number };
