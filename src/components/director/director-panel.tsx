@@ -136,6 +136,32 @@ export function DirectorPanel({
     onError: fail,
   });
 
+  /**
+   * The stress test: the director challenges its own finished bible before the
+   * creator approves it, so a weak concept is caught before credits are spent.
+   */
+  const challengeMutation = useMutation({
+    mutationFn: () =>
+      stressTest({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    onSuccess: (result) => setChallenge(result),
+    onError: fail,
+  });
+
+  /** The director's own fix becomes the blueprint, then it re-checks the result. */
+  const acceptMutation = useMutation({
+    mutationFn: () =>
+      acceptFix({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    onSuccess: (result) => {
+      setBlueprint(result.blueprint);
+      setState((current) => (current ? { ...current, blueprint: result.blueprint } : current));
+      setChallenge((current) =>
+        current ? { ...current, verdict: "ready", weakness: null, recommendation: "" } : current,
+      );
+      setReview(null);
+    },
+    onError: fail,
+  });
+
   useEffect(() => {
     if (started.current || !sessionId) return;
     started.current = true;
@@ -146,6 +172,13 @@ export function DirectorPanel({
   useEffect(() => {
     if (state?.question) answerRef.current?.focus();
   }, [state?.question?.text]);
+
+  useEffect(() => {
+    if (!state || state.status !== "ready" || challenged.current === state.id) return;
+    challenged.current = state.id;
+    challengeMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.status, state?.id]);
 
   const thinking =
     startMutation.isPending ||
