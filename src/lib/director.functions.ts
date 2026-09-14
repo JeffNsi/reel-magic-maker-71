@@ -189,6 +189,8 @@ export type Challenge = {
   recommendation: string;
   /** The blueprint as it would read if the creator accepts that change. */
   improved_blueprint: string;
+  /** Will this plan survive being turned into a five-second generated clip? */
+  reality: RealityCheck | null;
 };
 
 /** A moment in the interview where an answer redirected the film. */
