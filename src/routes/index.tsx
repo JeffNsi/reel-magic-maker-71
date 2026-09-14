@@ -44,6 +44,35 @@ const PLACEHOLDER =
 /** The four styles offered in the V1 create flow. */
 const V1_STYLES = ["cinematic", "anime", "realistic", "claymation"];
 
+/** True-story twist prompts — one tap fills the idea field. */
+const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
+  {
+    label: "The canoe man",
+    prompt:
+      "A woman weeps beside an empty canoe on a rocky shore, surrounded by police. The camera swings toward the window of the house behind her — a shadow moves behind the curtain.",
+  },
+  {
+    label: "The fake surgeon",
+    prompt:
+      "A field surgeon aboard a warship calmly operates on a wounded soldier under pressure. The camera zooms in on his trembling hands and a hidden medical textbook under the table — he never trained as a doctor.",
+  },
+  {
+    label: "The fairy hoax",
+    prompt:
+      "A young girl in early 1900s clothing photographs smiling fairies among the flowers. The camera slowly pulls back to reveal the fairies are only thin paper cutouts pinned with hat pins.",
+  },
+  {
+    label: "Selling the Eiffel Tower",
+    prompt:
+      "An elegant man in a suit shakes hands with a businessman in front of the Eiffel Tower and hands over an official document. He turns away and smiles to himself as he walks off — the document is completely fake.",
+  },
+  {
+    label: "The lost aristocrat",
+    prompt:
+      "A heavyset man in fine clothes is embraced by a weeping elderly woman crying 'my son, you're alive'. The camera catches his uncertain glance as someone in the background whispers a question in French he doesn't understand.",
+  },
+];
+
 type Phase = "create" | "working" | "done" | "error";
 
 /** Turns a backend failure into language a filmmaker can act on. */
