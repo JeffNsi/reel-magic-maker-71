@@ -7,6 +7,7 @@ import {
   answerDirector,
   applyChallenge,
   challengeFilm,
+  keepMyVersion,
   finishDirector,
   reopenDirector,
   reviewBlueprint,
@@ -73,6 +74,7 @@ export function DirectorPanel({
   const propagate = useServerFn(reviewBlueprint);
   const stressTest = useServerFn(challengeFilm);
   const acceptFix = useServerFn(applyChallenge);
+  const keepVersion = useServerFn(keepMyVersion);
 
   const apply = (next: DirectorState) => {
     setState(next);
@@ -160,6 +162,15 @@ export function DirectorPanel({
       setReview(null);
     },
     onError: fail,
+  });
+
+  /**
+   * The creator's execution wins and the session remembers it, so the reality
+   * check stops arguing for a simpler version it has already lost.
+   */
+  const keepMutation = useMutation({
+    mutationFn: () =>
+      keepVersion({ data: { director_session_id: state!.id, session_id: sessionId } }),
   });
 
   useEffect(() => {
@@ -672,6 +683,56 @@ export function DirectorPanel({
                   </div>
                 )}
 
+                {challenge.reality?.five_second_risk && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-primary">
+                      Five-second clarity risk
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.reality.five_second_risk.problem}
+                    </p>
+                    {challenge.reality.five_second_risk.alternative && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        A simpler way to shoot it: {challenge.reality.five_second_risk.alternative}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.reality?.change && (
+                  <div className="mt-4 space-y-1">
+                    {challenge.reality.keep && (
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        <span className="uppercase tracking-[0.15em] text-muted-foreground/70">
+                          Keep
+                        </span>{" "}
+                        {challenge.reality.keep}
+                      </p>
+                    )}
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      <span className="uppercase tracking-[0.15em] text-muted-foreground/70">
+                        Change
+                      </span>{" "}
+                      {challenge.reality.change}
+                    </p>
+                    {challenge.reality.why && (
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        <span className="uppercase tracking-[0.15em] text-muted-foreground/70">
+                          Why
+                        </span>{" "}
+                        {challenge.reality.why}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {(challenge.reality?.shot_split.length ?? 0) > 1 && (
+                  <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                    Or keep it all and shoot it as separate beats:{" "}
+                    {challenge.reality!.shot_split.join(" · ")}
+                  </p>
+                )}
+
                 {challenge.predictability === "high" && challenge.predictability_note && (
                   <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                     I can see where this is going: {challenge.predictability_note}
@@ -696,9 +757,10 @@ export function DirectorPanel({
                     </Button>
                     <Button
                       variant="ghost"
-                      onClick={() =>
-                        setChallenge({ ...challenge, verdict: "ready", recommendation: "" })
-                      }
+                      onClick={() => {
+                        keepMutation.mutate();
+                        setChallenge({ ...challenge, verdict: "ready", recommendation: "" });
+                      }}
                       className="h-11 flex-1 rounded-xl text-[10px] uppercase tracking-[0.2em]"
                     >
                       Keep my version
