@@ -789,10 +789,69 @@ type SessionRow = {
   challenge: unknown;
   simplify_rejections: number;
   question_count: number;
+  creative_truth: unknown;
 };
 
 const SESSION_COLUMNS =
-  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, simplify_rejections, question_count";
+  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, simplify_rejections, question_count, creative_truth";
+
+/**
+ * The permanent home for the three decisions that used to live only inside a
+ * temporary reality-check record: what the film must communicate, what may
+ * never disappear, and the execution that won. Kept on the session so it
+ * survives further questions, approval and blueprint edits, and read later by
+ * the Scene Truth Contract.
+ */
+export type CreativeTruth = {
+  emotional_core: string;
+  what_must_survive: string;
+  chosen_execution: string;
+  source: "user_decision" | "ai_discovery" | "ai_recommendation" | "ai_assumption";
+};
+
+export function readCreativeTruth(value: unknown): CreativeTruth | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<CreativeTruth>;
+  const truth: CreativeTruth = {
+    emotional_core: text(raw.emotional_core, 300),
+    what_must_survive: text(raw.what_must_survive, 300),
+    chosen_execution: text(raw.chosen_execution, 400),
+    source: raw.source === "user_decision" ? "user_decision" : "ai_recommendation",
+  };
+  return truth.emotional_core || truth.what_must_survive || truth.chosen_execution ? truth : null;
+}
+
+/**
+ * Remember creative truth without ever letting an AI pass overwrite a decision
+ * the creator made: a creator-owned execution stands, and only empty fields are
+ * filled in by the director.
+ */
+async function rememberCreativeTruth(
+  row: SessionRow,
+  patch: Partial<CreativeTruth> & { source: CreativeTruth["source"] },
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const current = readCreativeTruth(row.creative_truth);
+  const userOwned = current?.source === "user_decision" && patch.source !== "user_decision";
+
+  const next: CreativeTruth = {
+    emotional_core:
+      text(patch.emotional_core, 300) || current?.emotional_core || "",
+    what_must_survive:
+      text(patch.what_must_survive, 300) || current?.what_must_survive || "",
+    chosen_execution: userOwned
+      ? current?.chosen_execution || text(patch.chosen_execution, 400)
+      : text(patch.chosen_execution, 400) || current?.chosen_execution || "",
+    source: userOwned ? "user_decision" : patch.source,
+  };
+
+  if (!next.emotional_core && !next.what_must_survive && !next.chosen_execution) return;
+
+  await supabaseAdmin
+    .from("director_sessions")
+    .update({ creative_truth: next })
+    .eq("id", row.id);
+}
 
 function readModel(value: unknown): FilmModel | null {
   return value && typeof value === "object" ? (value as FilmModel) : null;
@@ -1014,6 +1073,12 @@ export const saveBlueprint = createServerFn({ method: "POST" })
       .from("director_sessions")
       .update({ blueprint: data.blueprint })
       .eq("id", row.id);
+
+    /** An edited blueprint is the creator's own execution — it outranks the AI's. */
+    await rememberCreativeTruth(row, {
+      chosen_execution: data.blueprint,
+      source: "user_decision",
+    });
 
     return { blueprint: data.blueprint };
   });
@@ -1290,6 +1355,17 @@ export const challengeFilm = createServerFn({ method: "POST" })
       .update({ challenge })
       .eq("id", row.id);
 
+    /**
+     * The emotional core and the winning execution get a permanent home here,
+     * so a later question can never wipe them with the challenge record.
+     */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge.reality?.execution?.intention ?? "",
+      chosen_execution: row.blueprint ?? "",
+      source: "ai_discovery" as CreativeTruth["source"],
+    });
+
     return challenge;
   });
 
@@ -1334,6 +1410,14 @@ export const applyChallenge = createServerFn({ method: "POST" })
       })
       .eq("id", row.id);
 
+    /** The director's version was accepted: its execution becomes the winner. */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge.reality?.execution?.intention ?? "",
+      chosen_execution: challenge.reality?.execution?.safer_execution || blueprint,
+      source: "ai_recommendation",
+    });
+
     return { blueprint };
   });
 
@@ -1360,6 +1444,15 @@ export const keepMyVersion = createServerFn({ method: "POST" })
           : challenge,
       })
       .eq("id", row.id);
+
+    /** Keep my version: the creator's execution is authoritative from now on. */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge?.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge?.reality?.execution?.intention ?? "",
+      chosen_execution:
+        challenge?.reality?.execution?.risky_execution || row.blueprint || "",
+      source: "user_decision",
+    });
 
     return { kept };
   });

@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { STYLES } from "@/lib/storyreel.functions";
+import { readCreativeTruth } from "@/lib/director.functions";
+import {
+  buildGenerationRequest,
+  checkFidelity,
+  emptySceneTruth,
+  mergeSceneTruth,
+  readSceneTruth,
+  sceneTruthSchema,
+  type SceneTruth,
+} from "@/lib/scene-truth";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -47,6 +57,8 @@ export type FilmScene = {
   video_url: string | null;
   voice_url: string | null;
   error_message: string | null;
+  /** The authoritative structured version of this scene, read by generation. */
+  truth: SceneTruth | null;
 };
 
 export type FilmView = {
@@ -87,6 +99,7 @@ const sceneSchema = z.object({
   complexity: z.coerce.number().min(0).max(10).optional(),
   clarity_verdict: z.string().trim().max(30).optional(),
   clarity_note: z.string().trim().max(300).optional(),
+  truth: sceneTruthSchema.partial().optional(),
 });
 
 const breakdownSchema = z.object({
@@ -160,8 +173,10 @@ For every scene also judge, honestly:
 - "clarity_verdict": "clear" when the moment reads in five seconds without explanation, "risky" when it probably reads but is fragile, "unclear" when an audience would not follow it.
 - "clarity_note": one short sentence naming what a viewer sees, or what would confuse them.
 
+SCENE TRUTH CONTRACT: every scene also carries a structured "truth" object — the executable form of the approved film bible for THAT scene, not a summary of the whole film. Fill only what this scene genuinely has, leave the rest as empty strings, and never invent creative decisions the bible did not make. "emotional_core" is the one thing this scene must communicate. "what_must_survive" is the beat that may never disappear, whatever the execution becomes. "chosen_execution" is how this exact shot is staged — the winning execution, never a rejected alternative. Give each scene its own emotional purpose and execution; do not repeat one global paragraph across scenes. When a character, wardrobe item, object, location or planted clue must persist across scenes, say so in "continuity". Fill "twist", "reveal" and "foreshadowing" only in the scenes those elements actually touch, using the bible's turn as written. Leave "sound" and "dialogue" empty unless the bible asked for them.
+
 Reply with JSON only, no markdown, in this exact shape:
-{"title":string,"logline":string,"setting":string,"characters":[{"name":string,"look":string}],"scenes":[{"title":string,"prompt":string,"narration":string,"complexity":number,"clarity_verdict":string,"clarity_note":string}]}
+{"title":string,"logline":string,"setting":string,"characters":[{"name":string,"look":string}],"scenes":[{"title":string,"prompt":string,"narration":string,"complexity":number,"clarity_verdict":string,"clarity_note":string,"truth":{"emotional_core":string,"what_must_survive":string,"chosen_execution":string,"characters":string,"action":string,"setting":string,"time_period":string,"wardrobe":string,"camera":string,"framing":string,"movement":string,"visual_direction":string,"lighting":string,"sound":string,"dialogue":string,"continuity":string,"twist":string,"reveal":string,"foreshadowing":string}}]}
 
 Each prompt is under 400 characters. Each narration is one spoken voice-over sentence under 200 characters, or an empty string when the shot is stronger silent. No quotation marks, no camera brand names, no scene numbers inside the prompts.`;
 
@@ -191,6 +206,7 @@ type SceneRow = {
   clarity_note: string | null;
   queued: boolean | null;
   generation_id: string | null;
+  truth: unknown;
 };
 
 async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
@@ -211,7 +227,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
   const { data: sceneRows } = await supabaseAdmin
     .from("story_scenes")
     .select(
-      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id",
+      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id, truth",
     )
     .eq("story_id", film_id)
     .order("scene_number", { ascending: true });
@@ -252,6 +268,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
             : null,
         voice_url: await signedUrl((generation?.voiceover_url as string | null) ?? null),
         error_message: (generation?.error_message as string | null) ?? null,
+        truth: readSceneTruth(scene.truth),
       };
     }),
   );
@@ -311,7 +328,9 @@ export async function buildFilmCore(
 
     const { data: session } = await supabaseAdmin
       .from("director_sessions")
-      .select("id, idea, style, status, film_bible, recommendation, blueprint, challenge")
+      .select(
+        "id, idea, style, status, film_bible, recommendation, blueprint, challenge, creative_truth",
+      )
       .eq("id", data.director_session_id)
       .maybeSingle();
 
@@ -357,9 +376,78 @@ export async function buildFilmCore(
 
     if (error || !story) throw new Error("Could not save this film. Please try again.");
 
+    const bible = (session.film_bible ?? null) as {
+      decisions?: string[];
+      camera?: string;
+      look?: string;
+      mood?: string;
+      setting?: string;
+      twist?: {
+        statement?: string;
+        emotional_purpose?: string;
+        reveal?: string;
+        visual_clue?: string;
+        foreshadowing?: string[];
+        ending_implication?: string;
+      } | null;
+    } | null;
+
+    /** The director's permanent creative truth, kept across questions. */
+    const creative = readCreativeTruth(session.creative_truth);
+    const twist = bible?.twist ?? null;
+
     const rows = sceneList.map((scene, index) => {
       const complexity =
         scene.complexity === undefined ? null : Math.round(Math.min(10, Math.max(0, scene.complexity)));
+
+      /**
+       * Scene Truth: the scene's own structured decisions, with the director's
+       * persisted emotional core, execution and accepted turn filled in where
+       * the scene did not state them itself. The creator's decisions are marked
+       * so no later AI pass can overwrite them.
+       */
+      let truth = mergeSceneTruth(emptySceneTruth(), {
+        emotional_core: creative?.emotional_core ?? "",
+        what_must_survive: creative?.what_must_survive ?? "",
+        chosen_execution: creative?.chosen_execution ?? "",
+        camera: bible?.camera ?? "",
+        visual_direction: [bible?.look ?? "", bible?.mood ?? ""].filter(Boolean).join(" — "),
+        setting: bible?.setting ?? breakdown.setting,
+        provenance: creative
+          ? {
+              emotional_core: creative.source,
+              what_must_survive: creative.source,
+              chosen_execution: creative.source,
+            }
+          : {},
+        user_decisions: (bible?.decisions ?? []).slice(0, 8),
+      });
+
+      /** The scene's own decisions win over the film-wide fallbacks. */
+      truth = mergeSceneTruth(truth, {
+        ...(scene.truth ?? {}),
+        action: scene.truth?.action || scene.prompt,
+        dialogue: scene.truth?.dialogue || "",
+        provenance: {},
+      });
+
+      /**
+       * The accepted turn travels with the scenes it touches — one twist
+       * representation only, taken straight from the approved film bible.
+       */
+      if (twist && (truth.twist || truth.reveal || truth.foreshadowing || index === sceneList.length - 1)) {
+        truth = mergeSceneTruth(truth, {
+          twist: truth.twist || twist.statement || "",
+          reveal: truth.reveal || twist.reveal || twist.visual_clue || "",
+          foreshadowing:
+            truth.foreshadowing || (twist.foreshadowing ?? []).slice(0, 4).join("; "),
+          provenance: { twist: "ai_recommendation", reveal: "ai_recommendation" },
+        });
+        if (!truth.emotional_core && twist.emotional_purpose) {
+          truth = mergeSceneTruth(truth, { emotional_core: twist.emotional_purpose });
+        }
+      }
+
       return {
         story_id: story.id as string,
         scene_number: index + 1,
@@ -370,6 +458,7 @@ export async function buildFilmCore(
         credit_cost: costFor(complexity),
         clarity_verdict: verdictOf(scene.clarity_verdict),
         clarity_note: scene.clarity_note ?? "",
+        truth,
       };
     });
 
@@ -494,14 +583,43 @@ export const renderScene = createServerFn({ method: "POST" })
       .map((c) => `${c.name}: ${c.look}`)
       .join(". ");
 
-    const prompt = [
-      STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"],
-      cast ? `Recurring characters — ${cast}. ` : "",
-      film.setting ? `Same setting throughout — ${film.setting}. ` : "",
-      `Scene ${scene.scene_number}: ${scene.idea.trim()}`,
-    ]
-      .join("")
-      .slice(0, 1800);
+    /**
+     * The generation request is built from the Scene Truth Contract, never
+     * reconstructed from the original idea or a shortened sentence. Scenes made
+     * before the contract existed fall back to their prose.
+     */
+    const truth =
+      scene.truth ??
+      mergeSceneTruth(emptySceneTruth(), { action: scene.idea.trim(), setting: film.setting });
+
+    const context = {
+      style_prefix: STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"] ?? "",
+      original_idea: film.logline || "",
+      scene_number: scene.scene_number,
+      scene_title: scene.title,
+      cast,
+      film_setting: film.setting,
+      film_continuity: truth.continuity,
+    };
+
+    let prompt = buildGenerationRequest(truth, context);
+    let fidelity = checkFidelity(truth, prompt);
+
+    /**
+     * Preparation validation, not a generation retry: if an approved creative
+     * field did not survive into the request, the request is rebuilt from Scene
+     * Truth before a single credit is spent.
+     */
+    if (!fidelity.ok) {
+      prompt = buildGenerationRequest(truth, context, { minimal: true });
+      fidelity = checkFidelity(truth, prompt);
+    }
+
+    if (!fidelity.ok) {
+      throw new Error(
+        "This scene's approved direction did not make it into the generation request, so nothing was rendered and no credits were used. Review the scene and try again.",
+      );
+    }
 
     const generationId = await startGeneration({
       session_id: data.session_id,
