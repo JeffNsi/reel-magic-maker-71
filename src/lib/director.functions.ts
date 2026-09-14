@@ -841,3 +841,195 @@ export const reviewBlueprint = createServerFn({ method: "POST" })
       updated_blueprint: text(reply.blueprint, 500) || data.blueprint,
     };
   });
+
+/* ------------------------------------------------------------------ *
+ * Creative intelligence stress test
+ * ------------------------------------------------------------------ */
+
+type ChallengeReply = {
+  verdict?: string;
+  headline?: string;
+  weakness?: Partial<Weakness> | null;
+  opportunity?: Partial<Opportunity> | null;
+  generation_risk?: Partial<GenerationRisk> | null;
+  predictability?: string;
+  predictability_note?: string;
+  what_ifs?: unknown;
+  recommendation?: string;
+  improved_blueprint?: string | null;
+};
+
+const NO_WEAKNESS = "No major creative weakness detected.";
+
+function score(value: unknown) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function cleanWhatIfs(input: unknown): WhatIf[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((entry) => {
+      const item = entry as { text?: unknown; creative_value?: unknown; risk?: unknown };
+      return {
+        text: text(item?.text, 240),
+        creative_value: score(item?.creative_value),
+        risk: score(item?.risk),
+      };
+    })
+    .filter((item) => item.text)
+    .sort((a, b) => b.creative_value - b.risk - (a.creative_value - a.risk))
+    .slice(0, 3);
+}
+
+/** Only findings the model can actually point at survive — no invented criticism. */
+function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challenge {
+  const problem = text(reply.weakness?.problem, 300);
+  const weakness: Weakness | null =
+    problem && problem.toLowerCase() !== NO_WEAKNESS.toLowerCase()
+      ? {
+          problem,
+          why_it_matters: text(reply.weakness?.why_it_matters, 300),
+          affected: list(reply.weakness?.affected, 6, 60),
+          solution: text(reply.weakness?.solution, 300),
+        }
+      : null;
+
+  const improvement = text(reply.opportunity?.proposed_improvement, 300);
+  const opportunity: Opportunity | null = improvement
+    ? {
+        current_direction: text(reply.opportunity?.current_direction, 300),
+        proposed_improvement: improvement,
+        why: text(reply.opportunity?.why, 300),
+        affected: list(reply.opportunity?.affected, 6, 60),
+      }
+    : null;
+
+  const riskProblem = text(reply.generation_risk?.problem, 300);
+  const generation_risk: GenerationRisk | null = riskProblem
+    ? { problem: riskProblem, fix: text(reply.generation_risk?.fix, 300) }
+    : null;
+
+  const raw = String(reply.verdict ?? "").toLowerCase();
+  let verdict: Verdict =
+    raw.includes("revis") || raw.includes("red")
+      ? "revision"
+      : raw.includes("recommend") || raw.includes("yellow")
+        ? "recommendation"
+        : "ready";
+
+  /** The verdict has to match the findings, not just the label the model chose. */
+  if (verdict === "ready" && (weakness || opportunity || generation_risk)) {
+    verdict = "recommendation";
+  }
+  if (verdict === "revision" && !weakness && !generation_risk) verdict = "recommendation";
+
+  const predictabilityRaw = String(reply.predictability ?? "").toLowerCase();
+  const predictability =
+    predictabilityRaw === "high" ? "high" : predictabilityRaw === "medium" ? "medium" : "low";
+
+  const recommendation =
+    text(reply.recommendation, 400) ||
+    opportunity?.proposed_improvement ||
+    weakness?.solution ||
+    "";
+
+  return {
+    verdict,
+    headline:
+      text(reply.headline, 300) ||
+      (verdict === "ready"
+        ? "This holds up. I'd shoot it as it stands."
+        : verdict === "revision"
+          ? "I found a creative problem worth fixing first."
+          : "I have one recommendation before we shoot."),
+    weakness,
+    opportunity,
+    generation_risk,
+    predictability,
+    predictability_note: text(reply.predictability_note, 300),
+    what_ifs: cleanWhatIfs(reply.what_ifs),
+    recommendation: verdict === "ready" ? "" : recommendation,
+    improved_blueprint: text(reply.improved_blueprint, 500) || currentBlueprint,
+  };
+}
+
+function challengeBrief(row: SessionRow) {
+  return [
+    `ORIGINAL IDEA: ${row.idea}`,
+    `Visual style: ${styleLabel(row.style)}`,
+    `Film bible (the authoritative version): ${JSON.stringify(row.film_bible)}`,
+    `Your recommendation: ${JSON.stringify(row.recommendation)}`,
+    `Your film model, including the impact chain: ${JSON.stringify(readModel(row.film_model))}`,
+    `The blueprint that would be sent to the generator: ${row.blueprint ?? ""}`,
+    "",
+    "Challenge this film as its director would before production. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
+  ].join("\n");
+}
+
+/**
+ * Run the stress test on the approved bible. Separate from the interview so it
+ * costs nothing until a film is actually designed, and never blocks a question.
+ */
+export const challengeFilm = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<Challenge> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    if (!row.film_bible) throw new Error("There is no finished film to challenge yet.");
+    if (row.challenge && typeof row.challenge === "object") return row.challenge as Challenge;
+
+    const reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    const challenge = cleanChallenge(reply, row.blueprint ?? "");
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({ challenge })
+      .eq("id", row.id);
+
+    return challenge;
+  });
+
+/**
+ * "Accept recommendation" / "Fix with AI": the director's own fix becomes the
+ * blueprint, recorded as its recommendation, and the challenge is cleared so
+ * the fixed version can be challenged again.
+ */
+export const applyChallenge = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<{ blueprint: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    const challenge = (row.challenge ?? null) as Challenge | null;
+    if (!challenge) throw new Error("There is nothing to apply yet.");
+
+    const blueprint = (challenge.improved_blueprint || row.blueprint || "").slice(0, 500);
+    if (!blueprint) throw new Error("There is nothing to apply yet.");
+
+    const model = readModel(row.film_model);
+    const bible = (row.film_bible ?? null) as FilmBible | null;
+    const applied: FilmBible | null = bible
+      ? {
+          ...bible,
+          recommendations: [
+            ...bible.recommendations,
+            challenge.recommendation || challenge.weakness?.solution || "",
+          ]
+            .filter(Boolean)
+            .slice(-10),
+        }
+      : null;
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({
+        blueprint,
+        film_bible: applied,
+        film_model: model,
+        challenge: { ...challenge, verdict: "ready", recommendation: "", weakness: null },
+      })
+      .eq("id", row.id);
+
+    return { blueprint };
+  });
