@@ -267,6 +267,35 @@ export type Database = {
           },
         ]
       }
+      film_watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          story_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          story_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_watchlist_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generations: {
         Row: {
           coins_spent: number
@@ -438,8 +467,10 @@ export type Database = {
       }
       stories: {
         Row: {
+          blueprint: string | null
           characters: Json
           created_at: string
+          director_session_id: string | null
           id: string
           logline: string
           session_id: string
@@ -450,8 +481,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          blueprint?: string | null
           characters?: Json
           created_at?: string
+          director_session_id?: string | null
           id?: string
           logline?: string
           session_id: string
@@ -462,8 +495,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          blueprint?: string | null
           characters?: Json
           created_at?: string
+          director_session_id?: string | null
           id?: string
           logline?: string
           session_id?: string
@@ -477,33 +512,51 @@ export type Database = {
       }
       story_scenes: {
         Row: {
+          clarity_note: string | null
+          clarity_verdict: string | null
+          complexity: number | null
           created_at: string
+          credit_cost: number
           generation_id: string | null
           id: string
           idea: string
           narration: string
+          queue_position: number | null
+          queued: boolean
           scene_number: number
           story_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          clarity_note?: string | null
+          clarity_verdict?: string | null
+          complexity?: number | null
           created_at?: string
+          credit_cost?: number
           generation_id?: string | null
           id?: string
           idea?: string
           narration?: string
+          queue_position?: number | null
+          queued?: boolean
           scene_number: number
           story_id: string
           title?: string
           updated_at?: string
         }
         Update: {
+          clarity_note?: string | null
+          clarity_verdict?: string | null
+          complexity?: number | null
           created_at?: string
+          credit_cost?: number
           generation_id?: string | null
           id?: string
           idea?: string
           narration?: string
+          queue_position?: number | null
+          queued?: boolean
           scene_number?: number
           story_id?: string
           title?: string
