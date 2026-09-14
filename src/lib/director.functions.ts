@@ -950,6 +950,62 @@ function cleanWhatIfs(input: unknown): WhatIf[] {
     .slice(0, 3);
 }
 
+/** 0-10 planning indicator, not a prediction of the model's success. */
+function complexityScore(value: unknown) {
+  return Math.max(0, Math.min(10, Math.round(Number(value) || 0)));
+}
+
+/**
+ * The reality check survives only where the model pointed at something real:
+ * a beat that fails the five-second test, an execution that can be simplified
+ * without touching the intention, anchors, or a shot split.
+ */
+function cleanReality(input: ChallengeReply["reality"]): RealityCheck | null {
+  if (!input || typeof input !== "object") return null;
+
+  const riskProblem = text(input.five_second_risk?.problem, 300);
+  const five_second_risk: FiveSecondRisk | null = riskProblem
+    ? {
+        scene: text(input.five_second_risk?.scene, 200),
+        problem: riskProblem,
+        alternative: text(input.five_second_risk?.alternative, 300),
+      }
+    : null;
+
+  const intention = text(input.execution?.intention, 240);
+  const safer = text(input.execution?.safer_execution, 300);
+  /** An execution note is only useful when there is an intention AND a simpler way. */
+  const execution: Execution | null =
+    intention && safer
+      ? {
+          intention,
+          risky_execution: text(input.execution?.risky_execution, 300),
+          safer_execution: safer,
+        }
+      : null;
+
+  const reality: RealityCheck = {
+    five_second_risk,
+    execution,
+    complexity: complexityScore(input.complexity),
+    complexity_note: text(input.complexity_note, 240),
+    anchors: list(input.anchors, 4, 80),
+    shot_split: list(input.shot_split, 4, 120),
+    keep: text(input.keep, 240),
+    change: text(input.change, 240),
+    why: text(input.why, 300),
+  };
+
+  const empty =
+    !five_second_risk &&
+    !execution &&
+    !reality.complexity_note &&
+    !reality.anchors.length &&
+    !reality.shot_split.length &&
+    !reality.change;
+  return empty ? null : reality;
+}
+
 /** Only findings the model can actually point at survive — no invented criticism. */
 function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challenge {
   const problem = text(reply.weakness?.problem, 300);
