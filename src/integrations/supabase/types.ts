@@ -61,6 +61,7 @@ export type Database = {
           blueprint: string | null
           breakthrough: string | null
           breakthroughs: Json
+          challenge: Json | null
           confidence: Json
           created_at: string
           evolution: Json | null
@@ -81,6 +82,7 @@ export type Database = {
           blueprint?: string | null
           breakthrough?: string | null
           breakthroughs?: Json
+          challenge?: Json | null
           confidence?: Json
           created_at?: string
           evolution?: Json | null
@@ -101,6 +103,7 @@ export type Database = {
           blueprint?: string | null
           breakthrough?: string | null
           breakthroughs?: Json
+          challenge?: Json | null
           confidence?: Json
           created_at?: string
           evolution?: Json | null

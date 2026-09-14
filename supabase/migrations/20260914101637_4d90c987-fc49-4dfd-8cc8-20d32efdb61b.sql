@@ -1,0 +1,1 @@
+ALTER TABLE public.director_sessions ADD COLUMN IF NOT EXISTS challenge jsonb;
