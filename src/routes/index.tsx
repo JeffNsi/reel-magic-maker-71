@@ -71,6 +71,31 @@ const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
     prompt:
       "A heavyset man in fine clothes is embraced by a weeping elderly woman crying 'my son, you're alive'. The camera catches his uncertain glance as someone in the background whispers a question in French he doesn't understand.",
   },
+  {
+    label: "The lost violin",
+    prompt:
+      "A street musician plays violin in a subway station while passers-by ignore him completely. The camera zooms in on the violin's engraving — it reveals the instrument is worth millions of dollars.",
+  },
+  {
+    label: "The doctor in disguise",
+    prompt:
+      "A strict army doctor in Victorian uniform gives orders at a field hospital, self-assured and authoritative. The camera cuts to a silent mortuary decades later, where an assistant dressing the body gasps and stares in shock toward the camera.",
+  },
+  {
+    label: "The invisible robber",
+    prompt:
+      "A man rubs lemon juice into his face in front of a mirror, smiling confidently. The camera cuts to him walking straight into a bank — the security camera captures his face crystal clear.",
+  },
+  {
+    label: "The island that vanished",
+    prompt:
+      "A research vessel approaches the coordinates of an island marked on an old nautical chart. The camera pans across the horizon — there is nothing there, only open water in every direction.",
+  },
+  {
+    label: "His own double",
+    prompt:
+      "An adult man with tense eyes is embraced by a crying family who believe he is their missing son. The camera catches his lips forming a word with a clear foreign accent that no one in the family reacts to.",
+  },
 ];
 
 type Phase = "create" | "working" | "done" | "error";
