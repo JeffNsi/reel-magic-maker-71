@@ -112,6 +112,47 @@ export type Recommendation = {
   ending: string;
 };
 
+/**
+ * Creative intelligence stress test — the director challenges its own film
+ * bible before a single credit is spent. Every test runs internally; only the
+ * few findings that matter reach the creator.
+ */
+export type Weakness = {
+  problem: string;
+  why_it_matters: string;
+  affected: string[];
+  solution: string;
+};
+
+export type Opportunity = {
+  current_direction: string;
+  proposed_improvement: string;
+  why: string;
+  affected: string[];
+};
+
+export type GenerationRisk = { problem: string; fix: string };
+
+export type WhatIf = { text: string; creative_value: number; risk: number };
+
+export type Verdict = "ready" | "recommendation" | "revision";
+
+export type Challenge = {
+  verdict: Verdict;
+  headline: string;
+  /** Null when the film holds up — criticism is never invented. */
+  weakness: Weakness | null;
+  opportunity: Opportunity | null;
+  generation_risk: GenerationRisk | null;
+  predictability: "low" | "medium" | "high";
+  predictability_note: string;
+  what_ifs: WhatIf[];
+  /** The one thing the director would change, in a sentence. */
+  recommendation: string;
+  /** The blueprint as it would read if the creator accepts that change. */
+  improved_blueprint: string;
+};
+
 /** A moment in the interview where an answer redirected the film. */
 export type BreakthroughEvent = {
   question: string;
