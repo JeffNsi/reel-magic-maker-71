@@ -1185,3 +1185,30 @@ export const applyChallenge = createServerFn({ method: "POST" })
 
     return { blueprint };
   });
+
+/**
+ * "Keep my version": the creator's execution stands untouched, and the session
+ * remembers the refusal so the reality check stops pushing simplifications it
+ * has already lost. The blueprint is never modified here.
+ */
+export const keepMyVersion = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<{ kept: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    const challenge = (row.challenge ?? null) as Challenge | null;
+    const kept = (row.simplify_rejections ?? 0) + 1;
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({
+        simplify_rejections: kept,
+        challenge: challenge
+          ? { ...challenge, verdict: "ready", recommendation: "", weakness: null }
+          : challenge,
+      })
+      .eq("id", row.id);
+
+    return { kept };
+  });
