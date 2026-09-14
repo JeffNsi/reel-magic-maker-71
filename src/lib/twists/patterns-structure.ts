@@ -1,0 +1,38 @@
+import { buildFamily, type RawTwist } from "./types";
+
+const rows: RawTwist[] = [
+  ["begins-after-event","The story begins after the real event","order","the inciting act already happened","curiosity","drama,thriller","self","aftermath,bandage,rubble,silence",9,9,3,4,9],
+  ["ending-is-beginning","The apparent ending is a beginning","order","the close opens another story","forward tension","drama,sci-fi","self","door,road,letter,light",8,8,3,4,9],
+  ["circular","The film ends where it began","circle","the final image repeats the first","inevitability","drama,thriller","self","same frame,same object,same light",10,10,4,5,9],
+  ["parallel-converge","Two parallel stories turn out to be one","convergence","the strands share a subject","satisfying click","drama,thriller","self,stranger","object,time,street,sound",9,9,6,5,7],
+  ["second-teller","Another character tells the same story differently","retelling","the account changes with the teller","reappraisal","drama,crime","ally,rival","same scene,new detail,angle,voice",9,10,5,4,8],
+  ["final-recontextualises-opening","The last scene recontextualises the first","recontext","the opening was misread","delighted shock","thriller,drama","self","same shot,wider frame,new sound",10,10,4,4,9],
+  ["repeated-image","A repeated image gains new meaning","motif","the motif accrues meaning","quiet power","drama","self,family","object,window,tree,hand",10,10,3,4,9],
+  ["throwaway-detail-central","A throwaway detail becomes central","seeding","the incidental was essential","satisfaction","mystery,drama","self,stranger","background,label,poster,name",10,10,3,4,9],
+  ["frame-narrative","The whole film sits inside another telling","frame","someone is recounting it","distance then intimacy","drama","self,stranger","chair,recorder,room,listener",7,8,5,5,8],
+  ["reverse-order","The film runs backwards","order","the sequence is reversed","recontextualisation","thriller,drama","self","restored object,water,smoke,wound",9,8,7,6,6],
+  ["two-endings","Two endings coexist","ambiguity","the outcome is left open","unsettled reflection","drama","self","door,two paths,light,mirror",8,8,5,5,8],
+  ["cold-open-is-end","The cold open is the final beat","order","the first shot is the climax","dread","thriller","self","blood,rain,phone,clock",9,9,4,4,9],
+  ["title-means-two-things","The title carries a second meaning","naming","the words apply differently at the end","clever warmth","drama","self","sign,word,letter,name",6,8,3,4,9],
+  ["first-line-answered-last","The opening question is answered at the end","bookend","the film closes its own loop","completion","drama","self,family","question,letter,voice,note",7,9,3,4,9],
+  ["one-shot-two-readings","A single shot supports two readings","ambiguity","the same footage means either","productive doubt","drama,thriller","self,stranger","hand,door,glance,shadow",10,9,4,4,9],
+  ["chapter-lie","A stated fact was never true","unreliable structure","the framing device lied","betrayal","psychological,thriller","self","caption,voice,date,record",7,9,5,6,8],
+  ["background-story","The real story is in the background","composition","the periphery carries the plot","delight","drama,comedy","stranger,self","background,window,street,extra",10,10,4,4,9],
+  ["single-take-reveal","One unbroken shot hides the turn","staging","the reveal happens without a cut","admiration","thriller,drama","self,stranger","pillar,corner,mirror,doorway",10,9,6,4,7],
+  ["silent-reveal","The turn arrives with no words","silence","the reveal is wordless","pure cinema","drama","self,family","face,object,light,breath",10,9,3,3,9],
+  ["off-screen-event","The decisive event happens off screen","omission","what matters is never shown","imagination engaged","drama,horror","self,family","door,sound,reaction,shadow",9,9,3,4,9],
+  ["opening-was-dream-of-end","The opening was a premonition","foreshadow","the first image predicted the last","inevitability","thriller,supernatural","self","same frame,same rain,same wound",10,10,4,5,9],
+  ["mid-scene-start","The film starts mid-decision","order","the choice is already underway","urgency","thriller,drama","self","hand,door,engine,phone",8,8,3,4,9],
+  ["three-versions","The same minute plays three ways","repetition","perspective changes the event","reorientation","drama,thriller","self,ally","same clock,same street,new angle",9,9,6,5,7],
+  ["letter-frames-film","A letter frames the whole film","device","the text organises the story","intimacy","drama,romance","lover,family","paper,ink,envelope,voice",8,9,4,4,9],
+  ["object-passes-hands","An object carries the story between people","relay","the prop is the through-line","connection across lives","drama","stranger,family","coin,book,coat,ticket",10,10,4,4,9],
+  ["ending-in-first-line","The ending was stated at the start","declaration","the outcome was announced early","tragic momentum","drama","self","voice,caption,letter,note",7,9,3,4,9],
+  ["absent-protagonist","The protagonist never appears","absence","the subject is defined by others","haunting","drama","family,stranger","chair,coat,voice,photo",10,9,5,5,8],
+  ["witness-structure","The story is told by a bystander","viewpoint","the observer frames the events","distance","drama,crime","stranger","window,doorway,street,glass",9,9,4,4,9],
+  ["clock-structure","The film is organised by a countdown","time frame","a deadline shapes the structure","tension","thriller","self","clock,timer,train,bell",9,9,4,5,9],
+  ["ending-repeats-opening-sound","A sound bookends the film","audio motif","the same sound returns changed","resonance","drama","self,family","train,bell,breath,rain",9,10,3,4,9],
+  ["two-halves-mirror","The second half mirrors the first","symmetry","every beat has an answering beat","formal satisfaction","drama","self,rival","same prop,same street,same gesture",9,9,6,4,8],
+  ["last-frame-question","The final frame poses the question","ending","the film closes on uncertainty","lingering","drama,thriller","self","face,door,horizon,light",9,8,3,4,9],
+];
+
+export const STRUCTURE_TWISTS = buildFamily("structure", rows);

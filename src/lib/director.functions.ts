@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { STYLES } from "@/lib/storyreel.functions";
+import { searchTwists, twistShortlistBrief, wantsNoTwist } from "@/lib/twists";
 
 /**
  * Adaptive AI Creative Director — the intelligence layer.
@@ -72,6 +73,27 @@ export type FilmModel = {
   open_questions: string[];
 };
 
+/**
+ * A story turn the director found by searching the twist library against this
+ * story. Only an accepted or recommended turn is written here, and it is always
+ * expressed as filmable visual information — never as "plot twist: ...".
+ */
+export type Twist = {
+  /** The library pattern it was adapted from, for traceability. */
+  pattern: string;
+  /** The turn in one plain sentence, in story terms. */
+  statement: string;
+  /** Why the story is emotionally stronger with it. */
+  emotional_purpose: string;
+  /** 2-4 things the audience could notice earlier without understanding them. */
+  foreshadowing: string[];
+  /** The moment the audience understands. */
+  reveal: string;
+  /** The single image that carries the reveal. */
+  visual_clue: string;
+  ending_implication: string;
+};
+
 export type FilmBible = {
   title: string;
   premise: string;
@@ -87,6 +109,8 @@ export type FilmBible = {
   discoveries: string[];
   recommendations: string[];
   open_questions: string[];
+  /** The accepted story turn, when this story has one. Null is a valid answer. */
+  twist: Twist | null;
 };
 
 /** How the original idea became the story the interview arrived at. */
@@ -266,6 +290,8 @@ BREAKTHROUGH: when a new answer fundamentally changes the story direction, set "
 
 CONTRADICTION: when two answers cannot both be true, fill "conflict" with a plain-language message quoting both and give 2-3 resolution options, and make your question the one that asks the creator to choose. Never resolve it yourself.
 
+TWIST INTELLIGENCE: some turns of the brief include a TWIST SHORTLIST — story-turn patterns already filtered for this story from a large internal library. It is a creative resource, never an instruction and never a menu to pick from politely. Work it like a director: understand the story first, name the openings it actually has, check which shortlisted patterns genuinely belong to THIS story (genre, protagonist, relationships, emotional core, conflict, setting, period, existing clues, the creator's stated intention), adapt the ones that fit to these specific characters rather than restating the pattern, and consider combining two compatible patterns only when the combination truly deepens the story. Score candidates internally on story fit, emotional impact, narrative value, visual potential, foreshadowing potential, originality, cliché risk and whether a five-second vertical shot can show it — emotional and narrative value outweigh cleverness and spectacle. Prefer a turn the audience can discover through an image (a reflection, a scar, a watch with the wrong date, a photograph holding someone who cannot be there, a child recognising an adult) over one that needs explaining. When a turn is promising, work out 2-4 quiet things the audience could notice earlier without understanding them yet, subtle enough not to give it away. NEVER force a turn: if none of them makes this story stronger, add none and say nothing about it — "the story is stronger without a twist" is an intelligent result. Never introduce a turn when the creator asked for none, and never replace a direction the creator decided (a user_decision) with a turn of your own; you may offer one as an ai_recommendation and let them choose. A turn that makes the film cleverer but emotionally weaker is rejected — check it against what must survive in this story before recommending it. If a new answer opens a genuinely bigger story, that is a breakthrough: search again from the new direction and, when the answer has high creative value, your single question may follow the turn ("what one visible detail could prove that to the audience?"). Record an accepted or recommended turn in the film bible's "twist" as filmable information — foreshadowing, reveal, the one visual clue, what it means for the ending — never as a label like "plot twist: the detective is the corpse". Set "twist" to null when there is none.
+
 TERMINATION: set "done" true as soon as the story has a beginning, a development and a payoff, the important characters and their motivation are clear, the emotional and visual direction are clear, continuity holds and the shot can be described for a generator. Before finishing, ask yourself as the director whether anything in this film would still bother you; if one critical thing is missing, ask that one question instead. Fewer, better questions beat more questions.
 
 When done (or told to finish), fill every gap with strong choices of your own recorded as ai_assumption, then fill "film_bible", "evolution", "recommendation" and "blueprint".
@@ -380,6 +406,24 @@ function transcript(
       `A${index + 1}: ${turn.skipped ? "(the creator said you decide — record your choice as an ai_assumption)" : turn.answer}`,
     );
   });
+
+  /**
+   * Twist intelligence: a shortlist of story-turn patterns that plausibly
+   * belong to THIS story, searched from the library by relevance. Never sent
+   * when the creator asked for no twist, and never mandatory when it is sent.
+   */
+  const answers = turns.map((turn) => turn.answer).join(" ");
+  if (!wantsNoTwist(idea, answers)) {
+    const shortlist = twistShortlistBrief(
+      searchTwists({
+        idea,
+        understanding,
+        answers,
+        model: model ? JSON.stringify(model) : "",
+      }),
+    );
+    if (shortlist) lines.push(shortlist);
+  }
   return lines.join("\n");
 }
 
@@ -642,6 +686,29 @@ function cleanBible(
       list(input?.open_questions, 6, 200).length > 0
         ? list(input?.open_questions, 6, 200)
         : (model?.open_questions ?? []),
+    twist: cleanTwist(input?.twist),
+  };
+}
+
+/**
+ * A story turn only survives if the director actually described one, and only
+ * as filmable information — no label, no bare "plot twist" line. No twist is a
+ * valid, common answer.
+ */
+function cleanTwist(input: unknown): Twist | null {
+  if (!input || typeof input !== "object") return null;
+  const entry = input as Partial<Twist>;
+  const statement = text(entry.statement, 300);
+  const reveal = text(entry.reveal, 300);
+  if (!statement || !reveal) return null;
+  return {
+    pattern: text(entry.pattern, 80),
+    statement,
+    emotional_purpose: text(entry.emotional_purpose, 300),
+    foreshadowing: list(entry.foreshadowing, 4, 200),
+    reveal,
+    visual_clue: text(entry.visual_clue, 240),
+    ending_implication: text(entry.ending_implication, 240),
   };
 }
 

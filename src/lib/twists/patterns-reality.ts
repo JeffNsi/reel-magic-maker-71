@@ -1,0 +1,38 @@
+import { buildFamily, type RawTwist } from "./types";
+
+const rows: RawTwist[] = [
+  ["simulation","The world is a simulation","constructed","the environment is generated, not lived in","ground removed","sci-fi,thriller","self","glitch,repetition,grid,screen",8,8,6,8,6],
+  ["artificial-world","The place is a built set","constructed","walls end where the world seemed to continue","exposure","drama,sci-fi","self,stranger","edge,seam,light rig,painted sky",10,8,5,7,7],
+  ["dream-as-real","What we watched was a dream","dream","the scene never happened outside a sleeping mind","disorientation then loss","drama,horror","self","bed,clock,repetition,door",7,7,4,9,7],
+  ["memory-reconstruction","Reality is a reconstructed memory","memory","the scene is an imperfect replay","unstable grief","drama,psychological","self","gap,blur,missing face,loop",9,9,6,6,6],
+  ["inside-illusion","The character has been inside an illusion","illusion","someone staged the world around them","betrayal by everyone","thriller,sci-fi","ally,stranger","actor,cue,camera,curtain",8,8,6,7,6],
+  ["world-resets","The world resets around them","loop","the environment restores itself","futility","sci-fi,horror","self","object returns,clock,spill,candle",9,9,6,6,7],
+  ["truth-changes-world","Remembering a truth changes reality","memory","the world reorganises when a fact is admitted","catharsis","supernatural,drama","self","room shifts,photo changes,door,light",9,8,7,6,5],
+  ["mundane-explanation","The supernatural event has an ordinary cause","deflation","fear had a plain source","relief edged with shame","horror,drama","self,family","draft,pipe,animal,neighbour",8,8,3,5,9],
+  ["normality-is-staged","The ordinary world is staged for one person","constructed","everyone plays a role for the protagonist","paranoia confirmed","thriller,drama","stranger,ally","repeat extras,cue,camera,marker",8,9,6,7,6],
+  ["being-observed","They are being watched and studied","surveillance","the protagonist is an experiment","exposure","thriller,sci-fi","stranger","camera,glass,notes,mirror",9,9,5,6,8],
+  ["afterlife-waiting-room","The place is between life and death","afterlife","the location is a threshold, not a room","calm dread","drama,supernatural","self,stranger","corridor,ticket,clock,queue",9,8,5,7,7],
+  ["hallucinated-companion","The companion exists only in their mind","projection","the other person was never physically there","loneliness revealed","psychological,drama","ally,lover","no reflection,two cups,one chair,silence",9,9,5,8,7],
+  ["medication-veil","Medication has been shaping what they see","chemical","perception was altered on purpose","violation","psychological,thriller","carer,self","pill,glass,label,tremor",8,9,4,6,8],
+  ["future-earth","The familiar world is the far future","time-place","what looks contemporary is centuries later","awe","sci-fi","self","ruin,overgrowth,artefact,signage",9,8,6,6,7],
+  ["past-not-past","The apparent past is the present","time-place","the period look is a chosen way of living","curiosity","drama,sci-fi","self,stranger","modern object,radio,plastic,plane",8,9,5,5,8],
+  ["nested-dream","A dream inside a dream","dream","waking leads to another constructed layer","unsteady footing","thriller,sci-fi","self","door,bed,repeat detail,ring",8,8,8,8,5],
+  ["recording-not-live","What we see is a recording","medium","the event already happened","helplessness","thriller,drama","self,stranger","timecode,tape,static,pause",9,9,4,6,8],
+  ["mirror-world","The reflected world behaves differently","mirror","the mirror shows another reality","primal unease","horror,supernatural","self","mirror,delay,wrong hand,shadow",10,9,6,6,6],
+  ["storybook","The events are being written as they happen","authorship","someone is composing the world","strange comfort","drama,fantasy","self,stranger","pen,page,typewriter,ink",8,8,6,7,7],
+  ["ghost-town-alive","The empty place is inhabited","occupancy","people are present but unseen","creeping company","horror,drama","stranger","food,warm cup,footprint,curtain",9,9,4,5,9],
+  ["coma-world","The world is built inside a coma","medical","the protagonist is unconscious elsewhere","tender sorrow","drama,sci-fi","self,family","beeping,white light,voice,hand",8,8,5,7,7],
+  ["afterimage","The person left an imprint, not a presence","supernatural","what repeats is a residue of an event","melancholy awe","supernatural,drama","self,stranger","same path,same time,worn floor,shadow",9,9,5,5,8],
+  ["reversed-roles","The world runs on rules we misread","rules","the logic of the place is inverted","reorientation","sci-fi,fantasy","self,stranger","signage,gesture,greeting,queue",7,8,6,6,7],
+  ["single-inhabitant","Only one person is really there","solitude","every other figure is generated","isolation confirmed","sci-fi,drama","self","identical faces,loop,empty street,echo",9,9,6,6,7],
+  ["museum-of-life","The world is preserved, not lived","preservation","the setting is an exhibit of their life","dislocation","drama,sci-fi","self","label,rope,glass,plaque",10,9,5,5,8],
+  ["prayer-answered-wrong","A wish reshaped reality","wish","the world changed to grant something asked for","careful-what-you-wish dread","fantasy,drama","self,family","candle,coin,note,shrine",8,8,5,7,7],
+  ["timeline-overwritten","This reality replaced another","erasure","a previous version of events was overwritten","mourning something unremembered","sci-fi,drama","self","scar,photo change,name,anniversary",8,9,7,6,6],
+  ["shared-delusion","A group maintains the illusion together","collective","everyone agreed not to see the truth","complicity","drama,thriller","family,ally","empty chair,place setting,ritual,silence",9,9,5,6,8],
+  ["animal-perspective","We have been seeing through another creature's eyes","viewpoint","the observer is not human","tender surprise","drama,fantasy","self,stranger","low angle,fur,paw,height",9,8,5,6,7],
+  ["fiction-inside-fiction","The story being told is inside another story","frame","the narrative is a performance within the film","playful unsteadiness","drama","self,stranger","stage,script,audience,light",7,8,6,7,7],
+  ["place-remembers","The location repeats an old event","haunting","the room replays what happened there","sorrowful awe","supernatural,drama","self,stranger","period clothing,same wound,rain,clock",9,9,6,5,7],
+  ["broadcast-loop","The message has been repeating for years","signal","the live call is an old recording","abandonment","sci-fi,thriller","stranger,ally","radio,static,date,dust",9,9,4,5,9],
+];
+
+export const REALITY_TWISTS = buildFamily("reality", rows);

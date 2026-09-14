@@ -1,0 +1,38 @@
+import { buildFamily, type RawTwist } from "./types";
+
+const rows: RawTwist[] = [
+  ["loop","Time repeats","loop","the same interval runs again","dread of repetition","sci-fi,thriller","self","clock,spill,same words,object returns",9,9,6,7,7],
+  ["future-caused-past","The future caused the past","causality","a later act created the earlier event","fatalism","sci-fi,drama","self","note,scar,date,object",7,9,7,5,6],
+  ["past-caused-future","An old act caused the present","causality","a forgotten decision shaped everything","guilt surfacing","drama,thriller","self,family","letter,photo,receipt,tree",7,9,4,4,8],
+  ["ending-first","The ending happened before the beginning","order","the opening image is the last event","recontextualised dread","thriller,drama","self","same room,blood,rain,clock",9,9,5,5,8],
+  ["flashback-is-future","The flashback is actually the future","order","what read as memory has not happened yet","cold surprise","sci-fi,thriller","self","grade,wardrobe,age,object",9,9,6,6,7],
+  ["message-from-future","A message arrives from later","communication","information travels backwards","urgency","sci-fi,thriller","self,stranger","note,recording,handwriting,phone",8,9,5,6,8],
+  ["meets-older-self","They meet their older self","doubling","the future person stands in front of them","fear of becoming","sci-fi,drama","self","age,scar,ring,gait",9,8,6,5,6],
+  ["meets-younger-self","They meet their younger self","doubling","the past person stands in front of them","grief for a life lived","drama,sci-fi","self","uniform,haircut,toy,platform",9,8,6,5,6],
+  ["repeat-new-meaning","The same event repeats with new meaning","recontext","a scene returns and reads differently","revelation without new footage","drama,thriller","self","same shot,new detail,angle,sound",9,10,5,4,9],
+  ["already-lived-ending","They have already lived the ending","foreknowledge","the outcome is known to the protagonist","resignation","drama,sci-fi","self","calm,packed bag,letter,ritual",8,9,5,5,8],
+  ["prevention-causes","Preventing the event causes it","causality","the attempt to stop it is the cause","tragic irony","sci-fi,thriller","self","brake,shout,hand,door",8,9,6,6,7],
+  ["slow-time","Time runs at a different rate here","rate","minutes outside are years inside","awe and loss","sci-fi","self,family","dust,growth,age,decay",9,8,7,6,6],
+  ["one-day-many-years","One day contains a lifetime","compression","the interval covers decades","sweeping tenderness","drama,fantasy","self,family","light,wear,furniture,seasons",10,8,7,5,7],
+  ["frozen-moment","The world is paused around them","stasis","only the protagonist moves","isolation","sci-fi,fantasy","self","suspended rain,still crowd,dust,flame",10,7,7,6,6],
+  ["anniversary-echo","The same date keeps returning","calendar","an anniversary reproduces the original event","haunted routine","drama,supernatural","self,family","calendar,flowers,cake,rain",9,9,4,5,9],
+  ["late-by-minutes","They arrive minutes too late, always","recurrence","timing is structurally against them","helpless ache","drama","self,lover","train,door,phone,clock",8,9,3,5,9],
+  ["photograph-future","A photograph shows an event still to come","artefact","the image is from later","chill","thriller,supernatural","self","photo,date,clothing,weather",10,10,4,5,9],
+  ["last-day-first","The film opens on their last day","order","the first scene is the end of a life","dread and tenderness","drama","self,family","ritual,packing,goodbye,light",8,8,4,5,9],
+  ["clock-lies","The measured time is wrong","instrument","clocks disagree with the world","unease","thriller,sci-fi","self","two clocks,shadow,light,watch",9,9,4,5,9],
+  ["two-timelines-one-room","Two eras share the same room","overlay","the space holds both periods","awe","supernatural,drama","self,stranger","furniture,wallpaper,lamp,dust",10,9,7,5,6],
+  ["child-becomes-adult","The child in frame becomes the adult","growth","one continuous view spans years","sweeping recognition","drama","self,parent","height,uniform,doorframe,toy",10,8,7,5,6],
+  ["delayed-letter","A letter arrives decades late","post","the message was overtaken by time","bittersweet","drama,romance","lover,family","envelope,stamp,handwriting,dust",8,9,3,4,9],
+  ["premonition-fulfilled","An image seen earlier comes true","foreshadow","the vision was accurate","inevitability","thriller,supernatural","self","same frame,same object,rain,sound",9,10,4,6,8],
+  ["borrowed-hour","An hour has been taken from them","subtraction","time is missing from their day","paranoia","thriller,sci-fi","self","clock,receipt,phone,mud",8,9,5,5,8],
+  ["reversed-sequence","Events run backwards","order","the sequence plays in reverse meaning","recontextualisation","drama,thriller","self","object restored,water,tears,smoke",9,8,7,6,6],
+  ["yearly-visitor","Someone returns exactly once a year","recurrence","the visit is a fixed appointment","longing","drama,supernatural","lover,stranger","season,coat,flowers,bench",9,9,3,4,9],
+  ["war-echo","A past conflict repeats in the present","recurrence","history reproduces itself here","weary dread","drama,war","family,stranger","uniform,medal,rubble,sound",9,9,5,5,8],
+  ["future-ruin","The place is seen as it will be","projection","the future state of the location appears","melancholy awe","sci-fi,drama","self","overgrowth,crack,dust,sign",10,8,6,5,7],
+  ["missed-generation","A generation is skipped","kinship","the person met is not the one expected in this era","dislocation","drama","parent,child","photo,age,name,gravestone",8,9,4,5,8],
+  ["clock-stopped-at-death","A stopped clock names the moment","artefact","the instrument marks the exact event","quiet horror","drama,thriller","self,family","clock,watch,glass,crack",10,10,3,6,9],
+  ["same-shot-two-eras","One framing serves two periods","overlay","the identical composition returns in another era","recognition","drama","self,family","composition,window,tree,chair",10,10,5,4,8],
+  ["loop-breaks-once","The repetition changes once","loop","one detail differs on the final pass","hope inside dread","sci-fi,thriller","self","object moved,new sound,glance,light",9,10,6,6,8],
+];
+
+export const TIME_TWISTS = buildFamily("time", rows);

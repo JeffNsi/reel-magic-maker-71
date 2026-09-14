@@ -508,6 +508,30 @@ export function DirectorPanel({
                       </div>
                     ))}
                 </dl>
+                {state.film_bible.twist && (
+                  <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/5 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
+                      The turn I found in your story
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-foreground">
+                      {state.film_bible.twist.statement}
+                    </p>
+                    {state.film_bible.twist.visual_clue && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        The audience sees it here: {state.film_bible.twist.visual_clue}
+                      </p>
+                    )}
+                    {state.film_bible.twist.foreshadowing.length > 0 && (
+                      <ul className="mt-2 space-y-1">
+                        {state.film_bible.twist.foreshadowing.map((clue) => (
+                          <li key={clue} className="text-xs leading-relaxed text-muted-foreground">
+                            {clue}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 {(state.film_bible.decisions.length > 0 ||
                   state.film_bible.assumptions.length > 0 ||
                   state.film_bible.discoveries.length > 0 ||
