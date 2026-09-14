@@ -292,7 +292,12 @@ const buildInput = z.object({
  */
 export const buildFilm = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => buildInput.parse(data))
-  .handler(async ({ data }): Promise<FilmView> => {
+  .handler(({ data }) => buildFilmCore(data));
+
+export async function buildFilmCore(
+  data: z.infer<typeof buildInput>,
+): Promise<FilmView> {
+  {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: existing } = await supabaseAdmin
