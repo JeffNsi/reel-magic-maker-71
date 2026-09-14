@@ -268,7 +268,8 @@ export const checkStatus = createServerFn({ method: "POST" })
     }
 
     const { providerProgress } = await import("@/lib/storyreel-core.server");
-    const provider = row.provider === "fal" ? "fal" : "lovable";
+    const provider =
+      row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
 
     let progress;
     try {
