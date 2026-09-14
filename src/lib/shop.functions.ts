@@ -181,7 +181,10 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => sumupCreateInput.parse(data))
   .handler(
-    async ({ data, context }): Promise<{ checkoutId: string } | { error: string }> => {
+    async ({
+      data,
+      context,
+    }): Promise<{ checkoutId: string; amount: number } | { error: string }> => {
       const pack = PACKS[data.pack];
       try {
         const payToEmail = process.env["SUMUP_PAY_TO_EMAIL"];
