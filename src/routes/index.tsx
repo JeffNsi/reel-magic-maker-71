@@ -566,15 +566,29 @@ function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
 function ResultState({
   videoUrl,
   generationId,
+  sessionId,
+  directorSessionId,
   onReset,
 }: {
   videoUrl: string;
   generationId: string | null;
+  sessionId: string;
+  directorSessionId: string | null;
   onReset: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [downloading, setDownloading] = useState(false);
   const filename = `storyreel-${generationId ?? "short"}.mp4`;
+  const navigate = useNavigate();
+  const build = useServerFn(buildFilm);
+
+  /** Turn the approved film bible into a scene-by-scene film page. */
+  const buildFull = useMutation({
+    mutationFn: () =>
+      build({ data: { director_session_id: directorSessionId!, session_id: sessionId } }),
+    onSuccess: (film) => navigate({ to: "/film/$filmId", params: { filmId: film.id } }),
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const download = async () => {
     setDownloading(true);
