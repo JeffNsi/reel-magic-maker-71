@@ -383,7 +383,58 @@ function transcript(
   return lines.join("\n");
 }
 
+/**
+ * Correct reasoning is not the same as reliable structured output: the model
+ * occasionally truncates or wraps its JSON. Recovery happens here, before any
+ * caller commits director state — so a malformed reply never becomes a visible
+ * failure and never mutates the session.
+ */
+const FORMAT_REMINDER =
+  "Your previous reply could not be parsed. Answer the exact same way creatively — same reasoning, same conclusions, nothing rethought — but return ONLY one complete, valid JSON object matching the required structure, with every required field present, no markdown fences, no commentary before or after it, and keep the text inside each field short so the JSON is never cut off.";
+
+/** A usable reply is a real object with at least one field carrying content. */
+function isUsableReply(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  return Object.values(value as Record<string, unknown>).some((entry) => {
+    if (entry === null || entry === undefined) return false;
+    if (typeof entry === "string") return entry.trim().length > 0;
+    if (Array.isArray(entry)) return entry.length > 0;
+    if (typeof entry === "object") return Object.keys(entry as object).length > 0;
+    return true;
+  });
+}
+
 export async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
+  try {
+    return await callGatewayOnce<T>(user, system);
+  } catch (error) {
+    if (!(error instanceof MalformedReplyError)) throw error;
+    /** One retry only, same creative brief, stronger output contract. */
+    try {
+      return await callGatewayOnce<T>(`${user}\n\n${FORMAT_REMINDER}`, system);
+    } catch (retryError) {
+      if (!(retryError instanceof MalformedReplyError)) throw retryError;
+      throw new Error(
+        "The director hit a temporary response error. Nothing was lost — try that again.",
+      );
+    }
+  }
+}
+
+class MalformedReplyError extends Error {}
+
+/**
+ * Rescues the formatting slips the model actually makes, without touching what
+ * it said: chain arrows written between separate strings ("a" -> "b"), and
+ * trailing commas. Meaning is preserved exactly; only the syntax is repaired.
+ */
+function repairJson(input: string) {
+  return input
+    .replace(/"\s*(?:->|→|=>)\s*"/g, " -> ")
+    .replace(/,(\s*[}\]])/g, "$1");
+}
+
+async function callGatewayOnce<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("The creative director isn't available right now.");
 
@@ -417,13 +468,22 @@ export async function callGateway<T = AiReply>(user: string, system = SYSTEM): P
   const raw = body?.choices?.[0]?.message?.content ?? "";
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("The creative director came back empty.");
+  if (start < 0 || end <= start) throw new MalformedReplyError("unparsable director reply");
 
+  const slice = raw.slice(start, end + 1);
+  let parsed: unknown;
   try {
-    return JSON.parse(raw.slice(start, end + 1)) as T;
+    parsed = JSON.parse(slice);
   } catch {
-    throw new Error("The creative director came back empty.");
+    try {
+      parsed = JSON.parse(repairJson(slice));
+    } catch {
+      throw new MalformedReplyError("invalid director JSON");
+    }
   }
+  /** Validate before any caller commits state to the session. */
+  if (!isUsableReply(parsed)) throw new MalformedReplyError("empty director reply");
+  return parsed as T;
 }
 
 type Mode = "interview" | "finish" | "reopen";
