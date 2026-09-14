@@ -165,7 +165,7 @@ export async function providerProgress(
       };
     }
 
-    const resultRes = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${taskId}`, {
+    const resultRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}`, {
       headers: falHeaders(key),
     });
     const result = (await resultRes.json().catch(() => null)) as { video?: { url?: string } } | null;
