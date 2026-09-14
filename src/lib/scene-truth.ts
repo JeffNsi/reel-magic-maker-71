@@ -212,7 +212,7 @@ const STOP = new Set([
   "the","a","an","and","or","of","to","in","on","at","by","for","with","from","that","this",
   "her","his","their","its","she","he","they","it","as","is","are","was","were","be","been",
   "into","over","must","should","one","own","two","between","while","without","not","no",
-  "shot","scene","film","camera","视",
+  "shot","scene","film","camera",
 ]);
 
 function keyWords(value: string): string[] {
