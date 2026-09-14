@@ -593,6 +593,146 @@ export function DirectorPanel({
               </div>
             )}
 
+            {challengeMutation.isPending && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground"
+              >
+                <Loader2 className="size-4 animate-spin text-primary" />
+                Challenging the story before we spend anything...
+              </div>
+            )}
+
+            {challenge && (
+              <div
+                className={`rounded-2xl border p-4 ${
+                  challenge.verdict === "ready"
+                    ? "border-border/60 bg-background/40"
+                    : "border-primary/40 bg-primary/5"
+                }`}
+              >
+                <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
+                  <ShieldCheck className="size-3" /> {VERDICT_LABELS[challenge.verdict]}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground">
+                  {challenge.headline}
+                </p>
+
+                {challenge.weakness && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                      The weakness I'd challenge
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.weakness.problem}
+                    </p>
+                    {challenge.weakness.why_it_matters && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        Why it matters: {challenge.weakness.why_it_matters}
+                      </p>
+                    )}
+                    {challenge.weakness.solution && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        My fix: {challenge.weakness.solution}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.opportunity && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                      The one change that would make it stronger
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.opportunity.proposed_improvement}
+                    </p>
+                    {challenge.opportunity.why && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {challenge.opportunity.why}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.generation_risk && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-primary">
+                      Filming risk
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.generation_risk.problem}
+                    </p>
+                    {challenge.generation_risk.fix && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {challenge.generation_risk.fix}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.predictability === "high" && challenge.predictability_note && (
+                  <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                    I can see where this is going: {challenge.predictability_note}
+                  </p>
+                )}
+
+                {challenge.verdict !== "ready" && challenge.recommendation && (
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="outline"
+                      onClick={() => acceptMutation.mutate()}
+                      disabled={acceptMutation.isPending}
+                      className="h-11 flex-1 rounded-xl text-[10px] uppercase tracking-[0.2em]"
+                    >
+                      {acceptMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : challenge.verdict === "revision" ? (
+                        "Fix with AI"
+                      ) : (
+                        "Accept recommendation"
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() =>
+                        setChallenge({ ...challenge, verdict: "ready", recommendation: "" })
+                      }
+                      className="h-11 flex-1 rounded-xl text-[10px] uppercase tracking-[0.2em]"
+                    >
+                      Keep my version
+                    </Button>
+                  </div>
+                )}
+
+                {challenge.what_ifs.length > 0 && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setWhatIfs((value) => !value)}
+                      className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {whatIfs ? "Hide other directions" : "Show other directions I considered"}
+                    </button>
+                    {whatIfs && (
+                      <ul className="mt-2 space-y-2 text-sm text-foreground">
+                        {challenge.what_ifs.map((item) => (
+                          <li key={item.text}>
+                            {item.text}
+                            <span className="ml-2 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                              value {item.creative_value} · risk {item.risk}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+
             <div className="space-y-3">
               <Button
                 onClick={() => void generate()}
