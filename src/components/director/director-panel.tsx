@@ -59,8 +59,11 @@ export function DirectorPanel({
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [review, setReview] = useState<BlueprintReview | null>(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [whatIfs, setWhatIfs] = useState(false);
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
+  const challenged = useRef<string | null>(null);
 
   const begin = useServerFn(startDirector);
   const reply = useServerFn(answerDirector);
@@ -68,6 +71,8 @@ export function DirectorPanel({
   const reopen = useServerFn(reopenDirector);
   const persist = useServerFn(saveBlueprint);
   const propagate = useServerFn(reviewBlueprint);
+  const stressTest = useServerFn(challengeFilm);
+  const acceptFix = useServerFn(applyChallenge);
 
   const apply = (next: DirectorState) => {
     setState(next);
