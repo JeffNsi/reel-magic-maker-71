@@ -202,11 +202,8 @@ function StoryReel() {
     },
   });
 
-  const submit = () => {
-    if (!idea.trim()) {
-      toast.error("Describe your story first.");
-      return;
-    }
+  /** Generation itself is unchanged — only the prompt it receives differs. */
+  const render = (prompt: string, directorSessionId?: string) => {
     if (!user) {
       navigate({ to: "/auth" });
       return;
@@ -218,7 +215,26 @@ function StoryReel() {
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
-    generate.mutate();
+    generate.mutate({ prompt, directorSessionId });
+  };
+
+  /** The idea box opens the director instead of rendering straight away. */
+  const submit = () => {
+    if (!idea.trim()) {
+      toast.error("Describe your story first.");
+      return;
+    }
+    setErrorMessage(null);
+    setVideoUrl(null);
+    setPhase("director");
+  };
+
+  const submitDirect = () => {
+    if (!idea.trim()) {
+      toast.error("Describe your story first.");
+      return;
+    }
+    render(idea);
   };
 
   const reset = () => {
