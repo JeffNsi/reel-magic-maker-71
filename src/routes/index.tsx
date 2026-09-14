@@ -44,6 +44,35 @@ const PLACEHOLDER =
 /** The four styles offered in the V1 create flow. */
 const V1_STYLES = ["cinematic", "anime", "realistic", "claymation"];
 
+/** True-story twist prompts — one tap fills the idea field. */
+const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
+  {
+    label: "The canoe man",
+    prompt:
+      "A woman weeps beside an empty canoe on a rocky shore, surrounded by police. The camera swings toward the window of the house behind her — a shadow moves behind the curtain.",
+  },
+  {
+    label: "The fake surgeon",
+    prompt:
+      "A field surgeon aboard a warship calmly operates on a wounded soldier under pressure. The camera zooms in on his trembling hands and a hidden medical textbook under the table — he never trained as a doctor.",
+  },
+  {
+    label: "The fairy hoax",
+    prompt:
+      "A young girl in early 1900s clothing photographs smiling fairies among the flowers. The camera slowly pulls back to reveal the fairies are only thin paper cutouts pinned with hat pins.",
+  },
+  {
+    label: "Selling the Eiffel Tower",
+    prompt:
+      "An elegant man in a suit shakes hands with a businessman in front of the Eiffel Tower and hands over an official document. He turns away and smiles to himself as he walks off — the document is completely fake.",
+  },
+  {
+    label: "The lost aristocrat",
+    prompt:
+      "A heavyset man in fine clothes is embraced by a weeping elderly woman crying 'my son, you're alive'. The camera catches his uncertain glance as someone in the background whispers a question in French he doesn't understand.",
+  },
+];
+
 type Phase = "create" | "working" | "done" | "error";
 
 /** Turns a backend failure into language a filmmaker can act on. */
@@ -324,6 +353,25 @@ function CreateCard({
               placeholder={PLACEHOLDER}
               className="min-h-[168px] resize-none rounded-2xl border-border/70 bg-background/40 p-4 text-base leading-relaxed placeholder:text-muted-foreground/60 focus-visible:border-primary/50"
             />
+          </div>
+
+          <div>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              True stories — tap to try
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {EXAMPLE_PROMPTS.map((example) => (
+                <button
+                  key={example.label}
+                  type="button"
+                  onClick={() => setIdea(example.prompt)}
+                  disabled={busy}
+                  className="rounded-full border border-border/70 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <StylePicker value={style} onChange={setStyle} only={V1_STYLES} />
