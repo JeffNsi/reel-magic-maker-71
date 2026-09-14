@@ -127,7 +127,9 @@ export async function submitFalVideo(
 }
 
 export function submitVideo(provider: VideoProvider, prompt: string, audio: boolean) {
-  return provider === "fal" ? submitFalVideo(prompt, audio) : submitLovableVideo(prompt, audio);
+  return provider === "lovable"
+    ? submitLovableVideo(prompt, audio)
+    : submitFalVideo(prompt, audio, falModelFor(provider));
 }
 
 export type ProviderProgress =
