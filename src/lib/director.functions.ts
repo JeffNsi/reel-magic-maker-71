@@ -302,7 +302,7 @@ function transcript(
   return lines.join("\n");
 }
 
-async function callGateway(user: string): Promise<AiReply> {
+async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("The creative director isn't available right now.");
 
@@ -313,7 +313,7 @@ async function callGateway(user: string): Promise<AiReply> {
       model: MODEL,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM },
+        { role: "system", content: system },
         { role: "user", content: user },
       ],
     }),
