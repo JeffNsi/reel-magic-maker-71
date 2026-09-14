@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowRight, Download, Film, Loader2, RotateCcw } from "lucide-react";
 
 import { checkStatus, COIN_COST, generateVideo } from "@/lib/storyreel.functions";
+import { buildFilm } from "@/lib/film.functions";
 import { getProfile } from "@/lib/vibe.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionId } from "@/lib/session";
