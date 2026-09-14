@@ -693,7 +693,13 @@ export function DirectorPanel({
                     </p>
                     {challenge.reality.five_second_risk.alternative && (
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        A simpler way to shoot it: {challenge.reality.five_second_risk.alternative}
+                        A stronger way to keep it:{" "}
+                        {challenge.reality.five_second_risk.alternative}
+                      </p>
+                    )}
+                    {challenge.reality.execution?.emotional_core && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        What must survive: {challenge.reality.execution.emotional_core}
                       </p>
                     )}
                   </div>
