@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 
 import {
   answerDirector,
+  applyChallenge,
+  challengeFilm,
   finishDirector,
   reopenDirector,
   reviewBlueprint,
   saveBlueprint,
   startDirector,
   type BlueprintReview,
+  type Challenge,
   type DirectorState,
 } from "@/lib/director.functions";
 import { Button } from "@/components/ui/button";
@@ -20,12 +23,16 @@ const DIMENSION_LABELS: Record<string, string> = {
   story: "Story",
   character: "Character",
   emotion: "Emotion",
-  world: "World",
-  camera: "Camera",
-  audience: "Audience",
-  turn: "The turn",
-  ending: "Ending",
+  visual: "Visual",
+  generation: "Ready to film",
 };
+
+const VERDICT_LABELS: Record<Challenge["verdict"], string> = {
+  ready: "Ready to make",
+  recommendation: "I have one recommendation",
+  revision: "I found a creative problem",
+};
+
 
 /**
  * The adaptive interview. One question at a time, always re-derived from
@@ -52,8 +59,11 @@ export function DirectorPanel({
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [review, setReview] = useState<BlueprintReview | null>(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [whatIfs, setWhatIfs] = useState(false);
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
+  const challenged = useRef<string | null>(null);
 
   const begin = useServerFn(startDirector);
   const reply = useServerFn(answerDirector);
@@ -61,6 +71,8 @@ export function DirectorPanel({
   const reopen = useServerFn(reopenDirector);
   const persist = useServerFn(saveBlueprint);
   const propagate = useServerFn(reviewBlueprint);
+  const stressTest = useServerFn(challengeFilm);
+  const acceptFix = useServerFn(applyChallenge);
 
   const apply = (next: DirectorState) => {
     setState(next);
@@ -68,6 +80,9 @@ export function DirectorPanel({
     setError(null);
     setEditing(false);
     setReview(null);
+    setChallenge(null);
+    setWhatIfs(false);
+    challenged.current = null;
     if (next.blueprint) setBlueprint(next.blueprint);
   };
 
@@ -121,6 +136,32 @@ export function DirectorPanel({
     onError: fail,
   });
 
+  /**
+   * The stress test: the director challenges its own finished bible before the
+   * creator approves it, so a weak concept is caught before credits are spent.
+   */
+  const challengeMutation = useMutation({
+    mutationFn: () =>
+      stressTest({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    onSuccess: (result) => setChallenge(result),
+    onError: fail,
+  });
+
+  /** The director's own fix becomes the blueprint, then it re-checks the result. */
+  const acceptMutation = useMutation({
+    mutationFn: () =>
+      acceptFix({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    onSuccess: (result) => {
+      setBlueprint(result.blueprint);
+      setState((current) => (current ? { ...current, blueprint: result.blueprint } : current));
+      setChallenge((current) =>
+        current ? { ...current, verdict: "ready", weakness: null, recommendation: "" } : current,
+      );
+      setReview(null);
+    },
+    onError: fail,
+  });
+
   useEffect(() => {
     if (started.current || !sessionId) return;
     started.current = true;
@@ -131,6 +172,13 @@ export function DirectorPanel({
   useEffect(() => {
     if (state?.question) answerRef.current?.focus();
   }, [state?.question?.text]);
+
+  useEffect(() => {
+    if (!state || state.status !== "ready" || challenged.current === state.id) return;
+    challenged.current = state.id;
+    challengeMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.status, state?.id]);
 
   const thinking =
     startMutation.isPending ||
@@ -544,6 +592,146 @@ export function DirectorPanel({
                 </div>
               </div>
             )}
+
+            {challengeMutation.isPending && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground"
+              >
+                <Loader2 className="size-4 animate-spin text-primary" />
+                Challenging the story before we spend anything...
+              </div>
+            )}
+
+            {challenge && (
+              <div
+                className={`rounded-2xl border p-4 ${
+                  challenge.verdict === "ready"
+                    ? "border-border/60 bg-background/40"
+                    : "border-primary/40 bg-primary/5"
+                }`}
+              >
+                <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
+                  <ShieldCheck className="size-3" /> {VERDICT_LABELS[challenge.verdict]}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground">
+                  {challenge.headline}
+                </p>
+
+                {challenge.weakness && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                      The weakness I'd challenge
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.weakness.problem}
+                    </p>
+                    {challenge.weakness.why_it_matters && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        Why it matters: {challenge.weakness.why_it_matters}
+                      </p>
+                    )}
+                    {challenge.weakness.solution && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        My fix: {challenge.weakness.solution}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.opportunity && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                      The one change that would make it stronger
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.opportunity.proposed_improvement}
+                    </p>
+                    {challenge.opportunity.why && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {challenge.opportunity.why}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.generation_risk && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-primary">
+                      Filming risk
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {challenge.generation_risk.problem}
+                    </p>
+                    {challenge.generation_risk.fix && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {challenge.generation_risk.fix}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {challenge.predictability === "high" && challenge.predictability_note && (
+                  <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                    I can see where this is going: {challenge.predictability_note}
+                  </p>
+                )}
+
+                {challenge.verdict !== "ready" && challenge.recommendation && (
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="outline"
+                      onClick={() => acceptMutation.mutate()}
+                      disabled={acceptMutation.isPending}
+                      className="h-11 flex-1 rounded-xl text-[10px] uppercase tracking-[0.2em]"
+                    >
+                      {acceptMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : challenge.verdict === "revision" ? (
+                        "Fix with AI"
+                      ) : (
+                        "Accept recommendation"
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() =>
+                        setChallenge({ ...challenge, verdict: "ready", recommendation: "" })
+                      }
+                      className="h-11 flex-1 rounded-xl text-[10px] uppercase tracking-[0.2em]"
+                    >
+                      Keep my version
+                    </Button>
+                  </div>
+                )}
+
+                {challenge.what_ifs.length > 0 && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setWhatIfs((value) => !value)}
+                      className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {whatIfs ? "Hide other directions" : "Show other directions I considered"}
+                    </button>
+                    {whatIfs && (
+                      <ul className="mt-2 space-y-2 text-sm text-foreground">
+                        {challenge.what_ifs.map((item) => (
+                          <li key={item.text}>
+                            {item.text}
+                            <span className="ml-2 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                              value {item.creative_value} · risk {item.risk}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
 
             <div className="space-y-3">
               <Button

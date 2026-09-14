@@ -26,15 +26,16 @@ const MODEL = "google/gemini-3.8-flash";
 /** Safety net only — the interview normally ends when the model has enough. */
 export const MAX_QUESTIONS = 8;
 
+/**
+ * Confidence is about how well the director understands the creator's intended
+ * direction — not video quality, not odds of success.
+ */
 export const DIMENSIONS = [
   "story",
   "character",
   "emotion",
-  "world",
-  "camera",
-  "audience",
-  "turn",
-  "ending",
+  "visual",
+  "generation",
 ] as const;
 
 export type Confidence = { dimension: string; score: number };
@@ -111,6 +112,47 @@ export type Recommendation = {
   ending: string;
 };
 
+/**
+ * Creative intelligence stress test — the director challenges its own film
+ * bible before a single credit is spent. Every test runs internally; only the
+ * few findings that matter reach the creator.
+ */
+export type Weakness = {
+  problem: string;
+  why_it_matters: string;
+  affected: string[];
+  solution: string;
+};
+
+export type Opportunity = {
+  current_direction: string;
+  proposed_improvement: string;
+  why: string;
+  affected: string[];
+};
+
+export type GenerationRisk = { problem: string; fix: string };
+
+export type WhatIf = { text: string; creative_value: number; risk: number };
+
+export type Verdict = "ready" | "recommendation" | "revision";
+
+export type Challenge = {
+  verdict: Verdict;
+  headline: string;
+  /** Null when the film holds up — criticism is never invented. */
+  weakness: Weakness | null;
+  opportunity: Opportunity | null;
+  generation_risk: GenerationRisk | null;
+  predictability: "low" | "medium" | "high";
+  predictability_note: string;
+  what_ifs: WhatIf[];
+  /** The one thing the director would change, in a sentence. */
+  recommendation: string;
+  /** The blueprint as it would read if the creator accepts that change. */
+  improved_blueprint: string;
+};
+
 /** A moment in the interview where an answer redirected the film. */
 export type BreakthroughEvent = {
   question: string;
@@ -149,6 +191,7 @@ export type DirectorState = {
   recommendation: Recommendation | null;
   film_bible: FilmBible | null;
   blueprint: string | null;
+  challenge: Challenge | null;
 };
 
 /** What a blueprint edit would ripple into. */
@@ -189,7 +232,27 @@ The blueprint is ONE paragraph under 400 characters describing a single continuo
 
 Reply with JSON only, matching exactly:
 {"understanding":"one or two sentences on what the film is right now","confidence":[{"dimension":"story","score":0}],"film_model":{"story":"","characters":"","world":"","time":"","emotion":"","camera":"","audience":"","ending":"","facts":[{"key":"","value":"","source":"user_decision"}],"continuity":[""],"impact_chain":[""],"open_questions":[""]},"breakthrough":null,"breakthrough_event":null,"conflict":null,"done":false,"question":{"preface":"one short sentence on what you already understand","text":"the single question","dimension":"story","why":"why this matters for the film","suggestions":["","",""]},"film_bible":{"title":"","premise":"","cast":[""],"setting":"","mood":"","look":"","camera":"","emotional_arc":"","ending":"","decisions":[""],"assumptions":[""],"discoveries":[""],"recommendations":[""],"open_questions":[""]},"evolution":{"evolved":true,"discoveries":[""],"how_it_evolved":"","biggest_discovery":"","breakthrough":""},"recommendation":{"rationale":"","logline":"","story_direction":"","main_character":"","central_conflict":"","emotional_journey":"","visual_direction":"","ending":""},"blueprint":""}
-Confidence dimensions are exactly: story, character, emotion, world, camera, audience, turn, ending. Use null for "question" when done, and null for "film_bible"/"evolution"/"recommendation"/"blueprint" when not done. "breakthrough_event" is {"question":"","answer":"","previous_understanding":"","new_understanding":"","affected":[""]}. "suggestions" holds 2-3 short example answers.`;
+Confidence dimensions are exactly: story, character, emotion, visual, generation. Each score answers "how confident am I that I understand the creator's intended direction here" — story understanding, character understanding, emotional understanding, visual understanding and generation readiness (can this be described as one renderable shot). Never score video quality, odds of success or factual accuracy. Use null for "question" when done, and null for "film_bible"/"evolution"/"recommendation"/"blueprint" when not done. "breakthrough_event" is {"question":"","answer":"","previous_understanding":"","new_understanding":"","affected":[""]}. "suggestions" holds 2-3 short example answers.`;
+
+/**
+ * The stress test prompt. A separate pass so the interview prompt stays about
+ * questions: this one only challenges a finished film bible.
+ */
+const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
+
+Run these tests internally and silently: biggest weakness, biggest creative opportunity, predictability, emotional logic (believable motivation, evolving journey, an ending that pays off the setup, a reason for the audience to care), character logic (goal, motivation, fear, conflict, change, relationship — flag a character who only moves the plot), visual storytelling (can it be understood without explanation; replace exposition with images: not "he is lonely" but an empty flat, two untouched plates, a phone with no messages), AI generation feasibility (too many characters, complex physical interaction, unclear motion, rapid transformation, inconsistent environment, choreography, unclear camera movement, impossible continuity, dialogue, unclear subject focus), continuity (face, hair, clothing, age, location, time, weather, lighting, props, emotional state), story economy (what can be removed for more impact), scene purpose (establish, reveal, escalate, develop, tension, emotion, transition, payoff) and whether the ending feels earned.
+
+Then rank everything and surface at most: ONE weakness, ONE opportunity, ONE generation risk, ONE recommendation. Never output a checklist. Never invent criticism: if the film genuinely holds up, set "weakness" to null. If there is no honest improvement, set "opportunity" to null. Do not propose a twist for the sake of a twist and do not make the film more complicated — aim for more intentional, more emotional, more visual, more coherent, more generatable. Do not remove something merely because it is complex.
+
+Give three short "what if" possibilities — alternative directions, not whole films — each scored for creative_value and risk from 0 to 100. Never apply them; the creator decides.
+
+Verdict, based on this actual film bible: "ready" when nothing meaningful is wrong; "recommendation" when it can be made as-is but one change would clearly strengthen it; "revision" only when a real creative problem would damage the film or the render.
+
+"improved_blueprint" is ONE paragraph under 400 characters: the blueprint as it would read if the creator accepts your recommendation, keeping the film's core identity, the creator's decisions and their intent. When the verdict is "ready", repeat the current blueprint unchanged.
+
+Reply with JSON only, matching exactly:
+{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
+Use null for "weakness", "opportunity" and "generation_risk" when there is nothing honest to report. Plain language, no markdown, no headings, no quotation marks around fields.`;
 
 type AiReply = {
   understanding?: string;
@@ -239,7 +302,7 @@ function transcript(
   return lines.join("\n");
 }
 
-async function callGateway(user: string): Promise<AiReply> {
+async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("The creative director isn't available right now.");
 
@@ -250,7 +313,7 @@ async function callGateway(user: string): Promise<AiReply> {
       model: MODEL,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM },
+        { role: "system", content: system },
         { role: "user", content: user },
       ],
     }),
@@ -276,7 +339,7 @@ async function callGateway(user: string): Promise<AiReply> {
   if (start < 0 || end <= start) throw new Error("The creative director came back empty.");
 
   try {
-    return JSON.parse(raw.slice(start, end + 1)) as AiReply;
+    return JSON.parse(raw.slice(start, end + 1)) as T;
   } catch {
     throw new Error("The creative director came back empty.");
   }
@@ -515,11 +578,12 @@ type SessionRow = {
   recommendation: unknown;
   breakthroughs: unknown;
   blueprint: string | null;
+  challenge: unknown;
   question_count: number;
 };
 
 const SESSION_COLUMNS =
-  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, question_count";
+  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, question_count";
 
 function readModel(value: unknown): FilmModel | null {
   return value && typeof value === "object" ? (value as FilmModel) : null;
@@ -581,6 +645,8 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
       evolution,
       recommendation,
       blueprint,
+      /** A new bible invalidates any earlier challenge — it is re-run on the new one. */
+      challenge: null,
       question_count: turns.length + (question ? 1 : 0),
     })
     .eq("id", row.id);
@@ -611,6 +677,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
     recommendation,
     film_bible: bible,
     blueprint,
+    challenge: null,
   };
 }
 
@@ -773,4 +840,196 @@ export const reviewBlueprint = createServerFn({ method: "POST" })
       affected: bibleNext.open_questions,
       updated_blueprint: text(reply.blueprint, 500) || data.blueprint,
     };
+  });
+
+/* ------------------------------------------------------------------ *
+ * Creative intelligence stress test
+ * ------------------------------------------------------------------ */
+
+type ChallengeReply = {
+  verdict?: string;
+  headline?: string;
+  weakness?: Partial<Weakness> | null;
+  opportunity?: Partial<Opportunity> | null;
+  generation_risk?: Partial<GenerationRisk> | null;
+  predictability?: string;
+  predictability_note?: string;
+  what_ifs?: unknown;
+  recommendation?: string;
+  improved_blueprint?: string | null;
+};
+
+const NO_WEAKNESS = "No major creative weakness detected.";
+
+function score(value: unknown) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function cleanWhatIfs(input: unknown): WhatIf[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((entry) => {
+      const item = entry as { text?: unknown; creative_value?: unknown; risk?: unknown };
+      return {
+        text: text(item?.text, 240),
+        creative_value: score(item?.creative_value),
+        risk: score(item?.risk),
+      };
+    })
+    .filter((item) => item.text)
+    .sort((a, b) => b.creative_value - b.risk - (a.creative_value - a.risk))
+    .slice(0, 3);
+}
+
+/** Only findings the model can actually point at survive — no invented criticism. */
+function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challenge {
+  const problem = text(reply.weakness?.problem, 300);
+  const weakness: Weakness | null =
+    problem && problem.toLowerCase() !== NO_WEAKNESS.toLowerCase()
+      ? {
+          problem,
+          why_it_matters: text(reply.weakness?.why_it_matters, 300),
+          affected: list(reply.weakness?.affected, 6, 60),
+          solution: text(reply.weakness?.solution, 300),
+        }
+      : null;
+
+  const improvement = text(reply.opportunity?.proposed_improvement, 300);
+  const opportunity: Opportunity | null = improvement
+    ? {
+        current_direction: text(reply.opportunity?.current_direction, 300),
+        proposed_improvement: improvement,
+        why: text(reply.opportunity?.why, 300),
+        affected: list(reply.opportunity?.affected, 6, 60),
+      }
+    : null;
+
+  const riskProblem = text(reply.generation_risk?.problem, 300);
+  const generation_risk: GenerationRisk | null = riskProblem
+    ? { problem: riskProblem, fix: text(reply.generation_risk?.fix, 300) }
+    : null;
+
+  const raw = String(reply.verdict ?? "").toLowerCase();
+  let verdict: Verdict =
+    raw.includes("revis") || raw.includes("red")
+      ? "revision"
+      : raw.includes("recommend") || raw.includes("yellow")
+        ? "recommendation"
+        : "ready";
+
+  /** The verdict has to match the findings, not just the label the model chose. */
+  if (verdict === "ready" && (weakness || opportunity || generation_risk)) {
+    verdict = "recommendation";
+  }
+  if (verdict === "revision" && !weakness && !generation_risk) verdict = "recommendation";
+
+  const predictabilityRaw = String(reply.predictability ?? "").toLowerCase();
+  const predictability =
+    predictabilityRaw === "high" ? "high" : predictabilityRaw === "medium" ? "medium" : "low";
+
+  const recommendation =
+    text(reply.recommendation, 400) ||
+    opportunity?.proposed_improvement ||
+    weakness?.solution ||
+    "";
+
+  return {
+    verdict,
+    headline:
+      text(reply.headline, 300) ||
+      (verdict === "ready"
+        ? "This holds up. I'd shoot it as it stands."
+        : verdict === "revision"
+          ? "I found a creative problem worth fixing first."
+          : "I have one recommendation before we shoot."),
+    weakness,
+    opportunity,
+    generation_risk,
+    predictability,
+    predictability_note: text(reply.predictability_note, 300),
+    what_ifs: cleanWhatIfs(reply.what_ifs),
+    recommendation: verdict === "ready" ? "" : recommendation,
+    improved_blueprint: text(reply.improved_blueprint, 500) || currentBlueprint,
+  };
+}
+
+function challengeBrief(row: SessionRow) {
+  return [
+    `ORIGINAL IDEA: ${row.idea}`,
+    `Visual style: ${styleLabel(row.style)}`,
+    `Film bible (the authoritative version): ${JSON.stringify(row.film_bible)}`,
+    `Your recommendation: ${JSON.stringify(row.recommendation)}`,
+    `Your film model, including the impact chain: ${JSON.stringify(readModel(row.film_model))}`,
+    `The blueprint that would be sent to the generator: ${row.blueprint ?? ""}`,
+    "",
+    "Challenge this film as its director would before production. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
+  ].join("\n");
+}
+
+/**
+ * Run the stress test on the approved bible. Separate from the interview so it
+ * costs nothing until a film is actually designed, and never blocks a question.
+ */
+export const challengeFilm = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<Challenge> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    if (!row.film_bible) throw new Error("There is no finished film to challenge yet.");
+    if (row.challenge && typeof row.challenge === "object") return row.challenge as Challenge;
+
+    const reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    const challenge = cleanChallenge(reply, row.blueprint ?? "");
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({ challenge })
+      .eq("id", row.id);
+
+    return challenge;
+  });
+
+/**
+ * "Accept recommendation" / "Fix with AI": the director's own fix becomes the
+ * blueprint, recorded as its recommendation, and the challenge is cleared so
+ * the fixed version can be challenged again.
+ */
+export const applyChallenge = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<{ blueprint: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    const challenge = (row.challenge ?? null) as Challenge | null;
+    if (!challenge) throw new Error("There is nothing to apply yet.");
+
+    const blueprint = (challenge.improved_blueprint || row.blueprint || "").slice(0, 500);
+    if (!blueprint) throw new Error("There is nothing to apply yet.");
+
+    const model = readModel(row.film_model);
+    const bible = (row.film_bible ?? null) as FilmBible | null;
+    const applied: FilmBible | null = bible
+      ? {
+          ...bible,
+          recommendations: [
+            ...bible.recommendations,
+            challenge.recommendation || challenge.weakness?.solution || "",
+          ]
+            .filter(Boolean)
+            .slice(-10),
+        }
+      : null;
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({
+        blueprint,
+        film_bible: applied,
+        film_model: model,
+        challenge: { ...challenge, verdict: "ready", recommendation: "", weakness: null },
+      })
+      .eq("id", row.id);
+
+    return { blueprint };
   });
