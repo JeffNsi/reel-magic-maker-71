@@ -449,7 +449,8 @@ export async function reviewScenesCore(data: z.infer<typeof ref>): Promise<FilmV
     }
 
     return loadFilm(data.film_id, data.session_id);
-  });
+  }
+}
 
 const sceneRef = ref.extend({ scene_id: z.string().uuid() });
 
