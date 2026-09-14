@@ -72,6 +72,7 @@ export type Database = {
           question_count: number
           recommendation: Json | null
           session_id: string
+          simplify_rejections: number
           status: string
           style: string
           understanding: string
@@ -93,6 +94,7 @@ export type Database = {
           question_count?: number
           recommendation?: Json | null
           session_id: string
+          simplify_rejections?: number
           status?: string
           style?: string
           understanding?: string
@@ -114,6 +116,7 @@ export type Database = {
           question_count?: number
           recommendation?: Json | null
           session_id?: string
+          simplify_rejections?: number
           status?: string
           style?: string
           understanding?: string
