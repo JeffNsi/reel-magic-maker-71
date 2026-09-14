@@ -686,6 +686,29 @@ function cleanBible(
       list(input?.open_questions, 6, 200).length > 0
         ? list(input?.open_questions, 6, 200)
         : (model?.open_questions ?? []),
+    twist: cleanTwist(input?.twist),
+  };
+}
+
+/**
+ * A story turn only survives if the director actually described one, and only
+ * as filmable information — no label, no bare "plot twist" line. No twist is a
+ * valid, common answer.
+ */
+function cleanTwist(input: unknown): Twist | null {
+  if (!input || typeof input !== "object") return null;
+  const entry = input as Partial<Twist>;
+  const statement = text(entry.statement, 300);
+  const reveal = text(entry.reveal, 300);
+  if (!statement || !reveal) return null;
+  return {
+    pattern: text(entry.pattern, 80),
+    statement,
+    emotional_purpose: text(entry.emotional_purpose, 300),
+    foreshadowing: list(entry.foreshadowing, 4, 200),
+    reveal,
+    visual_clue: text(entry.visual_clue, 240),
+    ending_implication: text(entry.ending_implication, 240),
   };
 }
 
