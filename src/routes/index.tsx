@@ -217,6 +217,7 @@ function StoryReel() {
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
+    setDirectorSessionId(directorSessionId ?? null);
     generate.mutate({ prompt, directorSessionId });
   };
 
