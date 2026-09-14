@@ -116,6 +116,7 @@ function StoryReel() {
   const [sessionId, setSessionId] = useState("");
   const [idea, setIdea] = useState("");
   const [style, setStyle] = useState("cinematic");
+  const [engine, setEngine] = useState<Engine>("lovable");
   const navigate = useNavigate();
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("create");
@@ -143,9 +144,8 @@ function StoryReel() {
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
 
   const generate = useMutation({
-    // Engine and soundtrack stay on their defaults — no technical switches in V1.
     mutationFn: () =>
-      start({ data: { idea, style, audio: true, engine: "lovable", session_id: sessionId } }),
+      start({ data: { idea, style, audio: true, engine, session_id: sessionId } }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       void refetchProfile();
