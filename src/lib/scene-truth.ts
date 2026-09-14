@@ -52,6 +52,8 @@ export const sceneTruthSchema = z.object({
 
 export type SceneTruth = z.infer<typeof sceneTruthSchema>;
 
+export type SceneTruthPatch = { [K in keyof SceneTruth]?: SceneTruth[K] | undefined };
+
 export type SceneTruthField = Exclude<keyof SceneTruth, "provenance" | "user_decisions">;
 
 /** The three fields the generation request may never lose. */
@@ -123,7 +125,7 @@ export function emptySceneTruth(): SceneTruth {
  * An AI assumption never overwrites a creator decision: a field the creator
  * decided keeps its value, whatever a later pass suggests.
  */
-export function mergeSceneTruth(base: SceneTruth, incoming: Partial<SceneTruth>): SceneTruth {
+export function mergeSceneTruth(base: SceneTruth, incoming: SceneTruthPatch): SceneTruth {
   const next: SceneTruth = { ...base, provenance: { ...base.provenance } };
 
   for (const field of ORDER) {

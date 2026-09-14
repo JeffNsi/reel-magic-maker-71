@@ -593,7 +593,7 @@ export const renderScene = createServerFn({ method: "POST" })
       mergeSceneTruth(emptySceneTruth(), { action: scene.idea.trim(), setting: film.setting });
 
     const context = {
-      style_prefix: STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"],
+      style_prefix: STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"] ?? "",
       original_idea: film.logline || "",
       scene_number: scene.scene_number,
       scene_title: scene.title,
