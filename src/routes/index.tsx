@@ -12,6 +12,7 @@ import { getSessionId } from "@/lib/session";
 import { StylePicker } from "@/components/landing/style-picker";
 import { Faq, HowItWorks, Learn, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
 import { Gallery } from "@/components/landing/gallery";
+import { DirectorPanel } from "@/components/director/director-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
