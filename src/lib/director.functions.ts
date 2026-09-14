@@ -1061,6 +1061,8 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
 
   const recommendation =
     text(reply.recommendation, 400) ||
+    reality?.five_second_risk?.alternative ||
+    reality?.execution?.safer_execution ||
     opportunity?.proposed_improvement ||
     weakness?.solution ||
     "";
