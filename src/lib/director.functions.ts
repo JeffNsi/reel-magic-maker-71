@@ -284,7 +284,7 @@ Confidence dimensions are exactly: story, character, emotion, visual, generation
  * The stress test prompt. A separate pass so the interview prompt stays about
  * questions: this one only challenges a finished film bible.
  */
-const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
+export const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
 
 Run these tests internally and silently: biggest weakness, biggest creative opportunity, predictability, emotional logic (believable motivation, evolving journey, an ending that pays off the setup, a reason for the audience to care), character logic (goal, motivation, fear, conflict, change, relationship — flag a character who only moves the plot), visual storytelling (can it be understood without explanation; replace exposition with images: not "he is lonely" but an empty flat, two untouched plates, a phone with no messages), AI generation feasibility (too many characters, complex physical interaction, unclear motion, rapid transformation, inconsistent environment, choreography, unclear camera movement, impossible continuity, dialogue, unclear subject focus), continuity (face, hair, clothing, age, location, time, weather, lighting, props, emotional state), story economy (what can be removed for more impact), scene purpose (establish, reveal, escalate, develop, tension, emotion, transition, payoff) and whether the ending feels earned.
 
