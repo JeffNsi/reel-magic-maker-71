@@ -24,7 +24,6 @@ import { Route as VibeMyListRouteImport } from './routes/vibe.my-list'
 import { Route as VibeProfileRouteImport } from './routes/vibe.profile'
 import { Route as VibeRewardsRouteImport } from './routes/vibe.rewards'
 import { Route as VibeShortsRouteImport } from './routes/vibe.shorts'
-import { Route as ApiPublicApplePayVerificationRouteImport } from './routes/api/public/apple-pay-verification'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,12 +101,6 @@ const VibeShortsRoute = VibeShortsRouteImport.update({
   path: '/shorts',
   getParentRoute: () => VibeRoute,
 } as any)
-const ApiPublicApplePayVerificationRoute =
-  ApiPublicApplePayVerificationRouteImport.update({
-    id: '/api/public/apple-pay-verification',
-    path: '/api/public/apple-pay-verification',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -131,7 +124,6 @@ export interface FileRoutesByFullPath {
   '/vibe/rewards': typeof VibeRewardsRoute
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe/': typeof VibeIndexRoute
-  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -149,7 +141,6 @@ export interface FileRoutesByTo {
   '/vibe/rewards': typeof VibeRewardsRoute
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe': typeof VibeIndexRoute
-  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -169,7 +160,6 @@ export interface FileRoutesById {
   '/vibe/rewards': typeof VibeRewardsRoute
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe/': typeof VibeIndexRoute
-  '/api/public/apple-pay-verification': typeof ApiPublicApplePayVerificationRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -190,7 +180,6 @@ export interface FileRouteTypes {
     | '/vibe/rewards'
     | '/vibe/shorts'
     | '/vibe/'
-    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -208,7 +197,6 @@ export interface FileRouteTypes {
     | '/vibe/rewards'
     | '/vibe/shorts'
     | '/vibe'
-    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -227,7 +215,6 @@ export interface FileRouteTypes {
     | '/vibe/rewards'
     | '/vibe/shorts'
     | '/vibe/'
-    | '/api/public/apple-pay-verification'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -242,7 +229,6 @@ export interface RootRouteChildren {
   VibeRoute: typeof VibeRouteWithChildren
   WatchlistRoute: typeof WatchlistRoute
   FilmFilmIdRoute: typeof FilmFilmIdRoute
-  ApiPublicApplePayVerificationRoute: typeof ApiPublicApplePayVerificationRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -353,13 +339,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VibeShortsRouteImport
       parentRoute: typeof VibeRoute
     }
-    '/api/public/apple-pay-verification': {
-      id: '/api/public/apple-pay-verification'
-      path: '/api/public/apple-pay-verification'
-      fullPath: '/api/public/apple-pay-verification'
-      preLoaderRoute: typeof ApiPublicApplePayVerificationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -399,7 +378,6 @@ const rootRouteChildren: RootRouteChildren = {
   VibeRoute: VibeRouteWithChildren,
   WatchlistRoute: WatchlistRoute,
   FilmFilmIdRoute: FilmFilmIdRoute,
-  ApiPublicApplePayVerificationRoute: ApiPublicApplePayVerificationRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

@@ -63,6 +63,13 @@ function SumUpCardForm({
           id: "sumup-card-container",
           checkoutId: result.checkoutId,
           locale: "sv-SE",
+          country: "SE",
+          currency: "SEK",
+          amount: pack.amountSek,
+          showAmount: true,
+          // Wallet buttons (Apple Pay on Safari/iOS, Google Pay elsewhere).
+          applePay: true,
+          googlePay: true,
           onResponse: async (type: string) => {
             if (type === "success") {
               const confirm = await confirmFn({
