@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowRight, Download, Film, Loader2, RotateCcw } from "lucide-react";
 
 import { checkStatus, COIN_COST, generateVideo } from "@/lib/storyreel.functions";
+import { buildFilm } from "@/lib/film.functions";
 import { getProfile } from "@/lib/vibe.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionId } from "@/lib/session";
@@ -133,6 +134,7 @@ function StoryReel() {
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [directorSessionId, setDirectorSessionId] = useState<string | null>(null);
 
   useEffect(() => setSessionId(getSessionId()), []);
 
@@ -216,6 +218,7 @@ function StoryReel() {
     setErrorMessage(null);
     setVideoUrl(null);
     setStatusText("queued");
+    setDirectorSessionId(directorSessionId ?? null);
     generate.mutate({ prompt, directorSessionId });
   };
 
@@ -299,7 +302,13 @@ function StoryReel() {
 
 
         {phase === "done" && videoUrl && (
-          <ResultState videoUrl={videoUrl} generationId={generationId} onReset={reset} />
+          <ResultState
+            videoUrl={videoUrl}
+            generationId={generationId}
+            sessionId={sessionId}
+            directorSessionId={directorSessionId}
+            onReset={reset}
+          />
         )}
 
         {phase === "error" && (
@@ -558,15 +567,29 @@ function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
 function ResultState({
   videoUrl,
   generationId,
+  sessionId,
+  directorSessionId,
   onReset,
 }: {
   videoUrl: string;
   generationId: string | null;
+  sessionId: string;
+  directorSessionId: string | null;
   onReset: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [downloading, setDownloading] = useState(false);
   const filename = `storyreel-${generationId ?? "short"}.mp4`;
+  const navigate = useNavigate();
+  const build = useServerFn(buildFilm);
+
+  /** Turn the approved film bible into a scene-by-scene film page. */
+  const buildFull = useMutation({
+    mutationFn: () =>
+      build({ data: { director_session_id: directorSessionId!, session_id: sessionId } }),
+    onSuccess: (film) => navigate({ to: "/film/$filmId", params: { filmId: film.id } }),
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const download = async () => {
     setDownloading(true);
@@ -616,6 +639,21 @@ function ResultState({
           )}
           Download
         </Button>
+        {directorSessionId && (
+          <Button
+            onClick={() => buildFull.mutate()}
+            disabled={buildFull.isPending}
+            variant="outline"
+            className="h-14 w-full rounded-2xl text-xs font-semibold uppercase tracking-[0.25em]"
+          >
+            {buildFull.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Film className="mr-2 size-4" />
+            )}
+            Build the full film
+          </Button>
+        )}
         <Button
           onClick={onReset}
           variant="outline"
