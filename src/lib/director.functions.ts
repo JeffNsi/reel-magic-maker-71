@@ -915,6 +915,17 @@ type ChallengeReply = {
   what_ifs?: unknown;
   recommendation?: string;
   improved_blueprint?: string | null;
+  reality?: {
+    five_second_risk?: Partial<FiveSecondRisk> | null;
+    execution?: Partial<Execution> | null;
+    complexity?: unknown;
+    complexity_note?: string;
+    anchors?: unknown;
+    shot_split?: unknown;
+    keep?: string;
+    change?: string;
+    why?: string;
+  } | null;
 };
 
 const NO_WEAKNESS = "No major creative weakness detected.";
