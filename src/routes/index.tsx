@@ -98,7 +98,7 @@ const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
   },
 ];
 
-type Phase = "create" | "working" | "done" | "error";
+type Phase = "create" | "director" | "working" | "done" | "error";
 
 type Engine = "lovable" | "fal" | "live";
 
