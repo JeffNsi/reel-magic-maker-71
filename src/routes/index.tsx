@@ -639,6 +639,21 @@ function ResultState({
           )}
           Download
         </Button>
+        {directorSessionId && (
+          <Button
+            onClick={() => buildFull.mutate()}
+            disabled={buildFull.isPending}
+            variant="outline"
+            className="h-14 w-full rounded-2xl text-xs font-semibold uppercase tracking-[0.25em]"
+          >
+            {buildFull.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Film className="mr-2 size-4" />
+            )}
+            Build the full film
+          </Button>
+        )}
         <Button
           onClick={onReset}
           variant="outline"
