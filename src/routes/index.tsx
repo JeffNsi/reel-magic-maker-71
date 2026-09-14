@@ -504,11 +504,19 @@ function CreateCard({
                 </>
               ) : (
                 <>
-                  Generate short
+                  Direct my film
                   <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </Button>
+            <button
+              type="button"
+              onClick={onSubmitDirect}
+              disabled={busy}
+              className="mt-3 w-full text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              Skip the director — generate now
+            </button>
             <p className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
               Vertical 9:16 · 5 seconds
             </p>
