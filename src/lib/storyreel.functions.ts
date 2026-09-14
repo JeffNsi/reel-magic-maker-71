@@ -171,6 +171,7 @@ export const generateVideo = createServerFn({ method: "POST" })
         prompt_final: promptFinal,
         status: "queued",
         provider: data.engine,
+        director_session_id: data.director_session_id ?? null,
       })
       .select("id")
       .single();
