@@ -17,6 +17,7 @@ import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VibeRouteImport } from './routes/vibe'
+import { Route as FilmFilmIdRouteImport } from './routes/film.$filmId'
 import { Route as VibeIndexRouteImport } from './routes/vibe.index'
 import { Route as VibeMyListRouteImport } from './routes/vibe.my-list'
 import { Route as VibeProfileRouteImport } from './routes/vibe.profile'
@@ -63,6 +64,11 @@ const TermsRoute = TermsRouteImport.update({
 const VibeRoute = VibeRouteImport.update({
   id: '/vibe',
   path: '/vibe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilmFilmIdRoute = FilmFilmIdRouteImport.update({
+  id: '/film/$filmId',
+  path: '/film/$filmId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VibeIndexRoute = VibeIndexRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/vibe': typeof VibeRouteWithChildren
+  '/film/$filmId': typeof FilmFilmIdRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/film/$filmId': typeof FilmFilmIdRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/vibe': typeof VibeRouteWithChildren
+  '/film/$filmId': typeof FilmFilmIdRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/vibe'
+    | '/film/$filmId'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/team'
     | '/terms'
+    | '/film/$filmId'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/vibe'
+    | '/film/$filmId'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   VibeRoute: typeof VibeRouteWithChildren
+  FilmFilmIdRoute: typeof FilmFilmIdRoute
   ApiPublicApplePayVerificationRoute: typeof ApiPublicApplePayVerificationRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/vibe'
       fullPath: '/vibe'
       preLoaderRoute: typeof VibeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/film/$filmId': {
+      id: '/film/$filmId'
+      path: '/film/$filmId'
+      fullPath: '/film/$filmId'
+      preLoaderRoute: typeof FilmFilmIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vibe/': {
@@ -357,6 +377,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   VibeRoute: VibeRouteWithChildren,
+  FilmFilmIdRoute: FilmFilmIdRoute,
   ApiPublicApplePayVerificationRoute: ApiPublicApplePayVerificationRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
