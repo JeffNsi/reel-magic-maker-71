@@ -232,7 +232,27 @@ The blueprint is ONE paragraph under 400 characters describing a single continuo
 
 Reply with JSON only, matching exactly:
 {"understanding":"one or two sentences on what the film is right now","confidence":[{"dimension":"story","score":0}],"film_model":{"story":"","characters":"","world":"","time":"","emotion":"","camera":"","audience":"","ending":"","facts":[{"key":"","value":"","source":"user_decision"}],"continuity":[""],"impact_chain":[""],"open_questions":[""]},"breakthrough":null,"breakthrough_event":null,"conflict":null,"done":false,"question":{"preface":"one short sentence on what you already understand","text":"the single question","dimension":"story","why":"why this matters for the film","suggestions":["","",""]},"film_bible":{"title":"","premise":"","cast":[""],"setting":"","mood":"","look":"","camera":"","emotional_arc":"","ending":"","decisions":[""],"assumptions":[""],"discoveries":[""],"recommendations":[""],"open_questions":[""]},"evolution":{"evolved":true,"discoveries":[""],"how_it_evolved":"","biggest_discovery":"","breakthrough":""},"recommendation":{"rationale":"","logline":"","story_direction":"","main_character":"","central_conflict":"","emotional_journey":"","visual_direction":"","ending":""},"blueprint":""}
-Confidence dimensions are exactly: story, character, emotion, world, camera, audience, turn, ending. Use null for "question" when done, and null for "film_bible"/"evolution"/"recommendation"/"blueprint" when not done. "breakthrough_event" is {"question":"","answer":"","previous_understanding":"","new_understanding":"","affected":[""]}. "suggestions" holds 2-3 short example answers.`;
+Confidence dimensions are exactly: story, character, emotion, visual, generation. Each score answers "how confident am I that I understand the creator's intended direction here" — story understanding, character understanding, emotional understanding, visual understanding and generation readiness (can this be described as one renderable shot). Never score video quality, odds of success or factual accuracy. Use null for "question" when done, and null for "film_bible"/"evolution"/"recommendation"/"blueprint" when not done. "breakthrough_event" is {"question":"","answer":"","previous_understanding":"","new_understanding":"","affected":[""]}. "suggestions" holds 2-3 short example answers.`;
+
+/**
+ * The stress test prompt. A separate pass so the interview prompt stays about
+ * questions: this one only challenges a finished film bible.
+ */
+const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
+
+Run these tests internally and silently: biggest weakness, biggest creative opportunity, predictability, emotional logic (believable motivation, evolving journey, an ending that pays off the setup, a reason for the audience to care), character logic (goal, motivation, fear, conflict, change, relationship — flag a character who only moves the plot), visual storytelling (can it be understood without explanation; replace exposition with images: not "he is lonely" but an empty flat, two untouched plates, a phone with no messages), AI generation feasibility (too many characters, complex physical interaction, unclear motion, rapid transformation, inconsistent environment, choreography, unclear camera movement, impossible continuity, dialogue, unclear subject focus), continuity (face, hair, clothing, age, location, time, weather, lighting, props, emotional state), story economy (what can be removed for more impact), scene purpose (establish, reveal, escalate, develop, tension, emotion, transition, payoff) and whether the ending feels earned.
+
+Then rank everything and surface at most: ONE weakness, ONE opportunity, ONE generation risk, ONE recommendation. Never output a checklist. Never invent criticism: if the film genuinely holds up, set "weakness" to null. If there is no honest improvement, set "opportunity" to null. Do not propose a twist for the sake of a twist and do not make the film more complicated — aim for more intentional, more emotional, more visual, more coherent, more generatable. Do not remove something merely because it is complex.
+
+Give three short "what if" possibilities — alternative directions, not whole films — each scored for creative_value and risk from 0 to 100. Never apply them; the creator decides.
+
+Verdict, based on this actual film bible: "ready" when nothing meaningful is wrong; "recommendation" when it can be made as-is but one change would clearly strengthen it; "revision" only when a real creative problem would damage the film or the render.
+
+"improved_blueprint" is ONE paragraph under 400 characters: the blueprint as it would read if the creator accepts your recommendation, keeping the film's core identity, the creator's decisions and their intent. When the verdict is "ready", repeat the current blueprint unchanged.
+
+Reply with JSON only, matching exactly:
+{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
+Use null for "weakness", "opportunity" and "generation_risk" when there is nothing honest to report. Plain language, no markdown, no headings, no quotation marks around fields.`;
 
 type AiReply = {
   understanding?: string;
