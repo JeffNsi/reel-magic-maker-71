@@ -377,7 +377,8 @@ export async function buildFilmCore(
     if (sceneError) throw new Error("Could not save the scenes. Please try again.");
 
     return loadFilm(story.id as string, data.session_id);
-  });
+  }
+}
 
 /** The film with its scenes, budgets, clarity notes and playable clips. */
 export const getFilm = createServerFn({ method: "POST" })
