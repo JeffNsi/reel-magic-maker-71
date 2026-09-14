@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 
 import {
   answerDirector,
+  applyChallenge,
+  challengeFilm,
   finishDirector,
   reopenDirector,
   reviewBlueprint,
   saveBlueprint,
   startDirector,
   type BlueprintReview,
+  type Challenge,
   type DirectorState,
 } from "@/lib/director.functions";
 import { Button } from "@/components/ui/button";
@@ -20,12 +23,16 @@ const DIMENSION_LABELS: Record<string, string> = {
   story: "Story",
   character: "Character",
   emotion: "Emotion",
-  world: "World",
-  camera: "Camera",
-  audience: "Audience",
-  turn: "The turn",
-  ending: "Ending",
+  visual: "Visual",
+  generation: "Ready to film",
 };
+
+const VERDICT_LABELS: Record<Challenge["verdict"], string> = {
+  ready: "Ready to make",
+  recommendation: "I have one recommendation",
+  revision: "I found a creative problem",
+};
+
 
 /**
  * The adaptive interview. One question at a time, always re-derived from
