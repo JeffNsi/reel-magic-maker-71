@@ -4,6 +4,8 @@
  */
 
 export const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
+/** LIVE engine: fal.ai's realtime director model, run through the same queue transport. */
+export const FAL_LIVE_MODEL_ID = "fal-ai/minimax/h3-max/director";
 export const FAL_QUEUE_BASE = "https://queue.fal.run";
 export const BUCKET = "videos";
 export const SIGNED_URL_TTL = 60 * 60 * 6;
@@ -42,7 +44,12 @@ export async function signedUrl(path: string | null) {
   return data?.signedUrl ?? null;
 }
 
-export type VideoProvider = "lovable" | "fal";
+export type VideoProvider = "lovable" | "fal" | "live";
+
+/** Which fal.ai model backs a fal-based engine. */
+export function falModelFor(provider: VideoProvider) {
+  return provider === "live" ? FAL_LIVE_MODEL_ID : FAL_MODEL_ID;
+}
 
 export const AI_VIDEO_BASE = "https://ai.gateway.lovable.dev/v1/videos";
 export const LOVABLE_VIDEO_MODEL = "google/gemini-omni-1.1-flash";
@@ -92,8 +99,12 @@ export async function submitLovableVideo(prompt: string, audio: boolean): Promis
 }
 
 /** Submit to fal.ai (Kling 3.0) and return its request id. */
-export async function submitFalVideo(prompt: string, audio: boolean): Promise<string> {
-  const res = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}`, {
+export async function submitFalVideo(
+  prompt: string,
+  audio: boolean,
+  model: string = FAL_MODEL_ID,
+): Promise<string> {
+  const res = await fetch(`${FAL_QUEUE_BASE}/${model}`, {
     method: "POST",
     headers: falHeaders(readFalKey()),
     body: JSON.stringify({
@@ -116,7 +127,9 @@ export async function submitFalVideo(prompt: string, audio: boolean): Promise<st
 }
 
 export function submitVideo(provider: VideoProvider, prompt: string, audio: boolean) {
-  return provider === "fal" ? submitFalVideo(prompt, audio) : submitLovableVideo(prompt, audio);
+  return provider === "lovable"
+    ? submitLovableVideo(prompt, audio)
+    : submitFalVideo(prompt, audio, falModelFor(provider));
 }
 
 export type ProviderProgress =
@@ -129,9 +142,10 @@ export async function providerProgress(
   provider: VideoProvider,
   taskId: string,
 ): Promise<ProviderProgress> {
-  if (provider === "fal") {
+  if (provider === "fal" || provider === "live") {
     const key = readFalKey();
-    const statusRes = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${taskId}/status`, {
+    const falModel = falModelFor(provider);
+    const statusRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}/status`, {
       headers: falHeaders(key),
     });
     const statusBody = (await statusRes.json().catch(() => null)) as
@@ -151,7 +165,7 @@ export async function providerProgress(
       };
     }
 
-    const resultRes = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/${taskId}`, {
+    const resultRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}`, {
       headers: falHeaders(key),
     });
     const result = (await resultRes.json().catch(() => null)) as { video?: { url?: string } } | null;

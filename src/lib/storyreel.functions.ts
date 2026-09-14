@@ -84,7 +84,7 @@ const generateInput = z.object({
   /** When true, the video model generates a soundtrack for the clip. */
   audio: z.boolean().optional().default(false),
   /** Which film engine renders the clip: Lovable AI, or the project's own fal.ai account. */
-  engine: z.enum(["lovable", "fal"]).optional().default("lovable"),
+  engine: z.enum(["lovable", "fal", "live"]).optional().default("lovable"),
 });
 
 const statusInput = z.object({
@@ -268,7 +268,8 @@ export const checkStatus = createServerFn({ method: "POST" })
     }
 
     const { providerProgress } = await import("@/lib/storyreel-core.server");
-    const provider = row.provider === "fal" ? "fal" : "lovable";
+    const provider =
+      row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
 
     let progress;
     try {
