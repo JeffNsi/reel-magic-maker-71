@@ -387,6 +387,7 @@ function CreateCard({
   engine,
   setEngine,
   onSubmit,
+  onSubmitDirect,
   busy,
   working,
   statusText,
@@ -398,6 +399,7 @@ function CreateCard({
   engine: Engine;
   setEngine: (v: Engine) => void;
   onSubmit: () => void;
+  onSubmitDirect: () => void;
   busy: boolean;
   working: boolean;
   statusText: "queued" | "processing";
