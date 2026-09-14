@@ -59,9 +59,11 @@ export type Database = {
       director_sessions: {
         Row: {
           blueprint: string | null
+          breakthrough: string | null
           confidence: Json
           created_at: string
           film_bible: Json | null
+          film_model: Json | null
           id: string
           idea: string
           question_count: number
@@ -74,9 +76,11 @@ export type Database = {
         }
         Insert: {
           blueprint?: string | null
+          breakthrough?: string | null
           confidence?: Json
           created_at?: string
           film_bible?: Json | null
+          film_model?: Json | null
           id?: string
           idea: string
           question_count?: number
@@ -89,9 +93,11 @@ export type Database = {
         }
         Update: {
           blueprint?: string | null
+          breakthrough?: string | null
           confidence?: Json
           created_at?: string
           film_bible?: Json | null
+          film_model?: Json | null
           id?: string
           idea?: string
           question_count?: number

@@ -6,7 +6,6 @@ import { ArrowRight, Loader2, Sparkles, Wand2 } from "lucide-react";
 import {
   answerDirector,
   finishDirector,
-  MAX_QUESTIONS,
   saveBlueprint,
   startDirector,
   type DirectorState,
@@ -15,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 const DIMENSION_LABELS: Record<string, string> = {
-  subject: "Who",
-  setting: "Where",
-  time: "When",
-  mood: "Mood",
-  look: "Look",
+  story: "Story",
+  character: "Character",
+  emotion: "Emotion",
+  world: "World",
   camera: "Camera",
+  audience: "Audience",
   turn: "The turn",
   ending: "Ending",
 };
@@ -192,25 +191,53 @@ export function DirectorPanel({
           </div>
         )}
 
+        {!thinking && state?.breakthrough && (
+          <div className="rounded-2xl border border-primary/40 bg-primary/5 p-4">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
+              This changes the film
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">{state.breakthrough}</p>
+          </div>
+        )}
+
+        {!thinking && state?.conflict && (
+          <div className="rounded-2xl border border-primary/40 bg-background/40 p-4">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
+              I noticed a story conflict
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">
+              {state.conflict.message}
+            </p>
+          </div>
+        )}
+
         {!thinking && state?.question && (
           <div className="space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-                Question {state.question_count} of at most {MAX_QUESTIONS}
+                Question {state.question_count}
               </p>
+              {state.question.preface && (
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {state.question.preface}
+                </p>
+              )}
               <p className="mt-2 font-display text-xl italic leading-snug text-foreground sm:text-2xl">
                 {state.question.text}
               </p>
               {state.question.why && (
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  {state.question.why}
+                  Why I'm asking: {state.question.why}
                 </p>
               )}
             </div>
 
-            {state.question.suggestions.length > 0 && (
+            {(state.conflict?.options.length || state.question.suggestions.length) > 0 && (
               <div className="flex flex-wrap gap-2">
-                {state.question.suggestions.map((suggestion) => (
+                {(state.conflict?.options.length
+                  ? state.conflict.options
+                  : state.question.suggestions
+                ).map((suggestion) => (
                   <button
                     key={suggestion}
                     type="button"
@@ -262,6 +289,10 @@ export function DirectorPanel({
 
         {!thinking && state?.status === "ready" && (
           <div className="space-y-5">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">
+              I have enough to direct this
+            </p>
+
             {state.film_bible && (
               <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
@@ -279,6 +310,9 @@ export function DirectorPanel({
                     ["Setting", state.film_bible.setting],
                     ["Mood", state.film_bible.mood],
                     ["Look", state.film_bible.look],
+                    ["Camera", state.film_bible.camera],
+                    ["Arc", state.film_bible.emotional_arc],
+                    ["Ending", state.film_bible.ending],
                   ]
                     .filter(([, value]) => value)
                     .map(([label, value]) => (
@@ -290,6 +324,28 @@ export function DirectorPanel({
                       </div>
                     ))}
                 </dl>
+                {(state.film_bible.decisions.length > 0 ||
+                  state.film_bible.assumptions.length > 0) && (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {[
+                      ["Your decisions", state.film_bible.decisions],
+                      ["My assumptions", state.film_bible.assumptions],
+                    ]
+                      .filter(([, items]) => (items as string[]).length > 0)
+                      .map(([label, items]) => (
+                        <div key={label as string}>
+                          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+                            {label as string}
+                          </p>
+                          <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                            {(items as string[]).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
 
