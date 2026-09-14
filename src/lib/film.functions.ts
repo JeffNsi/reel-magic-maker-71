@@ -388,7 +388,10 @@ export const getFilm = createServerFn({ method: "POST" })
 /** Review every scene for clarity and re-cost the shot list from what it finds. */
 export const reviewScenes = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ref.parse(data))
-  .handler(async ({ data }): Promise<FilmView> => {
+  .handler(({ data }) => reviewScenesCore(data));
+
+export async function reviewScenesCore(data: z.infer<typeof ref>): Promise<FilmView> {
+  {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const film = await loadFilm(data.film_id, data.session_id);
 
