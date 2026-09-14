@@ -548,8 +548,8 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
    * A contradiction is never resolved silently: while one is open the interview
    * keeps going so the creator can choose, unless they asked to finish now.
    */
-  const done = mode === "finish" || (!!question === false && mode !== "reopen") ||
-    (reply.done === true && !conflict && !question);
+  const done =
+    mode === "finish" || (mode === "interview" && !question);
 
   /** Breakthrough history: appended as the interview finds them, never rewritten. */
   const events = readEvents(row.breakthroughs);
