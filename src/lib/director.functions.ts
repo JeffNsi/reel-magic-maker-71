@@ -1084,20 +1084,37 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
     what_ifs: cleanWhatIfs(reply.what_ifs),
     recommendation: verdict === "ready" ? "" : recommendation,
     improved_blueprint: text(reply.improved_blueprint, 500) || currentBlueprint,
+    reality,
   };
 }
 
 function challengeBrief(row: SessionRow) {
-  return [
+  const lines = [
     `ORIGINAL IDEA: ${row.idea}`,
     `Visual style: ${styleLabel(row.style)}`,
     `Film bible (the authoritative version): ${JSON.stringify(row.film_bible)}`,
     `Your recommendation: ${JSON.stringify(row.recommendation)}`,
     `Your film model, including the impact chain: ${JSON.stringify(readModel(row.film_model))}`,
     `The blueprint that would be sent to the generator: ${row.blueprint ?? ""}`,
+    "Clip reality: one continuous take of about five seconds, vertical, no cuts, no subtitles.",
+  ];
+
+  /**
+   * Learned from this session: a creator who keeps choosing their own execution
+   * gets a less pushy director — the reality check stays honest but stops
+   * arguing for simplification it has already lost.
+   */
+  if (row.simplify_rejections >= 2) {
+    lines.push(
+      `The creator has kept their own version ${row.simplify_rejections} times in this session. Do not argue simplification again unless the render would genuinely fail: raise only a real filming risk, keep any recommendation short, and prefer "ready" when the plan is merely ambitious.`,
+    );
+  }
+
+  lines.push(
     "",
-    "Challenge this film as its director would before production. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
-  ].join("\n");
+    "Challenge this film as its director would before production, and run the reality check on it. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
+  );
+  return lines.join("\n");
 }
 
 /**
