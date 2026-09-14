@@ -328,7 +328,9 @@ export async function buildFilmCore(
 
     const { data: session } = await supabaseAdmin
       .from("director_sessions")
-      .select("id, idea, style, status, film_bible, recommendation, blueprint, challenge")
+      .select(
+        "id, idea, style, status, film_bible, recommendation, blueprint, challenge, creative_truth",
+      )
       .eq("id", data.director_session_id)
       .maybeSingle();
 
@@ -374,9 +376,78 @@ export async function buildFilmCore(
 
     if (error || !story) throw new Error("Could not save this film. Please try again.");
 
+    const bible = (session.film_bible ?? null) as {
+      decisions?: string[];
+      camera?: string;
+      look?: string;
+      mood?: string;
+      setting?: string;
+      twist?: {
+        statement?: string;
+        emotional_purpose?: string;
+        reveal?: string;
+        visual_clue?: string;
+        foreshadowing?: string[];
+        ending_implication?: string;
+      } | null;
+    } | null;
+
+    /** The director's permanent creative truth, kept across questions. */
+    const creative = readCreativeTruth(session.creative_truth);
+    const twist = bible?.twist ?? null;
+
     const rows = sceneList.map((scene, index) => {
       const complexity =
         scene.complexity === undefined ? null : Math.round(Math.min(10, Math.max(0, scene.complexity)));
+
+      /**
+       * Scene Truth: the scene's own structured decisions, with the director's
+       * persisted emotional core, execution and accepted turn filled in where
+       * the scene did not state them itself. The creator's decisions are marked
+       * so no later AI pass can overwrite them.
+       */
+      let truth = mergeSceneTruth(emptySceneTruth(), {
+        emotional_core: creative?.emotional_core ?? "",
+        what_must_survive: creative?.what_must_survive ?? "",
+        chosen_execution: creative?.chosen_execution ?? "",
+        camera: bible?.camera ?? "",
+        visual_direction: [bible?.look ?? "", bible?.mood ?? ""].filter(Boolean).join(" — "),
+        setting: bible?.setting ?? breakdown.setting,
+        provenance: creative
+          ? {
+              emotional_core: creative.source,
+              what_must_survive: creative.source,
+              chosen_execution: creative.source,
+            }
+          : {},
+        user_decisions: (bible?.decisions ?? []).slice(0, 8),
+      });
+
+      /** The scene's own decisions win over the film-wide fallbacks. */
+      truth = mergeSceneTruth(truth, {
+        ...(scene.truth ?? {}),
+        action: scene.truth?.action || scene.prompt,
+        dialogue: scene.truth?.dialogue || "",
+        provenance: {},
+      });
+
+      /**
+       * The accepted turn travels with the scenes it touches — one twist
+       * representation only, taken straight from the approved film bible.
+       */
+      if (twist && (truth.twist || truth.reveal || truth.foreshadowing || index === sceneList.length - 1)) {
+        truth = mergeSceneTruth(truth, {
+          twist: truth.twist || twist.statement || "",
+          reveal: truth.reveal || twist.reveal || twist.visual_clue || "",
+          foreshadowing:
+            truth.foreshadowing || (twist.foreshadowing ?? []).slice(0, 4).join("; "),
+          provenance: { twist: "ai_recommendation", reveal: "ai_recommendation" },
+        });
+        if (!truth.emotional_core && twist.emotional_purpose) {
+          truth = mergeSceneTruth(truth, { emotional_core: twist.emotional_purpose });
+        }
+      }
+
       return {
         story_id: story.id as string,
         scene_number: index + 1,
@@ -387,6 +458,7 @@ export async function buildFilmCore(
         credit_cost: costFor(complexity),
         clarity_verdict: verdictOf(scene.clarity_verdict),
         clarity_note: scene.clarity_note ?? "",
+        truth,
       };
     });
 
@@ -511,14 +583,43 @@ export const renderScene = createServerFn({ method: "POST" })
       .map((c) => `${c.name}: ${c.look}`)
       .join(". ");
 
-    const prompt = [
-      STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"],
-      cast ? `Recurring characters — ${cast}. ` : "",
-      film.setting ? `Same setting throughout — ${film.setting}. ` : "",
-      `Scene ${scene.scene_number}: ${scene.idea.trim()}`,
-    ]
-      .join("")
-      .slice(0, 1800);
+    /**
+     * The generation request is built from the Scene Truth Contract, never
+     * reconstructed from the original idea or a shortened sentence. Scenes made
+     * before the contract existed fall back to their prose.
+     */
+    const truth =
+      scene.truth ??
+      mergeSceneTruth(emptySceneTruth(), { action: scene.idea.trim(), setting: film.setting });
+
+    const context = {
+      style_prefix: STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"],
+      original_idea: film.logline || "",
+      scene_number: scene.scene_number,
+      scene_title: scene.title,
+      cast,
+      film_setting: film.setting,
+      film_continuity: truth.continuity,
+    };
+
+    let prompt = buildGenerationRequest(truth, context);
+    let fidelity = checkFidelity(truth, prompt);
+
+    /**
+     * Preparation validation, not a generation retry: if an approved creative
+     * field did not survive into the request, the request is rebuilt from Scene
+     * Truth before a single credit is spent.
+     */
+    if (!fidelity.ok) {
+      prompt = buildGenerationRequest(truth, context, { minimal: true });
+      fidelity = checkFidelity(truth, prompt);
+    }
+
+    if (!fidelity.ok) {
+      throw new Error(
+        "This scene's approved direction did not make it into the generation request, so nothing was rendered and no credits were used. Review the scene and try again.",
+      );
+    }
 
     const generationId = await startGeneration({
       session_id: data.session_id,
