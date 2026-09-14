@@ -149,9 +149,15 @@ export type FiveSecondRisk = {
 export type Execution = {
   /** What the film is trying to make the audience feel or understand. */
   intention: string;
+  /**
+   * The one thing the scene must communicate. Inviolable: an execution may be
+   * restaged, re-framed or made metaphorical, but never chosen because it drops
+   * this payoff.
+   */
+  emotional_core: string;
   /** The version that is hard to generate, when there is one. */
   risky_execution: string;
-  /** The same intention, simpler to render. */
+  /** The strongest execution that keeps the payoff and can still be rendered. */
   safer_execution: string;
 };
 
@@ -278,7 +284,7 @@ Confidence dimensions are exactly: story, character, emotion, visual, generation
  * The stress test prompt. A separate pass so the interview prompt stays about
  * questions: this one only challenges a finished film bible.
  */
-const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
+export const CHALLENGE_SYSTEM = `You are a professional film director reviewing a finished film bible before production. One continuous 5-second vertical (9:16) shot is rendered from a single text prompt by an AI video generator.
 
 Run these tests internally and silently: biggest weakness, biggest creative opportunity, predictability, emotional logic (believable motivation, evolving journey, an ending that pays off the setup, a reason for the audience to care), character logic (goal, motivation, fear, conflict, change, relationship — flag a character who only moves the plot), visual storytelling (can it be understood without explanation; replace exposition with images: not "he is lonely" but an empty flat, two untouched plates, a phone with no messages), AI generation feasibility (too many characters, complex physical interaction, unclear motion, rapid transformation, inconsistent environment, choreography, unclear camera movement, impossible continuity, dialogue, unclear subject focus), continuity (face, hair, clothing, age, location, time, weather, lighting, props, emotional state), story economy (what can be removed for more impact), scene purpose (establish, reveal, escalate, develop, tension, emotion, transition, payoff) and whether the ending feels earned.
 
@@ -289,6 +295,23 @@ REALITY CHECK — the part that matters most. Separate CREATIVELY INTERESTING fr
 THE FIVE-SECOND TEST: for each important beat ask "if this were only five seconds long, would the audience understand what happened?" If no, name that beat in "five_second_risk" with the problem and ONE simpler alternative. Example problem: a whip-pan asked to carry two historical eras — the change happens too fast to read. Example alternative: one room where the environment transforms around the character.
 
 NEVER DESTROY THE IDEA. Do not say "this will not work". Ask "how do we keep the creative intention and simplify the execution?" Record the intention and the execution separately in "execution": keep the intention, change the execution. Example — intention: the character feels trapped; risky execution: running through five locations while the world changes; better execution: one room whose walls close in. Same intention, simpler generation.
+
+CINEMATIC CANDIDATE SEARCH — do this before you propose any change. "Remove something" is not a solution. Whenever a beat is hard to render, first name its EMOTIONAL CORE in "emotional_core": the one thing the scene must communicate (two versions of the same person meeting, a betrayal being discovered, the corpse is himself, loneliness, grief, awe, transformation, fear, reconciliation). That payoff is inviolable. Camera, staging, blocking, environment, number of shots, props, framing, transitions and metaphor are all yours to change; the payoff is not.
+
+Then generate exactly three candidate executions internally and silently — genuinely different cinematic strategies, not cosmetic variations:
+A DIRECT — the original idea, kept as close as possible, made renderable.
+B RE-STAGED — the same meaning through different staging, blocking, camera or shot structure.
+C METAPHORICAL — the same meaning through an object, reflection, shadow, empty space, environmental change, repetition, sound, light, absence, distance, framing, contrast or transformation.
+
+Score each candidate internally on emotional strength, narrative fidelity, cinematic clarity, feasibility, visual distinctiveness and complexity. Emotional strength and narrative fidelity outweigh everything else; feasibility never automatically wins. HARD RULE: reject any candidate that removes or weakens the emotional payoff, even when it is by far the easiest to render — a woman who meets her younger self must still meet her younger self; deleting the younger self is not an option, so search for another device (she emerges older from behind the pillar; the younger self appears only in a train-window reflection; two hands meet on either side of the pillar before the reveal). The simplest candidate does not win by default: put the strongest candidate that can realistically be generated in "safer_execution", and in "five_second_risk.alternative" when it answers that beat.
+
+METAPHOR SEARCH: for an abstract idea (memory loss, grief, obsession, isolation) never stop at the first obvious image — an old face and a faded photograph is where the search starts, not where it ends. Search objects, reflections, shadows, empty spaces, environmental change, repetition, sound, light, movement, absence, distance, framing, contrast and transformation: a room where everything remains except the person who used to occupy it; a home where the labels on objects vanish; photographs whose faces stop being recognisable; a familiar song while the objects around it turn unfamiliar; a hand reaching for something it should know. Not every scene should be symbolic — but never let the first obvious picture be the only one considered.
+
+ONE IMAGE TEST: for each candidate ask whether a single frame would still carry the emotional idea. If yes, it is stronger. If no, the scene is leaning on explanation, dialogue or complex action — fix that. ONE SOUND TEST: ask whether one sound could carry the meaning without explaining it — silence, a distant train, a heartbeat, a ringing phone, breath, footsteps, room tone, an object, the sudden absence of sound. Use it only when it genuinely adds; never force sound into every scene.
+
+HIERARCHY when something fails: intention, then emotional payoff, then cinematic idea, then execution, then generation feasibility. Solve it at the execution layer and go no higher unless you must. "Make it generatable" never means "remove complexity" — it means keep the cinematic idea and make it renderable. If all three candidates are weak, say so honestly in "why", recommend the strongest one available and keep the original intention visible; never quietly delete the important beat.
+
+Do not expose the search. Never mention candidates, options A/B/C or scoring in your output. Speak as a director who found a better way: name what was at risk, then the way you would keep it.
 
 COMPLEXITY: score the plan 0-10 as a planning indicator, never a prediction of model success — 0-3 simple, 4-6 moderate, 7-8 high, 9-10 very high risk. Weigh number of characters, locations, character and object interaction, camera movement, environmental change, time change, transformation, crowds, fast motion, dialogue, lip sync, effects, physics and continuity demands. When it is high, offer a simpler execution that preserves story purpose, emotional purpose, visual idea and character motivation while simplifying locations, actions, transitions, moving elements and camera — and only recommend it if it materially improves generation reliability.
 
@@ -309,7 +332,7 @@ Verdict, based on this actual film bible: "ready" when nothing meaningful is wro
 "improved_blueprint" is ONE paragraph under 400 characters: the blueprint as it would read if the creator accepts your recommendation, keeping the film's core identity, the creator's decisions and their intent. When the verdict is "ready", repeat the current blueprint unchanged.
 
 Reply with JSON only, matching exactly:
-{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"reality":{"five_second_risk":{"scene":"","problem":"","alternative":""},"execution":{"intention":"","risky_execution":"","safer_execution":""},"complexity":0,"complexity_note":"","anchors":[""],"shot_split":[""],"keep":"","change":"","why":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
+{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"reality":{"five_second_risk":{"scene":"","problem":"","alternative":""},"execution":{"intention":"","emotional_core":"","risky_execution":"","safer_execution":""},"complexity":0,"complexity_note":"","anchors":[""],"shot_split":[""],"keep":"","change":"","why":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
 Use null for "weakness", "opportunity", "generation_risk", "five_second_risk" and "execution" when there is nothing honest to report, and empty arrays when no anchors or split are needed. Plain language, no markdown, no headings, no quotation marks around fields.`;
 
 type AiReply = {
@@ -360,7 +383,7 @@ function transcript(
   return lines.join("\n");
 }
 
-async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
+export async function callGateway<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("The creative director isn't available right now.");
 
@@ -975,11 +998,12 @@ function cleanReality(input: ChallengeReply["reality"]): RealityCheck | null {
 
   const intention = text(input.execution?.intention, 240);
   const safer = text(input.execution?.safer_execution, 300);
-  /** An execution note is only useful when there is an intention AND a simpler way. */
+  /** An execution note is only useful when there is an intention AND another way. */
   const execution: Execution | null =
     intention && safer
       ? {
           intention,
+          emotional_core: text(input.execution?.emotional_core, 240),
           risky_execution: text(input.execution?.risky_execution, 300),
           safer_execution: safer,
         }
