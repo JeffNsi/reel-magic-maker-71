@@ -80,6 +80,9 @@ export function DirectorPanel({
     setError(null);
     setEditing(false);
     setReview(null);
+    setChallenge(null);
+    setWhatIfs(false);
+    challenged.current = null;
     if (next.blueprint) setBlueprint(next.blueprint);
   };
 
