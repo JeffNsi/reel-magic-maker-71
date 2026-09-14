@@ -375,7 +375,7 @@ export const deleteScene = createServerFn({ method: "POST" })
 const generateSceneInput = storyRef.extend({
   scene_id: z.string().uuid(),
   audio: z.boolean().optional().default(false),
-  engine: z.enum(["lovable", "fal"]).optional().default("lovable"),
+  engine: z.enum(["lovable", "fal", "live"]).optional().default("lovable"),
 });
 
 /** Build a consistency-locked prompt for one scene and send it to the video model. */

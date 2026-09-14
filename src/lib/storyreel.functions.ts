@@ -84,7 +84,7 @@ const generateInput = z.object({
   /** When true, the video model generates a soundtrack for the clip. */
   audio: z.boolean().optional().default(false),
   /** Which film engine renders the clip: Lovable AI, or the project's own fal.ai account. */
-  engine: z.enum(["lovable", "fal"]).optional().default("lovable"),
+  engine: z.enum(["lovable", "fal", "live"]).optional().default("lovable"),
 });
 
 const statusInput = z.object({
