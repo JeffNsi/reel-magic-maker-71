@@ -1074,6 +1074,12 @@ export const saveBlueprint = createServerFn({ method: "POST" })
       .update({ blueprint: data.blueprint })
       .eq("id", row.id);
 
+    /** An edited blueprint is the creator's own execution — it outranks the AI's. */
+    await rememberCreativeTruth(row, {
+      chosen_execution: data.blueprint,
+      source: "user_decision",
+    });
+
     return { blueprint: data.blueprint };
   });
 
@@ -1349,6 +1355,17 @@ export const challengeFilm = createServerFn({ method: "POST" })
       .update({ challenge })
       .eq("id", row.id);
 
+    /**
+     * The emotional core and the winning execution get a permanent home here,
+     * so a later question can never wipe them with the challenge record.
+     */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge.reality?.execution?.intention ?? "",
+      chosen_execution: row.blueprint ?? "",
+      source: "ai_discovery" as CreativeTruth["source"],
+    });
+
     return challenge;
   });
 
@@ -1393,6 +1410,14 @@ export const applyChallenge = createServerFn({ method: "POST" })
       })
       .eq("id", row.id);
 
+    /** The director's version was accepted: its execution becomes the winner. */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge.reality?.execution?.intention ?? "",
+      chosen_execution: challenge.reality?.execution?.safer_execution || blueprint,
+      source: "ai_recommendation",
+    });
+
     return { blueprint };
   });
 
@@ -1419,6 +1444,15 @@ export const keepMyVersion = createServerFn({ method: "POST" })
           : challenge,
       })
       .eq("id", row.id);
+
+    /** Keep my version: the creator's execution is authoritative from now on. */
+    await rememberCreativeTruth(row, {
+      emotional_core: challenge?.reality?.execution?.emotional_core ?? "",
+      what_must_survive: challenge?.reality?.execution?.intention ?? "",
+      chosen_execution:
+        challenge?.reality?.execution?.risky_execution || row.blueprint || "",
+      source: "user_decision",
+    });
 
     return { kept };
   });
