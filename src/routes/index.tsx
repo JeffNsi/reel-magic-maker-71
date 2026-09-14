@@ -153,8 +153,17 @@ function StoryReel() {
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
 
   const generate = useMutation({
-    mutationFn: () =>
-      start({ data: { idea, style, audio: true, engine, session_id: sessionId } }),
+    mutationFn: (input: { prompt: string; directorSessionId?: string }) =>
+      start({
+        data: {
+          idea: input.prompt,
+          style,
+          audio: true,
+          engine,
+          session_id: sessionId,
+          director_session_id: input.directorSessionId,
+        },
+      }),
     onSuccess: (result) => {
       setGenerationId(result.generation_id);
       void refetchProfile();
