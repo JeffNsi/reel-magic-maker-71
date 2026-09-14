@@ -578,11 +578,12 @@ type SessionRow = {
   recommendation: unknown;
   breakthroughs: unknown;
   blueprint: string | null;
+  challenge: unknown;
   question_count: number;
 };
 
 const SESSION_COLUMNS =
-  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, question_count";
+  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, question_count";
 
 function readModel(value: unknown): FilmModel | null {
   return value && typeof value === "object" ? (value as FilmModel) : null;
