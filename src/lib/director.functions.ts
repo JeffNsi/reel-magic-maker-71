@@ -133,6 +133,44 @@ export type Opportunity = {
 
 export type GenerationRisk = { problem: string; fix: string };
 
+/**
+ * The reality check: is the plan actually filmable as one short AI-generated
+ * clip? Every scene test runs internally; only the parts a creator can act on
+ * are surfaced. The creative intention is never traded away — only execution.
+ */
+export type FiveSecondRisk = {
+  /** The moment that would not read in five seconds. */
+  scene: string;
+  problem: string;
+  /** ONE simpler way to shoot the same intention. */
+  alternative: string;
+};
+
+export type Execution = {
+  /** What the film is trying to make the audience feel or understand. */
+  intention: string;
+  /** The version that is hard to generate, when there is one. */
+  risky_execution: string;
+  /** The same intention, simpler to render. */
+  safer_execution: string;
+};
+
+export type RealityCheck = {
+  five_second_risk: FiveSecondRisk | null;
+  execution: Execution | null;
+  /** Planning indicator 0-10, not a prediction of model success. */
+  complexity: number;
+  complexity_note: string;
+  /** Concrete objects/wardrobe/architecture that make time and place readable. */
+  anchors: string[];
+  /** When one shot carries too much, the same idea as separate shots. */
+  shot_split: string[];
+  /** The recommendation in the creator's terms. */
+  keep: string;
+  change: string;
+  why: string;
+};
+
 export type WhatIf = { text: string; creative_value: number; risk: number };
 
 export type Verdict = "ready" | "recommendation" | "revision";
@@ -151,6 +189,8 @@ export type Challenge = {
   recommendation: string;
   /** The blueprint as it would read if the creator accepts that change. */
   improved_blueprint: string;
+  /** Will this plan survive being turned into a five-second generated clip? */
+  reality: RealityCheck | null;
 };
 
 /** A moment in the interview where an answer redirected the film. */
@@ -244,15 +284,33 @@ Run these tests internally and silently: biggest weakness, biggest creative oppo
 
 Then rank everything and surface at most: ONE weakness, ONE opportunity, ONE generation risk, ONE recommendation. Never output a checklist. Never invent criticism: if the film genuinely holds up, set "weakness" to null. If there is no honest improvement, set "opportunity" to null. Do not propose a twist for the sake of a twist and do not make the film more complicated — aim for more intentional, more emotional, more visual, more coherent, more generatable. Do not remove something merely because it is complex.
 
+REALITY CHECK — the part that matters most. Separate CREATIVELY INTERESTING from ACTUALLY GENERATABLE: a concept can be excellent and still fail to communicate inside one short AI clip. Test every important beat internally against story clarity (can the audience tell what is happening), visual clarity (can the action be read without words), temporal clarity (can a change in time be recognised), spatial clarity (is it clear where we are), character clarity (is it clear who does what), motion clarity (can a video model plausibly render that movement), continuity (can the person and the place stay consistent), duration (can this be told in the seconds available) and transition complexity.
+
+THE FIVE-SECOND TEST: for each important beat ask "if this were only five seconds long, would the audience understand what happened?" If no, name that beat in "five_second_risk" with the problem and ONE simpler alternative. Example problem: a whip-pan asked to carry two historical eras — the change happens too fast to read. Example alternative: one room where the environment transforms around the character.
+
+NEVER DESTROY THE IDEA. Do not say "this will not work". Ask "how do we keep the creative intention and simplify the execution?" Record the intention and the execution separately in "execution": keep the intention, change the execution. Example — intention: the character feels trapped; risky execution: running through five locations while the world changes; better execution: one room whose walls close in. Same intention, simpler generation.
+
+COMPLEXITY: score the plan 0-10 as a planning indicator, never a prediction of model success — 0-3 simple, 4-6 moderate, 7-8 high, 9-10 very high risk. Weigh number of characters, locations, character and object interaction, camera movement, environmental change, time change, transformation, crowds, fast motion, dialogue, lip sync, effects, physics and continuity demands. When it is high, offer a simpler execution that preserves story purpose, emotional purpose, visual idea and character motivation while simplifying locations, actions, transitions, moving elements and camera — and only recommend it if it materially improves generation reliability.
+
+TRANSITIONS: analyse whip pans, match cuts, morphs, time jumps, location jumps, transformations, fast camera moves, perspective changes and character transformations. Ask whether the audience will read it AND whether the model will hold continuity through it; if either is weak, propose a simpler transition.
+
+TIME AND VISUAL ANCHORS: for past/present/future, day/night, young/old or different periods, verify the change is recognisable, never relying on subtle cues or on-screen text. Put strong anchors in "anchors" — wardrobe, architecture, vehicles, props, a period television, lighting, production design.
+
+CAMERA AND SHOT SPLITTING: if continuous camera movement, several characters, environmental transformation, dialogue and a time jump pile up at once, recommend separating them. When one shot carries too much information, keep the idea and split it into shots in "shot_split" (for example: character enters the room; camera reveals the object; character reacts; the object activates) rather than deleting the idea.
+
+CREDIT AWARENESS: before rendering, ask internally whether this beat is worth a generation credit in its current form. If risk is high, recommend the safer execution BEFORE rendering. Never render speculative versions.
+
+RECOMMENDATION SHAPE: express your one recommendation as "keep" (what stays), "change" (what changes) and "why" (why the film improves — clearer for the audience, fewer continuity variables). Never silently replace the creator's idea; their version always survives a refusal, and you never argue the same point twice.
+
 Give three short "what if" possibilities — alternative directions, not whole films — each scored for creative_value and risk from 0 to 100. Never apply them; the creator decides.
 
-Verdict, based on this actual film bible: "ready" when nothing meaningful is wrong; "recommendation" when it can be made as-is but one change would clearly strengthen it; "revision" only when a real creative problem would damage the film or the render.
+Verdict, based on this actual film bible: "ready" when nothing meaningful is wrong; "recommendation" when it can be made as-is but one change would clearly strengthen it; "revision" only when a real creative problem or a real filming risk would damage the film or the render.
 
 "improved_blueprint" is ONE paragraph under 400 characters: the blueprint as it would read if the creator accepts your recommendation, keeping the film's core identity, the creator's decisions and their intent. When the verdict is "ready", repeat the current blueprint unchanged.
 
 Reply with JSON only, matching exactly:
-{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
-Use null for "weakness", "opportunity" and "generation_risk" when there is nothing honest to report. Plain language, no markdown, no headings, no quotation marks around fields.`;
+{"verdict":"ready","headline":"one short sentence in your own voice","weakness":{"problem":"","why_it_matters":"","affected":[""],"solution":""},"opportunity":{"current_direction":"","proposed_improvement":"","why":"","affected":[""]},"generation_risk":{"problem":"","fix":""},"reality":{"five_second_risk":{"scene":"","problem":"","alternative":""},"execution":{"intention":"","risky_execution":"","safer_execution":""},"complexity":0,"complexity_note":"","anchors":[""],"shot_split":[""],"keep":"","change":"","why":""},"predictability":"low","predictability_note":"","what_ifs":[{"text":"","creative_value":0,"risk":0}],"recommendation":"","improved_blueprint":""}
+Use null for "weakness", "opportunity", "generation_risk", "five_second_risk" and "execution" when there is nothing honest to report, and empty arrays when no anchors or split are needed. Plain language, no markdown, no headings, no quotation marks around fields.`;
 
 type AiReply = {
   understanding?: string;
@@ -579,11 +637,12 @@ type SessionRow = {
   breakthroughs: unknown;
   blueprint: string | null;
   challenge: unknown;
+  simplify_rejections: number;
   question_count: number;
 };
 
 const SESSION_COLUMNS =
-  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, question_count";
+  "id, idea, style, status, understanding, confidence, film_model, film_bible, evolution, recommendation, breakthroughs, blueprint, challenge, simplify_rejections, question_count";
 
 function readModel(value: unknown): FilmModel | null {
   return value && typeof value === "object" ? (value as FilmModel) : null;
@@ -857,6 +916,17 @@ type ChallengeReply = {
   what_ifs?: unknown;
   recommendation?: string;
   improved_blueprint?: string | null;
+  reality?: {
+    five_second_risk?: Partial<FiveSecondRisk> | null;
+    execution?: Partial<Execution> | null;
+    complexity?: unknown;
+    complexity_note?: string;
+    anchors?: unknown;
+    shot_split?: unknown;
+    keep?: string;
+    change?: string;
+    why?: string;
+  } | null;
 };
 
 const NO_WEAKNESS = "No major creative weakness detected.";
@@ -879,6 +949,62 @@ function cleanWhatIfs(input: unknown): WhatIf[] {
     .filter((item) => item.text)
     .sort((a, b) => b.creative_value - b.risk - (a.creative_value - a.risk))
     .slice(0, 3);
+}
+
+/** 0-10 planning indicator, not a prediction of the model's success. */
+function complexityScore(value: unknown) {
+  return Math.max(0, Math.min(10, Math.round(Number(value) || 0)));
+}
+
+/**
+ * The reality check survives only where the model pointed at something real:
+ * a beat that fails the five-second test, an execution that can be simplified
+ * without touching the intention, anchors, or a shot split.
+ */
+function cleanReality(input: ChallengeReply["reality"]): RealityCheck | null {
+  if (!input || typeof input !== "object") return null;
+
+  const riskProblem = text(input.five_second_risk?.problem, 300);
+  const five_second_risk: FiveSecondRisk | null = riskProblem
+    ? {
+        scene: text(input.five_second_risk?.scene, 200),
+        problem: riskProblem,
+        alternative: text(input.five_second_risk?.alternative, 300),
+      }
+    : null;
+
+  const intention = text(input.execution?.intention, 240);
+  const safer = text(input.execution?.safer_execution, 300);
+  /** An execution note is only useful when there is an intention AND a simpler way. */
+  const execution: Execution | null =
+    intention && safer
+      ? {
+          intention,
+          risky_execution: text(input.execution?.risky_execution, 300),
+          safer_execution: safer,
+        }
+      : null;
+
+  const reality: RealityCheck = {
+    five_second_risk,
+    execution,
+    complexity: complexityScore(input.complexity),
+    complexity_note: text(input.complexity_note, 240),
+    anchors: list(input.anchors, 4, 80),
+    shot_split: list(input.shot_split, 4, 120),
+    keep: text(input.keep, 240),
+    change: text(input.change, 240),
+    why: text(input.why, 300),
+  };
+
+  const empty =
+    !five_second_risk &&
+    !execution &&
+    !reality.complexity_note &&
+    !reality.anchors.length &&
+    !reality.shot_split.length &&
+    !reality.change;
+  return empty ? null : reality;
 }
 
 /** Only findings the model can actually point at survive — no invented criticism. */
@@ -909,6 +1035,8 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
     ? { problem: riskProblem, fix: text(reply.generation_risk?.fix, 300) }
     : null;
 
+  const reality = cleanReality(reply.reality);
+
   const raw = String(reply.verdict ?? "").toLowerCase();
   let verdict: Verdict =
     raw.includes("revis") || raw.includes("red")
@@ -918,10 +1046,15 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
         : "ready";
 
   /** The verdict has to match the findings, not just the label the model chose. */
-  if (verdict === "ready" && (weakness || opportunity || generation_risk)) {
+  if (
+    verdict === "ready" &&
+    (weakness || opportunity || generation_risk || reality?.five_second_risk)
+  ) {
     verdict = "recommendation";
   }
-  if (verdict === "revision" && !weakness && !generation_risk) verdict = "recommendation";
+  if (verdict === "revision" && !weakness && !generation_risk && !reality?.five_second_risk) {
+    verdict = "recommendation";
+  }
 
   const predictabilityRaw = String(reply.predictability ?? "").toLowerCase();
   const predictability =
@@ -929,6 +1062,8 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
 
   const recommendation =
     text(reply.recommendation, 400) ||
+    reality?.five_second_risk?.alternative ||
+    reality?.execution?.safer_execution ||
     opportunity?.proposed_improvement ||
     weakness?.solution ||
     "";
@@ -950,20 +1085,37 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
     what_ifs: cleanWhatIfs(reply.what_ifs),
     recommendation: verdict === "ready" ? "" : recommendation,
     improved_blueprint: text(reply.improved_blueprint, 500) || currentBlueprint,
+    reality,
   };
 }
 
 function challengeBrief(row: SessionRow) {
-  return [
+  const lines = [
     `ORIGINAL IDEA: ${row.idea}`,
     `Visual style: ${styleLabel(row.style)}`,
     `Film bible (the authoritative version): ${JSON.stringify(row.film_bible)}`,
     `Your recommendation: ${JSON.stringify(row.recommendation)}`,
     `Your film model, including the impact chain: ${JSON.stringify(readModel(row.film_model))}`,
     `The blueprint that would be sent to the generator: ${row.blueprint ?? ""}`,
+    "Clip reality: one continuous take of about five seconds, vertical, no cuts, no subtitles.",
+  ];
+
+  /**
+   * Learned from this session: a creator who keeps choosing their own execution
+   * gets a less pushy director — the reality check stays honest but stops
+   * arguing for simplification it has already lost.
+   */
+  if (row.simplify_rejections >= 2) {
+    lines.push(
+      `The creator has kept their own version ${row.simplify_rejections} times in this session. Do not argue simplification again unless the render would genuinely fail: raise only a real filming risk, keep any recommendation short, and prefer "ready" when the plan is merely ambitious.`,
+    );
+  }
+
+  lines.push(
     "",
-    "Challenge this film as its director would before production. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
-  ].join("\n");
+    "Challenge this film as its director would before production, and run the reality check on it. Surface at most one weakness, one opportunity, one generation risk and one recommendation, and be honest when there is nothing wrong.",
+  );
+  return lines.join("\n");
 }
 
 /**
@@ -1032,4 +1184,31 @@ export const applyChallenge = createServerFn({ method: "POST" })
       .eq("id", row.id);
 
     return { blueprint };
+  });
+
+/**
+ * "Keep my version": the creator's execution stands untouched, and the session
+ * remembers the refusal so the reality check stops pushing simplifications it
+ * has already lost. The blueprint is never modified here.
+ */
+export const keepMyVersion = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => refInput.parse(data))
+  .handler(async ({ data }): Promise<{ kept: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { row } = await loadSession(data.director_session_id, data.session_id);
+
+    const challenge = (row.challenge ?? null) as Challenge | null;
+    const kept = (row.simplify_rejections ?? 0) + 1;
+
+    await supabaseAdmin
+      .from("director_sessions")
+      .update({
+        simplify_rejections: kept,
+        challenge: challenge
+          ? { ...challenge, verdict: "ready", recommendation: "", weakness: null }
+          : challenge,
+      })
+      .eq("id", row.id);
+
+    return { kept };
   });
