@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { STYLES } from "@/lib/storyreel.functions";
+import { readCreativeTruth } from "@/lib/director.functions";
+import {
+  buildGenerationRequest,
+  checkFidelity,
+  emptySceneTruth,
+  mergeSceneTruth,
+  readSceneTruth,
+  sceneTruthSchema,
+  type SceneTruth,
+} from "@/lib/scene-truth";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -47,6 +57,8 @@ export type FilmScene = {
   video_url: string | null;
   voice_url: string | null;
   error_message: string | null;
+  /** The authoritative structured version of this scene, read by generation. */
+  truth: SceneTruth | null;
 };
 
 export type FilmView = {
@@ -87,6 +99,7 @@ const sceneSchema = z.object({
   complexity: z.coerce.number().min(0).max(10).optional(),
   clarity_verdict: z.string().trim().max(30).optional(),
   clarity_note: z.string().trim().max(300).optional(),
+  truth: sceneTruthSchema.partial().optional(),
 });
 
 const breakdownSchema = z.object({
@@ -160,8 +173,10 @@ For every scene also judge, honestly:
 - "clarity_verdict": "clear" when the moment reads in five seconds without explanation, "risky" when it probably reads but is fragile, "unclear" when an audience would not follow it.
 - "clarity_note": one short sentence naming what a viewer sees, or what would confuse them.
 
+SCENE TRUTH CONTRACT: every scene also carries a structured "truth" object — the executable form of the approved film bible for THAT scene, not a summary of the whole film. Fill only what this scene genuinely has, leave the rest as empty strings, and never invent creative decisions the bible did not make. "emotional_core" is the one thing this scene must communicate. "what_must_survive" is the beat that may never disappear, whatever the execution becomes. "chosen_execution" is how this exact shot is staged — the winning execution, never a rejected alternative. Give each scene its own emotional purpose and execution; do not repeat one global paragraph across scenes. When a character, wardrobe item, object, location or planted clue must persist across scenes, say so in "continuity". Fill "twist", "reveal" and "foreshadowing" only in the scenes those elements actually touch, using the bible's turn as written. Leave "sound" and "dialogue" empty unless the bible asked for them.
+
 Reply with JSON only, no markdown, in this exact shape:
-{"title":string,"logline":string,"setting":string,"characters":[{"name":string,"look":string}],"scenes":[{"title":string,"prompt":string,"narration":string,"complexity":number,"clarity_verdict":string,"clarity_note":string}]}
+{"title":string,"logline":string,"setting":string,"characters":[{"name":string,"look":string}],"scenes":[{"title":string,"prompt":string,"narration":string,"complexity":number,"clarity_verdict":string,"clarity_note":string,"truth":{"emotional_core":string,"what_must_survive":string,"chosen_execution":string,"characters":string,"action":string,"setting":string,"time_period":string,"wardrobe":string,"camera":string,"framing":string,"movement":string,"visual_direction":string,"lighting":string,"sound":string,"dialogue":string,"continuity":string,"twist":string,"reveal":string,"foreshadowing":string}}]}
 
 Each prompt is under 400 characters. Each narration is one spoken voice-over sentence under 200 characters, or an empty string when the shot is stronger silent. No quotation marks, no camera brand names, no scene numbers inside the prompts.`;
 
@@ -191,6 +206,7 @@ type SceneRow = {
   clarity_note: string | null;
   queued: boolean | null;
   generation_id: string | null;
+  truth: unknown;
 };
 
 async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
@@ -211,7 +227,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
   const { data: sceneRows } = await supabaseAdmin
     .from("story_scenes")
     .select(
-      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id",
+      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id, truth",
     )
     .eq("story_id", film_id)
     .order("scene_number", { ascending: true });
@@ -252,6 +268,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
             : null,
         voice_url: await signedUrl((generation?.voiceover_url as string | null) ?? null),
         error_message: (generation?.error_message as string | null) ?? null,
+        truth: readSceneTruth(scene.truth),
       };
     }),
   );
