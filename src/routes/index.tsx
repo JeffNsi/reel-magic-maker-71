@@ -133,6 +133,7 @@ function StoryReel() {
   const [statusText, setStatusText] = useState<"queued" | "processing">("queued");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [directorSessionId, setDirectorSessionId] = useState<string | null>(null);
 
   useEffect(() => setSessionId(getSessionId()), []);
 
