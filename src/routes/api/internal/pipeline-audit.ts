@@ -121,7 +121,7 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
             scene_number: scene.scene_number,
             title: scene.title,
             complexity: scene.complexity,
-            clarity: scene.clarity,
+            
             truth,
             request: preview,
             fidelity: checkFidelity(truth, preview),
