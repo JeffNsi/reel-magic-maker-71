@@ -275,6 +275,7 @@ function StoryReel() {
               engine={engine}
               setEngine={setEngine}
               onSubmit={submit}
+              onSubmitDirect={submitDirect}
               busy={generate.isPending || !sessionId || phase === "working"}
               working={phase === "working"}
               statusText={statusText}
@@ -283,6 +284,18 @@ function StoryReel() {
             {phase === "create" && <Learn />}
           </>
         )}
+
+        {phase === "director" && sessionId && (
+          <DirectorPanel
+            sessionId={sessionId}
+            idea={idea}
+            style={style}
+            generating={generate.isPending}
+            onGenerate={(blueprint, directorSessionId) => render(blueprint, directorSessionId)}
+            onCancel={() => setPhase("create")}
+          />
+        )}
+
 
         {phase === "done" && videoUrl && (
           <ResultState videoUrl={videoUrl} generationId={generationId} onReset={reset} />
