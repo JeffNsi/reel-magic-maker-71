@@ -99,8 +99,12 @@ export async function submitLovableVideo(prompt: string, audio: boolean): Promis
 }
 
 /** Submit to fal.ai (Kling 3.0) and return its request id. */
-export async function submitFalVideo(prompt: string, audio: boolean): Promise<string> {
-  const res = await fetch(`${FAL_QUEUE_BASE}/${FAL_MODEL_ID}`, {
+export async function submitFalVideo(
+  prompt: string,
+  audio: boolean,
+  model: string = FAL_MODEL_ID,
+): Promise<string> {
+  const res = await fetch(`${FAL_QUEUE_BASE}/${model}`, {
     method: "POST",
     headers: falHeaders(readFalKey()),
     body: JSON.stringify({
