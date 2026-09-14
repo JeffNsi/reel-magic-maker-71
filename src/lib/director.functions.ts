@@ -998,11 +998,12 @@ function cleanReality(input: ChallengeReply["reality"]): RealityCheck | null {
 
   const intention = text(input.execution?.intention, 240);
   const safer = text(input.execution?.safer_execution, 300);
-  /** An execution note is only useful when there is an intention AND a simpler way. */
+  /** An execution note is only useful when there is an intention AND another way. */
   const execution: Execution | null =
     intention && safer
       ? {
           intention,
+          emotional_core: text(input.execution?.emotional_core, 240),
           risky_execution: text(input.execution?.risky_execution, 300),
           safer_execution: safer,
         }
