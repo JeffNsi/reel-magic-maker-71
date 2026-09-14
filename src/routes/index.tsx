@@ -100,6 +100,15 @@ const EXAMPLE_PROMPTS: { label: string; prompt: string }[] = [
 
 type Phase = "create" | "working" | "done" | "error";
 
+type Engine = "lovable" | "fal" | "live";
+
+/** The three film engines a creator can pick between. */
+const ENGINES: { id: Engine; label: string; note: string }[] = [
+  { id: "lovable", label: "Ezy", note: "Included credits" },
+  { id: "fal", label: "Strong", note: "Your own account" },
+  { id: "live", label: "Live", note: "Realtime engine" },
+];
+
 /** Turns a backend failure into language a filmmaker can act on. */
 function friendlyError(raw: string | null | undefined) {
   const message = (raw ?? "").trim();
