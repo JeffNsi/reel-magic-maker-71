@@ -1034,6 +1034,8 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
     ? { problem: riskProblem, fix: text(reply.generation_risk?.fix, 300) }
     : null;
 
+  const reality = cleanReality(reply.reality);
+
   const raw = String(reply.verdict ?? "").toLowerCase();
   let verdict: Verdict =
     raw.includes("revis") || raw.includes("red")
