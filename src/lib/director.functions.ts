@@ -133,6 +133,44 @@ export type Opportunity = {
 
 export type GenerationRisk = { problem: string; fix: string };
 
+/**
+ * The reality check: is the plan actually filmable as one short AI-generated
+ * clip? Every scene test runs internally; only the parts a creator can act on
+ * are surfaced. The creative intention is never traded away — only execution.
+ */
+export type FiveSecondRisk = {
+  /** The moment that would not read in five seconds. */
+  scene: string;
+  problem: string;
+  /** ONE simpler way to shoot the same intention. */
+  alternative: string;
+};
+
+export type Execution = {
+  /** What the film is trying to make the audience feel or understand. */
+  intention: string;
+  /** The version that is hard to generate, when there is one. */
+  risky_execution: string;
+  /** The same intention, simpler to render. */
+  safer_execution: string;
+};
+
+export type RealityCheck = {
+  five_second_risk: FiveSecondRisk | null;
+  execution: Execution | null;
+  /** Planning indicator 0-10, not a prediction of model success. */
+  complexity: number;
+  complexity_note: string;
+  /** Concrete objects/wardrobe/architecture that make time and place readable. */
+  anchors: string[];
+  /** When one shot carries too much, the same idea as separate shots. */
+  shot_split: string[];
+  /** The recommendation in the creator's terms. */
+  keep: string;
+  change: string;
+  why: string;
+};
+
 export type WhatIf = { text: string; creative_value: number; risk: number };
 
 export type Verdict = "ready" | "recommendation" | "revision";
