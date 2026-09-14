@@ -44,7 +44,12 @@ export async function signedUrl(path: string | null) {
   return data?.signedUrl ?? null;
 }
 
-export type VideoProvider = "lovable" | "fal";
+export type VideoProvider = "lovable" | "fal" | "live";
+
+/** Which fal.ai model backs a fal-based engine. */
+export function falModelFor(provider: VideoProvider) {
+  return provider === "live" ? FAL_LIVE_MODEL_ID : FAL_MODEL_ID;
+}
 
 export const AI_VIDEO_BASE = "https://ai.gateway.lovable.dev/v1/videos";
 export const LOVABLE_VIDEO_MODEL = "google/gemini-omni-1.1-flash";
