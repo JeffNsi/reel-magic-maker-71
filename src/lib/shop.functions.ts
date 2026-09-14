@@ -203,7 +203,7 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
             redirect_url: `${data.origin}/vibe/profile?shop=return`,
           }),
         });
-        return { checkoutId: checkout.id as string };
+        return { checkoutId: checkout.id as string, amount: pack.amountSek };
       } catch (error: any) {
         if (error?.message === "SUMUP_NOT_CONNECTED") {
           return { error: "SumUp is not connected yet. Add your SumUp API key to enable it." };
