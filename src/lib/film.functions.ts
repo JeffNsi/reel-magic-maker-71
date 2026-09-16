@@ -207,6 +207,7 @@ type SceneRow = {
   queued: boolean | null;
   generation_id: string | null;
   truth: unknown;
+  recovery: unknown;
 };
 
 async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
