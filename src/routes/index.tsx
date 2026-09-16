@@ -11,7 +11,16 @@ import { getProfile } from "@/lib/vibe.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionId } from "@/lib/session";
 import { StylePicker } from "@/components/landing/style-picker";
-import { Faq, HowItWorks, Learn, Pricing, SiteFooter, SocialProof } from "@/components/landing/sections";
+import { Faq, Pricing, SiteFooter } from "@/components/landing/sections";
+import {
+  BeforeYouStart,
+  CreativeIntelligence,
+  DirectorPrimer,
+  DirectorSequence,
+  NotPromptToVideo,
+  StayInControl,
+} from "@/components/landing/director-story";
+
 import { Gallery } from "@/components/landing/gallery";
 import { DirectorPanel } from "@/components/director/director-panel";
 import { Button } from "@/components/ui/button";
@@ -20,22 +29,47 @@ import { Textarea } from "@/components/ui/textarea";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "STORYREEL — Turn your story into a cinematic short" },
+      { title: "Reel Magic Maker — AI Creative Director for Short Films" },
       {
         name: "description",
         content:
-          "Describe your idea and STORYREEL transforms it into a vertical AI video you can watch and download.",
+          "Turn an idea into a cinematic short with an AI Creative Director that helps develop the story, discover creative possibilities, test scenes and direct the final generation.",
       },
-      { property: "og:title", content: "STORYREEL — Turn your story into a cinematic short" },
+      { property: "og:title", content: "Reel Magic Maker — AI Creative Director for Short Films" },
       {
         property: "og:description",
-        content:
-          "Describe your idea and STORYREEL transforms it into a vertical AI video you can watch and download.",
+        content: "You bring the idea. Your AI Director finds the film inside it.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://reel-magic-maker-71.lovable.app/" },
+      {
+        property: "og:image",
+        content: "https://reel-magic-maker-71.lovable.app/og-director.jpg",
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:image",
+        content: "https://reel-magic-maker-71.lovable.app/og-director.jpg",
+      },
+    ],
+    links: [{ rel: "canonical", href: "https://reel-magic-maker-71.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "Reel Magic Maker",
+          applicationCategory: "MultimediaApplication",
+          operatingSystem: "Web",
+          url: "https://reel-magic-maker-71.lovable.app/",
+          description:
+            "An AI Creative Director that helps develop a story idea, discover creative possibilities, test scenes and direct the generation of a cinematic short film.",
+        }),
+      },
     ],
   }),
+
   component: StoryReel,
 });
 
@@ -262,15 +296,42 @@ function StoryReel() {
         {(phase === "create" || phase === "working") && (
           <>
             <section className="text-center">
-              <h1 className="font-display text-4xl italic leading-[1.05] text-foreground sm:text-6xl">
-                Turn your story into a <span className="text-primary">cinematic short.</span>
-              </h1>
-              <p className="mx-auto mt-4 max-w-md text-balance text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
-                Describe your idea and StoryReel transforms it into a vertical AI video.
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">
+                AI Creative Director
               </p>
+              <h1 className="mt-4 font-display text-4xl italic leading-[1.05] text-foreground sm:text-6xl">
+                You bring the idea.{" "}
+                <span className="text-primary">Your AI Director finds the film inside it.</span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-lg text-balance text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
+                Give Reel Magic Maker an idea. Your AI Director asks what matters, discovers
+                what&apos;s missing, finds cinematic possibilities, and helps shape the strongest
+                version of your story before you generate it.
+              </p>
+              <div className="mt-7 flex flex-col items-center gap-3">
+                <Button
+                  onClick={() =>
+                    document.getElementById("idea")?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="group h-14 w-full max-w-xs rounded-2xl bg-primary text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground hover:shadow-[0_0_28px_var(--glow)]"
+                >
+                  Start with an idea
+                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("idea")?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="text-xs text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  Already know exactly what you want? Skip the Director — generate now
+                </button>
+              </div>
             </section>
 
             <div id="create" className="scroll-mt-24" />
+            {phase === "create" && <DirectorPrimer />}
             <CreateCard
               idea={idea}
               setIdea={setIdea}
@@ -285,7 +346,8 @@ function StoryReel() {
               statusText={statusText}
             />
 
-            {phase === "create" && <Learn />}
+            {phase === "create" && <BeforeYouStart signedIn={!!user} />}
+
           </>
         )}
 
@@ -321,9 +383,12 @@ function StoryReel() {
 
       {phase === "create" && (
         <>
+          <NotPromptToVideo />
+          <DirectorSequence />
+          <CreativeIntelligence />
+          <StayInControl />
           <Gallery />
-          <HowItWorks />
-          <SocialProof />
+
           <Pricing />
           <Faq />
           <SiteFooter />
@@ -514,7 +579,7 @@ function CreateCard({
                 </>
               ) : (
                 <>
-                  Direct my film
+                  Start with an idea
                   <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
@@ -525,11 +590,16 @@ function CreateCard({
               disabled={busy}
               className="mt-3 w-full text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
-              Skip the director — generate now
+              Skip the Director — generate now
             </button>
-            <p className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds
+            <p className="mt-2 text-center text-[10px] leading-relaxed text-muted-foreground/70">
+              Already know exactly what you want? Generate directly. Either way, nothing is
+              generated and no credits are used until you choose to make the film.
             </p>
+            <p className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              Vertical 9:16 · 5 seconds · {COIN_COST} credits per film
+            </p>
+
           </div>
         </div>
       )}
