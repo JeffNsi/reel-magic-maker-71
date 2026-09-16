@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { ClipPurchase } from "@/components/film/clip-purchase";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
+import { approveRecovery, recoverScene } from "@/lib/recovery.functions";
 import { checkStatus } from "@/lib/storyreel.functions";
 import {
   getFilm,
