@@ -106,6 +106,8 @@ export const candidateSchema = z.object({
   /** The new execution — how the same discovery is filmed instead. */
   chosen_execution: short(400),
   action: short(400),
+  /** How the people in frame are physically represented in this version. */
+  characters: short(400),
   setting: short(300),
   camera: short(200),
   framing: short(200),
@@ -240,6 +242,7 @@ export function patchFromCandidate(candidate: RecoveryCandidate): SceneTruthPatc
   return {
     chosen_execution: keep(candidate.chosen_execution),
     action: keep(candidate.action),
+    characters: keep(candidate.characters),
     setting: keep(candidate.setting),
     camera: keep(candidate.camera),
     framing: keep(candidate.framing),
@@ -252,6 +255,7 @@ export function patchFromCandidate(candidate: RecoveryCandidate): SceneTruthPatc
     provenance: {
       chosen_execution: "ai_recommendation",
       action: "ai_recommendation",
+      characters: "ai_recommendation",
       camera: "ai_recommendation",
       framing: "ai_recommendation",
       movement: "ai_recommendation",
