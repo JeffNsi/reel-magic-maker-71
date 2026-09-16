@@ -193,15 +193,19 @@ export const runSelfTest = createServerFn({ method: "POST" })
       const falKey = process.env["FAL_KEY"];
       if (falKey) {
         try {
+          const { FAL_QUEUE_BASE, FAL_MODEL_ID, falHeaders } = await import(
+            "@/lib/storyreel-core.server"
+          );
           const res = await withTimeout(
-            fetch("https://rest.alpha.fal.ai/tokens/", {
-              method: "POST",
-              headers: { Authorization: `Key ${falKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ allowed_apps: ["fal-ai/kling-video"], token_expiration: 60 }),
-            }),
+            fetch(
+              `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/00000000-0000-0000-0000-000000000000/status`,
+              { headers: falHeaders(falKey) },
+            ),
             15000,
           );
-          if (res.ok) add("Engines", "Strong / fal.ai", "ok", "account accepts work");
+          // A missing request id means the key was accepted — that is the pass case.
+          if (res.status === 404 || res.ok)
+            add("Engines", "Strong / fal.ai", "ok", "account accepts work");
           else if (res.status === 401 || res.status === 403)
             add("Engines", "Strong / fal.ai", "fail", "key rejected");
           else if (res.status === 402)
