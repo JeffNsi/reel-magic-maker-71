@@ -1,18 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Check,
-  Film,
-  Instagram,
-  MapPin,
-  Music,
-  Palette,
-  PenLine,
-  Play,
-  Sparkles,
-  Twitter,
-  Users,
-  Youtube,
-} from "lucide-react";
+import { Check, Music, Sparkles, Twitter, Instagram, Youtube } from "lucide-react";
 
 import {
   Accordion,
@@ -23,173 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { COIN_COST } from "@/lib/storyreel.functions";
 import { Reveal } from "./reveal";
-
-const STEPS = [
-  {
-    number: "01",
-    icon: PenLine,
-    title: "Write your idea",
-    body: "Describe the short film you want in a few words.",
-  },
-  {
-    number: "02",
-    icon: Sparkles,
-    title: "Build your story",
-    body: "Turn the idea into a title, a logline and a beginning, turn and end.",
-  },
-  {
-    number: "03",
-    icon: Users,
-    title: "Create your characters",
-    body: "Name your cast and fix their look so they stay the same in every shot.",
-  },
-  {
-    number: "04",
-    icon: MapPin,
-    title: "Lock your setting",
-    body: "One place, one time of day — the glue that holds the scenes together.",
-  },
-  {
-    number: "05",
-    icon: Film,
-    title: "Break it into scenes",
-    body: "Split the story into 5-second beats — one clear moment per scene.",
-  },
-  {
-    number: "06",
-    icon: Palette,
-    title: "Pick your style",
-    body: "Choose a cinematic look that fits your vision.",
-  },
-  {
-    number: "07",
-    icon: Music,
-    title: "Add voice and music",
-    body: "Record narration and lay a music bed under the whole short.",
-  },
-  {
-    number: "08",
-    icon: Play,
-    title: "Get your film",
-    body: "Render in 2–3 minutes and download in vertical 9:16.",
-  },
-];
-
-export function HowItWorks() {
-  return (
-    <section id="how" className="mt-24 scroll-mt-24">
-      <Reveal>
-        <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">How it works</h2>
-        <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          Eight steps from a single sentence to a finished short film.
-        </p>
-      </Reveal>
-      <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) => (
-          <Reveal as="li" key={step.title} delay={i * 80}>
-            <div className="surface-cinema relative h-full overflow-hidden rounded-2xl p-6">
-              <span className="absolute -right-2 -top-4 font-display text-7xl italic leading-none text-primary/10">
-                {step.number}
-              </span>
-              <div className="relative">
-                <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
-                  <step.icon className="size-5" aria-hidden />
-                </span>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Step {i + 1}
-                </p>
-                <h3 className="mt-1 text-lg font-medium text-foreground">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-              </div>
-            </div>
-          </Reveal>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-const TESTIMONIALS = [
-  {
-    name: "Maya Lindqvist",
-    role: "Content creator, 180k followers",
-    quote:
-      "I went from idea to a finished vertical short in under three minutes. The quality is unreal for something that fast.",
-    initials: "ML",
-  },
-  {
-    name: "Tobias Ek",
-    role: "Marketing lead, Nordwave",
-    quote:
-      "We used to spend a day shooting one hook. Now we generate three variations before lunch and pick the winner.",
-    initials: "TE",
-  },
-  {
-    name: "Amara Osei",
-    role: "Screenwriter",
-    quote:
-      "It is the easiest way to visualize a scene before I write the full script. The cinematic style presets are genuinely useful.",
-    initials: "AO",
-  },
-];
-
-const LOGOS = ["NORDWAVE", "STUDIO ÅTTA", "PIXELHOUSE", "LUMEN", "KVARTAL"];
-
-export function SocialProof() {
-  return (
-    <section className="mt-24">
-      <Reveal>
-        <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Loved by creators
-        </h2>
-      </Reveal>
-      <ul className="mt-8 grid gap-3 sm:grid-cols-3">
-        {TESTIMONIALS.map((person, i) => (
-          <Reveal as="li" key={person.name} delay={i * 80}>
-            <figure className="surface-cinema relative h-full overflow-hidden rounded-2xl border border-border/60 p-6">
-              <span
-                aria-hidden
-                className="absolute -right-2 -top-2 font-display text-6xl italic leading-none text-primary/20"
-              >
-                “
-              </span>
-              <blockquote className="relative text-sm leading-relaxed text-foreground/90">
-                {person.quote}
-              </blockquote>
-              <figcaption className="mt-5 flex items-center gap-3">
-                <span
-                  aria-hidden
-                  className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
-                >
-                  {person.initials}
-                </span>
-                <span className="text-sm">
-                  <span className="block font-medium text-foreground">{person.name}</span>
-                  <span className="block text-xs text-muted-foreground">{person.role}</span>
-                </span>
-              </figcaption>
-            </figure>
-          </Reveal>
-        ))}
-      </ul>
-      <Reveal className="mt-10 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-          Used by creators from
-        </p>
-        <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-          {LOGOS.map((logo) => (
-            <li
-              key={logo}
-              className="text-sm font-semibold tracking-[0.2em] text-muted-foreground"
-            >
-              {logo}
-            </li>
-          ))}
-        </ul>
-      </Reveal>
-    </section>
-  );
-}
 
 const TIERS = [
   {
@@ -279,6 +99,18 @@ export function Pricing() {
 
 const FAQS = [
   {
+    q: "What does the AI Director actually do?",
+    a: "It reads your idea, asks one useful question at a time, suggests cinematic possibilities and builds a Film Bible you approve before anything is generated.",
+  },
+  {
+    q: "When are credits used?",
+    a: "Only when you approve the direction and choose to make the film. Talking with the Director costs no film credits.",
+  },
+  {
+    q: "What if I close the browser?",
+    a: "A confirmed clip purchase stays confirmed and the clip is waiting on the film page when you return.",
+  },
+  {
     q: "What exactly do I get?",
     a: "A 5-second vertical 9:16 AI-generated short film, ready to post.",
   },
@@ -330,50 +162,10 @@ export function Faq() {
   );
 }
 
-const LEARN_STEPS = [
-  { number: "01", title: "Idea", body: "Describe your concept." },
-  { number: "02", title: "Story", body: "Turn the idea into a story." },
-  { number: "03", title: "Scenes", body: "Break the story into cinematic scenes." },
-  { number: "04", title: "Video", body: "Generate the visual footage." },
-  { number: "05", title: "Edit", body: "Combine your clips and finish your short." },
-];
-
-/** The StoryReel filmmaking workflow — where V1 sits, and where it is heading. */
-export function Learn() {
-  return (
-    <section id="learn" className="mt-20 scroll-mt-24 sm:mt-24">
-      <Reveal>
-        <h2 className="font-display text-2xl italic text-foreground sm:text-3xl">
-          How AI short filmmaking works
-        </h2>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Today StoryReel generates the video from your idea. The full five-step workflow is what
-          we are building next.
-        </p>
-      </Reveal>
-      <ol className="mt-8 space-y-3">
-        {LEARN_STEPS.map((step, i) => (
-          <Reveal as="li" key={step.number} delay={i * 70}>
-            <div className="flex items-baseline gap-4 border-b border-border/60 pb-4">
-              <span className="font-display text-lg italic text-primary">{step.number}</span>
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-foreground">
-                  {step.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-              </div>
-            </div>
-          </Reveal>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 const FOOTER_LINKS = {
   Product: [
     { label: "Create", href: "#create" },
-    { label: "Learn", href: "#learn" },
+    { label: "How it works", href: "#how" },
   ],
   Company: [
     { label: "Contact", href: "mailto:hello@storyreel.app" },
@@ -398,7 +190,7 @@ export function SiteFooter() {
         <div className="lg:col-span-2">
           <p className="font-display text-2xl italic text-primary">STORYREEL</p>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-            Cinematic vertical shorts from a single idea.
+            You bring the idea. Your AI Director finds the film inside it.
           </p>
           <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Sparkles className="size-3.5 text-primary" aria-hidden /> Made for creators
