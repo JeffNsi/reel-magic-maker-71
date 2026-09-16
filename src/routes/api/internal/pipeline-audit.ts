@@ -9,7 +9,13 @@ import {
 } from "@/lib/director.functions";
 import { buildFilmCore, getFilm, renderScene } from "@/lib/film.functions";
 import { checkStatus } from "@/lib/storyreel.functions";
-import { buildGenerationRequest, checkFidelity, emptySceneTruth, mergeSceneTruth } from "@/lib/scene-truth";
+import {
+  buildGenerationRequest,
+  checkFidelity,
+  emptySceneTruth,
+  mergeSceneTruth,
+  sceneTruthSchema,
+} from "@/lib/scene-truth";
 
 /**
  * INTERNAL TEST ROUTE — not part of the customer experience and not linked from
@@ -19,7 +25,7 @@ import { buildGenerationRequest, checkFidelity, emptySceneTruth, mergeSceneTruth
  */
 
 const body = z.object({
-  action: z.enum(["run", "render", "status"]),
+  action: z.enum(["run", "render", "status", "recover-sim", "recover"]),
   idea: z.string().optional(),
   style: z.string().optional().default("cinematic"),
   answers: z.array(z.string()).optional().default([]),
@@ -27,6 +33,9 @@ const body = z.object({
   film_id: z.string().uuid().optional(),
   scene_id: z.string().uuid().optional(),
   generation_id: z.string().uuid().optional(),
+  failure_message: z.string().optional(),
+  /** Scene Truth fields for a credit-free recovery simulation. */
+  truth: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const Route = createFileRoute("/api/internal/pipeline-audit")({
@@ -49,6 +58,63 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
             data: { generation_id: input.generation_id!, session_id: input.session_id },
           });
           return json(state);
+        }
+
+        /** Credit-free recovery simulation: no film, no scene row, no generation. */
+        if (input.action === "recover-sim") {
+          const { planRecovery } = await import("@/lib/recovery.functions");
+          const { diagnoseFailure } = await import("@/lib/generation-recovery");
+          const truth = mergeSceneTruth(
+            emptySceneTruth(),
+            sceneTruthSchema.partial().parse(input.truth ?? {}),
+          );
+          const failure = diagnoseFailure(input.failure_message ?? "");
+          const plan = await planRecovery(
+            truth,
+            { title: "Simulation", logline: input.idea ?? "", setting: truth.setting },
+            { scene_number: 1, title: "Simulated scene", idea: truth.action },
+            failure,
+          );
+          return json({
+            failure,
+            selected: plan.selected
+              ? {
+                  kind: plan.selected.candidate.kind,
+                  chosen_execution: plan.selected.candidate.chosen_execution,
+                  reveal: plan.selected.candidate.reveal,
+                  why: plan.selected.candidate.why,
+                  fidelity: plan.selected.fidelity,
+                  fidelity_parts: plan.selected.fidelity_parts,
+                  materially_changes_story: plan.selected.candidate.materially_changes_story,
+                }
+              : null,
+            candidates: plan.verdicts.map((v) => ({
+              kind: v.candidate.kind,
+              chosen_execution: v.candidate.chosen_execution,
+              valid: v.valid,
+              fidelity: v.fidelity,
+              rejections: v.rejections,
+            })),
+          });
+        }
+
+        /** Real recovery on a real failed scene (one generation). */
+        if (input.action === "recover") {
+          const { recoverScene } = await import("@/lib/recovery.functions");
+          const out = await recoverScene({
+            data: {
+              film_id: input.film_id!,
+              scene_id: input.scene_id!,
+              session_id: input.session_id,
+              failure_message: input.failure_message,
+            },
+          });
+          return json({
+            outcome: out.outcome,
+            failure_category: out.failure_category,
+            fidelity: out.fidelity,
+            record: out.record,
+          });
         }
 
         if (input.action === "render") {
