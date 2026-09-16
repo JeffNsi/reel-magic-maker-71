@@ -82,6 +82,18 @@ function newToken() {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
 }
 
+/**
+ * Where SumUp should post its payment confirmation. It must be a public https
+ * address, so a local/preview origin falls back to the stable published site.
+ */
+const PUBLISHED_SITE = "https://reel-magic-maker-71.lovable.app";
+function sumupWebhookUrl(origin: string) {
+  const base =
+    origin.startsWith("https://") && !origin.includes("localhost") ? origin : PUBLISHED_SITE;
+  return `${base}/api/public/payments/sumup-webhook`;
+}
+
+
 async function sumupRequest(path: string, init: RequestInit) {
   const apiKey = process.env["SUMUP_API_KEY"];
   if (!apiKey) throw new Error("SUMUP_NOT_CONNECTED");
