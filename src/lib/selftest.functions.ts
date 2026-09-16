@@ -69,7 +69,9 @@ export const runSelfTest = createServerFn({ method: "POST" })
     for (const table of TABLES) {
       try {
         const { count, error } = await withTimeout(
-          supabaseAdmin.from(table).select("*", { count: "exact", head: true }) as unknown as Promise<{
+          (supabaseAdmin as unknown as { from: (t: string) => any })
+            .from(table)
+            .select("*", { count: "exact", head: true }) as unknown as Promise<{
             count: number | null;
             error: { message: string } | null;
           }>,
