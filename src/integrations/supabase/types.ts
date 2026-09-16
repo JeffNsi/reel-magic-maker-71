@@ -595,6 +595,7 @@ export type Database = {
           narration: string
           queue_position: number | null
           queued: boolean
+          recovery: Json | null
           scene_number: number
           story_id: string
           title: string
@@ -613,6 +614,7 @@ export type Database = {
           narration?: string
           queue_position?: number | null
           queued?: boolean
+          recovery?: Json | null
           scene_number: number
           story_id: string
           title?: string
@@ -631,6 +633,7 @@ export type Database = {
           narration?: string
           queue_position?: number | null
           queued?: boolean
+          recovery?: Json | null
           scene_number?: number
           story_id?: string
           title?: string
