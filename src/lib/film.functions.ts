@@ -59,6 +59,13 @@ export type FilmScene = {
   error_message: string | null;
   /** The authoritative structured version of this scene, read by generation. */
   truth: SceneTruth | null;
+  /** What the Generation Recovery Director did after a failed render, if anything. */
+  recovery: {
+    outcome: "generated" | "awaiting_approval" | "no_valid_recovery";
+    note: string;
+    /** True while a story-changing alternative waits for the creator. */
+    awaiting_approval: boolean;
+  } | null;
 };
 
 export type FilmView = {
