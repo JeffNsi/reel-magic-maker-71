@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      clip_purchases: {
+        Row: {
+          amount: number
+          buyer_email: string | null
+          buyer_user_id: string | null
+          created_at: string
+          currency: string
+          delivery_token: string
+          environment: string
+          id: string
+          paid_at: string | null
+          provider: string
+          reference: string | null
+          scene_id: string
+          status: string
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          buyer_email?: string | null
+          buyer_user_id?: string | null
+          created_at?: string
+          currency?: string
+          delivery_token: string
+          environment?: string
+          id?: string
+          paid_at?: string | null
+          provider: string
+          reference?: string | null
+          scene_id: string
+          status?: string
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          buyer_email?: string | null
+          buyer_user_id?: string | null
+          created_at?: string
+          currency?: string
+          delivery_token?: string
+          environment?: string
+          id?: string
+          paid_at?: string | null
+          provider?: string
+          reference?: string | null
+          scene_id?: string
+          status?: string
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clip_purchases_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "story_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clip_purchases_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_purchases: {
         Row: {
           amount: number
