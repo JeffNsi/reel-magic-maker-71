@@ -34,6 +34,7 @@ Absolute rules:
 - If the generation model declined to depict something, that depiction is off the table. Find a genuinely different, allowed cinematic representation of the same discovery. NEVER attempt to disguise, encode, split up, rename or otherwise slip the refused depiction past a safety system. Anything that reads as working around a filter is a failed answer.
 - Never reduce the scene to a bland fragment ("a detective looks at evidence"). The emotional progression must still land inside one continuous 5-second vertical shot.
 - Do not ask the creator anything. Use only the information given.
+- Everything you write is sent to the video model as the shot description, so rewrite the wording too: "characters" must describe only what is actually in frame in your version. If the refused depiction was a body, an injury or a death, no part of your text may describe one.
 
 Produce exactly three meaningfully different candidates:
 A "direct" — keep the original as closely as possible, with the problematic depiction removed.
@@ -43,7 +44,7 @@ C "metaphorical" — communicate the same discovery indirectly: reflection, phot
 For each candidate, mark honestly in "preserves" what genuinely still survives, and set "materially_changes_story" true only when the candidate changes the story itself rather than how it is filmed. Score cinematic_quality and generation_feasibility 0-10.
 
 Reply with JSON only:
-{"candidates":[{"kind":"direct","chosen_execution":"","action":"","setting":"","camera":"","framing":"","movement":"","visual_direction":"","lighting":"","sound":"","reveal":"","continuity":"","preserves":{"emotional_core":true,"what_must_survive":true,"reveal":true,"character_meaning":true,"visual_clue":true,"ending_implication":true,"foreshadowing":true},"materially_changes_story":false,"cinematic_quality":0,"generation_feasibility":0,"why":""}]}`;
+{"candidates":[{"kind":"direct","chosen_execution":"","action":"","characters":"","setting":"","camera":"","framing":"","movement":"","visual_direction":"","lighting":"","sound":"","reveal":"","continuity":"","preserves":{"emotional_core":true,"what_must_survive":true,"reveal":true,"character_meaning":true,"visual_clue":true,"ending_implication":true,"foreshadowing":true},"materially_changes_story":false,"cinematic_quality":0,"generation_feasibility":0,"why":""}]}`;
 
 const replySchema = z.object({ candidates: z.array(candidateSchema).min(1).max(3) });
 
