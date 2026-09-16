@@ -1,0 +1,1 @@
+ALTER TABLE public.story_scenes ADD COLUMN IF NOT EXISTS recovery jsonb;

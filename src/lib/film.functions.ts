@@ -59,6 +59,13 @@ export type FilmScene = {
   error_message: string | null;
   /** The authoritative structured version of this scene, read by generation. */
   truth: SceneTruth | null;
+  /** What the Generation Recovery Director did after a failed render, if anything. */
+  recovery: {
+    outcome: "generated" | "awaiting_approval" | "no_valid_recovery";
+    note: string;
+    /** True while a story-changing alternative waits for the creator. */
+    awaiting_approval: boolean;
+  } | null;
 };
 
 export type FilmView = {
@@ -109,6 +116,27 @@ const breakdownSchema = z.object({
   characters: z.array(characterSchema).max(4).default([]),
   scenes: z.array(sceneSchema).min(1).max(6).default([]),
 });
+
+/**
+ * The creator-facing part of a recovery record: one plain line about what the
+ * director did, and whether a story-changing version is waiting for them.
+ */
+function readRecovery(value: unknown): FilmScene["recovery"] {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as {
+    outcome?: unknown;
+    selected_execution?: unknown;
+    pending?: unknown;
+  };
+  const outcome =
+    raw.outcome === "generated" || raw.outcome === "awaiting_approval" ? raw.outcome : "no_valid_recovery";
+  const execution = typeof raw.selected_execution === "string" ? raw.selected_execution : "";
+  const note =
+    outcome === "no_valid_recovery"
+      ? "The Director couldn't find a reliable way to generate this scene without changing what matters. Nothing was lost."
+      : `The Director found another way to film this scene: ${execution}`;
+  return { outcome, note, awaiting_approval: outcome === "awaiting_approval" && !!raw.pending };
+}
 
 function verdictOf(raw: string | undefined): ClarityVerdict | null {
   const value = (raw ?? "").toLowerCase();
@@ -207,6 +235,7 @@ type SceneRow = {
   queued: boolean | null;
   generation_id: string | null;
   truth: unknown;
+  recovery: unknown;
 };
 
 async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
@@ -227,7 +256,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
   const { data: sceneRows } = await supabaseAdmin
     .from("story_scenes")
     .select(
-      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id, truth",
+      "id, scene_number, title, idea, narration, credit_cost, complexity, clarity_verdict, clarity_note, queued, generation_id, truth, recovery",
     )
     .eq("story_id", film_id)
     .order("scene_number", { ascending: true });
@@ -269,6 +298,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
         voice_url: await signedUrl((generation?.voiceover_url as string | null) ?? null),
         error_message: (generation?.error_message as string | null) ?? null,
         truth: readSceneTruth(scene.truth),
+        recovery: readRecovery(scene.recovery),
       };
     }),
   );
