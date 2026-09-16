@@ -114,6 +114,29 @@ export type RecoveryResult = {
   film: FilmView | null;
 };
 
+/**
+ * Ask the director for up to three alternatives and grade them against the
+ * scene's invariants. No database write and no generation happens here, so the
+ * whole decision can be tested without spending a generation credit.
+ */
+export async function planRecovery(
+  truth: SceneTruth,
+  film: { title: string; logline: string; setting: string },
+  scene: { scene_number: number; title: string; idea: string },
+  failure: ReturnType<typeof diagnoseFailure>,
+) {
+  const inv = invariantsOf(truth);
+  let candidates: RecoveryCandidate[] = [];
+  try {
+    const reply = await callGateway<unknown>(brief(truth, film, scene, failure), RECOVERY_SYSTEM);
+    candidates = replySchema.parse(reply).candidates;
+  } catch (error) {
+    console.error("recovery planning failed", error);
+    candidates = [];
+  }
+  return selectRecovery(candidates, inv);
+}
+
 /** Find another way to film a scene the video model refused, and render it once. */
 export const recoverScene = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => input.parse(data))
@@ -160,21 +183,7 @@ export const recoverScene = createServerFn({ method: "POST" })
       scene.truth ??
       mergeSceneTruth(emptySceneTruth(), { action: scene.idea, setting: film.setting });
     const failure = diagnoseFailure(data.failure_message ?? scene.error_message);
-    const inv = invariantsOf(truth);
-
-    let candidates: RecoveryCandidate[] = [];
-    try {
-      const reply = await callGateway<unknown>(
-        brief(truth, film, scene, failure),
-        RECOVERY_SYSTEM,
-      );
-      candidates = replySchema.parse(reply).candidates;
-    } catch (error) {
-      console.error("recovery planning failed", error);
-      candidates = [];
-    }
-
-    const { verdicts, selected } = selectRecovery(candidates, inv);
+    const { verdicts, selected } = await planRecovery(truth, film, scene, failure);
 
     const record: RecoveryRecord = {
       attempted_at: new Date().toISOString(),
