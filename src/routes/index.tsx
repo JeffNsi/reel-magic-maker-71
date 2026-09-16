@@ -433,14 +433,14 @@ function Header({ signedIn }: { signedIn: boolean }) {
             Create
           </a>
           <a
-            href="#learn"
+            href="#director"
             onClick={(event) => {
               event.preventDefault();
-              document.getElementById("learn")?.scrollIntoView({ behavior: "smooth" });
+              document.getElementById("director")?.scrollIntoView({ behavior: "smooth" });
             }}
             className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
           >
-            Learn
+            Director
           </a>
           <Link
             to={signedIn ? "/history" : "/auth"}
