@@ -1,18 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Check,
-  Film,
-  Instagram,
-  MapPin,
-  Music,
-  Palette,
-  PenLine,
-  Play,
-  Sparkles,
-  Twitter,
-  Users,
-  Youtube,
-} from "lucide-react";
+import { Check, Music, Sparkles, Twitter, Instagram, Youtube } from "lucide-react";
 
 import {
   Accordion,
