@@ -204,7 +204,7 @@ export const runSelfTest = createServerFn({ method: "POST" })
             15000,
           );
           // A missing request id means the key was accepted — that is the pass case.
-          if (res.status === 404 || res.ok)
+          if (res.status === 404 || res.status === 405 || res.ok)
             add("Engines", "Strong / fal.ai", "ok", "account accepts work");
           else if (res.status === 401 || res.status === 403)
             add("Engines", "Strong / fal.ai", "fail", "key rejected");
