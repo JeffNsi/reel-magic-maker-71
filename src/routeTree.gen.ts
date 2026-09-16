@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SelftestRouteImport } from './routes/selftest'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -45,6 +46,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelftestRoute = SelftestRouteImport.update({
+  id: '/selftest',
+  path: '/selftest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
+  '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
+  '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
+  '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/privacy'
+    | '/selftest'
     | '/studio'
     | '/team'
     | '/terms'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/privacy'
+    | '/selftest'
     | '/studio'
     | '/team'
     | '/terms'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/privacy'
+    | '/selftest'
     | '/studio'
     | '/team'
     | '/terms'
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
+  SelftestRoute: typeof SelftestRoute
   StudioRoute: typeof StudioRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/selftest': {
+      id: '/selftest'
+      path: '/selftest'
+      fullPath: '/selftest'
+      preLoaderRoute: typeof SelftestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
+  SelftestRoute: SelftestRoute,
   StudioRoute: StudioRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
