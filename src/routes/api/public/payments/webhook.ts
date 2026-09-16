@@ -112,6 +112,17 @@ async function syncVipFromSubscription(subscription: any, env: StripeEnv) {
     .eq("id", userId);
 }
 
+/** Confirmed payment for one clip — idempotent, only pending rows flip to paid. */
+async function markClipPaid(purchaseId: string, reference: string) {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("clip_purchases")
+    .update({ status: "paid", reference, paid_at: new Date().toISOString() })
+    .eq("id", purchaseId)
+    .eq("status", "pending");
+  if (error) console.error("clip_purchases update failed:", error);
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
@@ -123,6 +134,11 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       const pack = session.metadata?.pack;
       if (userId && pack) {
         await creditPack(userId, pack, `stripe:${session.id}`, env);
+      }
+      // A single clip bought on the film page — mark it paid so it is delivered.
+      const clipPurchaseId = session.metadata?.clip_purchase_id;
+      if (clipPurchaseId) {
+        await markClipPaid(clipPurchaseId, `stripe:${session.id}`);
       }
       break;
     }

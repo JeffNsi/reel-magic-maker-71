@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ClipPurchase } from "@/components/film/clip-purchase";
+import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
 import { checkStatus } from "@/lib/storyreel.functions";
 import {
@@ -320,7 +322,10 @@ function SceneCard({
                 {VERDICT_LABEL[scene.clarity_verdict]}
               </span>
             )}
+            <span className="text-muted-foreground">Sells for {CLIP_PRICE_SEK} kr</span>
           </div>
+
+          <ClipPurchase sceneId={scene.id} ready={scene.status === "completed" && !!scene.video_url} />
 
           {scene.clarity_note && (
             <p className="mt-3 rounded-xl bg-background/60 p-3 text-xs leading-relaxed text-muted-foreground">
