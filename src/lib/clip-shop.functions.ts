@@ -190,8 +190,13 @@ export const startClipPurchase = createServerFn({ method: "POST" })
             pay_to_email: payToEmail,
             description: `${scene.film_title} — ${scene.scene_title}`,
             redirect_url: `${data.origin}/film/${scene.story_id}?clip=${purchaseId}`,
+            // Server-to-server confirmation: SumUp posts here the moment the
+            // payment settles, so the clip is delivered even if the buyer
+            // closes the page.
+            return_url: `${sumupWebhookUrl(data.origin)}`,
           }),
         });
+
 
         await supabaseAdmin
           .from("clip_purchases")
