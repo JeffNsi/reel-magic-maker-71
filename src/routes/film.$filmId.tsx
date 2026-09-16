@@ -79,6 +79,8 @@ function FilmPage() {
   const startScene = useServerFn(renderScene);
   const runReview = useServerFn(reviewScenes);
   const setQueued = useServerFn(queueScene);
+  const runRecovery = useServerFn(recoverScene);
+  const okRecovery = useServerFn(approveRecovery);
   const setSaved = useServerFn(toggleWatchlist);
 
   const filmQuery = useQuery({
@@ -125,6 +127,25 @@ function FilmPage() {
   const render = useMutation({
     mutationFn: (scene_id: string) =>
       startScene({ data: { film_id: filmId, session_id: sessionId, scene_id, audio: true } }),
+    onSuccess: (result) => apply(result.film),
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  /** A failed scene gets one recovery attempt: the director re-films the beat. */
+  const recover = useMutation({
+    mutationFn: (scene_id: string) =>
+      runRecovery({ data: { film_id: filmId, session_id: sessionId, scene_id } }),
+    onSuccess: (result) => {
+      if (result.film) apply(result.film);
+      if (result.outcome === "no_valid_recovery") toast.error(result.message);
+      else toast.success(result.message);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const approve = useMutation({
+    mutationFn: (scene_id: string) =>
+      okRecovery({ data: { film_id: filmId, session_id: sessionId, scene_id } }),
     onSuccess: (result) => apply(result.film),
     onError: (err: Error) => toast.error(err.message),
   });
@@ -261,7 +282,13 @@ function FilmPage() {
               key={scene.id}
               scene={scene}
               rendering={render.isPending && render.variables === scene.id}
+              recovering={
+                (recover.isPending && recover.variables === scene.id) ||
+                (approve.isPending && approve.variables === scene.id)
+              }
               onRender={() => render.mutate(scene.id)}
+              onRecover={() => recover.mutate(scene.id)}
+              onApproveRecovery={() => approve.mutate(scene.id)}
               onQueue={() => queue.mutate({ scene_id: scene.id, queued: !scene.queued })}
             />
           ))}
@@ -274,12 +301,18 @@ function FilmPage() {
 function SceneCard({
   scene,
   rendering,
+  recovering,
   onRender,
+  onRecover,
+  onApproveRecovery,
   onQueue,
 }: {
   scene: FilmScene;
   rendering: boolean;
+  recovering: boolean;
   onRender: () => void;
+  onRecover: () => void;
+  onApproveRecovery: () => void;
   onQueue: () => void;
 }) {
   const working = scene.status === "queued" || scene.status === "processing";
@@ -338,6 +371,32 @@ function SceneCard({
             <p className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
               {scene.error_message}
             </p>
+          )}
+
+          {scene.recovery && (
+            <p className="mt-3 rounded-xl border border-border/70 bg-background/60 p-3 text-xs leading-relaxed text-muted-foreground">
+              {scene.recovery.note}
+            </p>
+          )}
+
+          {scene.status === "failed" && !scene.recovery && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              disabled={recovering}
+              onClick={onRecover}
+            >
+              {recovering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Let the Director find another way
+            </Button>
+          )}
+
+          {scene.recovery?.awaiting_approval && (
+            <Button size="sm" className="mt-3" disabled={recovering} onClick={onApproveRecovery}>
+              {recovering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Film the Director's version
+            </Button>
           )}
 
           <div className="mt-5 flex items-center gap-3">
