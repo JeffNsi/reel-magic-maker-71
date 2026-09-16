@@ -82,6 +82,18 @@ function newToken() {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
 }
 
+/**
+ * Where SumUp should post its payment confirmation. It must be a public https
+ * address, so a local/preview origin falls back to the stable published site.
+ */
+const PUBLISHED_SITE = "https://reel-magic-maker-71.lovable.app";
+function sumupWebhookUrl(origin: string) {
+  const base =
+    origin.startsWith("https://") && !origin.includes("localhost") ? origin : PUBLISHED_SITE;
+  return `${base}/api/public/payments/sumup-webhook`;
+}
+
+
 async function sumupRequest(path: string, init: RequestInit) {
   const apiKey = process.env["SUMUP_API_KEY"];
   if (!apiKey) throw new Error("SUMUP_NOT_CONNECTED");
@@ -190,8 +202,13 @@ export const startClipPurchase = createServerFn({ method: "POST" })
             pay_to_email: payToEmail,
             description: `${scene.film_title} — ${scene.scene_title}`,
             redirect_url: `${data.origin}/film/${scene.story_id}?clip=${purchaseId}`,
+            // Server-to-server confirmation: SumUp posts here the moment the
+            // payment settles, so the clip is delivered even if the buyer
+            // closes the page.
+            return_url: `${sumupWebhookUrl(data.origin)}`,
           }),
         });
+
 
         await supabaseAdmin
           .from("clip_purchases")

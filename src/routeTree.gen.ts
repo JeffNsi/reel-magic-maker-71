@@ -26,6 +26,7 @@ import { Route as VibeProfileRouteImport } from './routes/vibe.profile'
 import { Route as VibeRewardsRouteImport } from './routes/vibe.rewards'
 import { Route as VibeShortsRouteImport } from './routes/vibe.shorts'
 import { Route as ApiInternalPipelineAuditRouteImport } from './routes/api/internal/pipeline-audit'
+import { Route as ApiPublicPaymentsSumupWebhookRouteImport } from './routes/api/public/payments/sumup-webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -114,6 +115,12 @@ const ApiInternalPipelineAuditRoute =
     path: '/api/internal/pipeline-audit',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPaymentsSumupWebhookRoute =
+  ApiPublicPaymentsSumupWebhookRouteImport.update({
+    id: '/api/public/payments/sumup-webhook',
+    path: '/api/public/payments/sumup-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe/': typeof VibeIndexRoute
   '/api/internal/pipeline-audit': typeof ApiInternalPipelineAuditRoute
+  '/api/public/payments/sumup-webhook': typeof ApiPublicPaymentsSumupWebhookRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -158,6 +166,7 @@ export interface FileRoutesByTo {
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe': typeof VibeIndexRoute
   '/api/internal/pipeline-audit': typeof ApiInternalPipelineAuditRoute
+  '/api/public/payments/sumup-webhook': typeof ApiPublicPaymentsSumupWebhookRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -179,6 +188,7 @@ export interface FileRoutesById {
   '/vibe/shorts': typeof VibeShortsRoute
   '/vibe/': typeof VibeIndexRoute
   '/api/internal/pipeline-audit': typeof ApiInternalPipelineAuditRoute
+  '/api/public/payments/sumup-webhook': typeof ApiPublicPaymentsSumupWebhookRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/vibe/shorts'
     | '/vibe/'
     | '/api/internal/pipeline-audit'
+    | '/api/public/payments/sumup-webhook'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/vibe/shorts'
     | '/vibe'
     | '/api/internal/pipeline-audit'
+    | '/api/public/payments/sumup-webhook'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -240,6 +252,7 @@ export interface FileRouteTypes {
     | '/vibe/shorts'
     | '/vibe/'
     | '/api/internal/pipeline-audit'
+    | '/api/public/payments/sumup-webhook'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -256,6 +269,7 @@ export interface RootRouteChildren {
   WatchlistRoute: typeof WatchlistRoute
   FilmFilmIdRoute: typeof FilmFilmIdRoute
   ApiInternalPipelineAuditRoute: typeof ApiInternalPipelineAuditRoute
+  ApiPublicPaymentsSumupWebhookRoute: typeof ApiPublicPaymentsSumupWebhookRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -380,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalPipelineAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/sumup-webhook': {
+      id: '/api/public/payments/sumup-webhook'
+      path: '/api/public/payments/sumup-webhook'
+      fullPath: '/api/public/payments/sumup-webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsSumupWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -421,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   WatchlistRoute: WatchlistRoute,
   FilmFilmIdRoute: FilmFilmIdRoute,
   ApiInternalPipelineAuditRoute: ApiInternalPipelineAuditRoute,
+  ApiPublicPaymentsSumupWebhookRoute: ApiPublicPaymentsSumupWebhookRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
