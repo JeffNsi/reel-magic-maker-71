@@ -35,7 +35,6 @@ import {
   type FilmView,
 } from "@/lib/film.functions";
 
-
 export const Route = createFileRoute("/film/$filmId")({
   head: () => ({
     meta: [
@@ -87,7 +86,6 @@ function FilmPage() {
   const okRecovery = useServerFn(approveRecovery);
   const setSaved = useServerFn(toggleWatchlist);
   const shareFilm = useServerFn(setFilmShare);
-
 
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
@@ -199,8 +197,6 @@ function FilmPage() {
   const shareUrl = film?.share_slug
     ? `${typeof window === "undefined" ? "" : window.location.origin}/share/${film.share_slug}`
     : "";
-
-
 
   if (filmQuery.isLoading || !sessionId) {
     return (
@@ -329,8 +325,6 @@ function FilmPage() {
             </div>
           )}
         </section>
-
-
 
         <section className="mt-8 rounded-2xl border border-border/70 bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
