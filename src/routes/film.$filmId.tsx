@@ -173,6 +173,33 @@ function FilmPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  /** Public sharing: off until the creator turns it on, and revocable. */
+  const share = useMutation({
+    mutationFn: (shared: boolean) =>
+      shareFilm({ data: { film_id: filmId, session_id: sessionId, shared } }),
+    onSuccess: async (result) => {
+      await filmQuery.refetch();
+      if (result.slug) {
+        const url = `${window.location.origin}/share/${result.slug}`;
+        try {
+          await navigator.clipboard.writeText(url);
+          toast.success("Public link copied — anyone with it can watch this film.");
+        } catch {
+          toast.success("Public link ready — copy it from the share box.");
+        }
+      } else {
+        toast.success("Sharing turned off. The old link no longer works.");
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const shareUrl = film?.share_slug
+    ? `${typeof window === "undefined" ? "" : window.location.origin}/share/${film.share_slug}`
+    : "";
+
+
+
   if (filmQuery.isLoading || !sessionId) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
