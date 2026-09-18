@@ -426,7 +426,7 @@ function characters(input: NormalizeInput): StoryCharacter[] {
   const names = new Map<string, { name: string; appearance: string | null }>();
   for (const entry of fromFilm) if (entry.name) names.set(entry.name.toLowerCase(), entry);
   for (const raw of list(input.film_bible?.cast)) {
-    const name = raw.split(/[—-]/)[0].trim() || raw;
+    const name = (raw.split(/[—-]/)[0] ?? "").trim() || raw;
     const key = name.toLowerCase();
     if (!names.has(key)) names.set(key, { name, appearance: clean(raw.slice(name.length)) });
   }

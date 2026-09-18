@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import type { FilmBible, FilmModel } from "@/lib/director.functions";
@@ -397,8 +399,7 @@ describe("Q. No hidden truth leakage", () => {
 describe("R. No duplicate twist engine", () => {
   it("StoryState holds no patterns and the library is still the only engine", () => {
     expect(TWIST_COUNT).toBeGreaterThanOrEqual(300);
-    const source = new URL("../src/lib/story-state.ts", import.meta.url);
-    const code = require("node:fs").readFileSync(source, "utf8") as string;
+    const code = readFileSync(new URL("../src/lib/story-state.ts", import.meta.url), "utf8");
     expect(code).not.toMatch(/TWIST_LIBRARY|searchTwists|buildFamily/);
   });
 });
