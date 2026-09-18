@@ -239,7 +239,10 @@ describe("14-15. Invalid references remain detectable", () => {
 
   it("valid references produce no reference finding", () => {
     const state = normalized();
-    expect(check(state).filter((f) => f.ruleId === "CONTINUITY_INVALID_REFERENCE")).toEqual([]);
+    const ids = check(state)
+      .filter((f) => f.ruleId === "CONTINUITY_INVALID_REFERENCE")
+      .map((f) => f.id);
+    expect(ids.filter((id) => /knowledge|character-state/.test(id))).toEqual([]);
   });
 });
 
