@@ -86,6 +86,8 @@ function FilmPage() {
   const runRecovery = useServerFn(recoverScene);
   const okRecovery = useServerFn(approveRecovery);
   const setSaved = useServerFn(toggleWatchlist);
+  const shareFilm = useServerFn(setFilmShare);
+
 
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
