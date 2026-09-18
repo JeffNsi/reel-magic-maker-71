@@ -64,7 +64,9 @@ export type Evidence = {
     | "payoff"
     | "twist"
     | "scene"
-    | "version";
+    | "version"
+    | "knowledge_event"
+    | "character_state_event";
   field?: string;
   value?: string;
 };

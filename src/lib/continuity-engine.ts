@@ -241,6 +241,74 @@ function invalidReference(state: StoryState): Finding[] {
     }
   }
 
+  // Phase 2.1 character state / knowledge events: broken canonical references
+  // stay detectable. Absent optional references are never treated as broken.
+  for (const entry of state.character_states) {
+    if (entry.character_id && !characterIds.has(entry.character_id)) {
+      report(
+        `character-state-${entry.character_id}`,
+        `Character state history references character "${entry.character_id}", who does not exist.`,
+        [
+          { entityType: "character_state_event", field: "character_id" },
+          { entityType: "character", entityId: entry.character_id },
+        ],
+      );
+    }
+    for (const event of entry.events) {
+      if (
+        event.scene_number !== null &&
+        sceneNumbers.size > 0 &&
+        !sceneNumbers.has(event.scene_number)
+      ) {
+        report(
+          `character-state-event-${event.id}-scene-${event.scene_number}`,
+          `State event "${event.id}" references scene ${event.scene_number}, which does not exist.`,
+          [
+            { entityType: "character_state_event", entityId: event.id, field: "scene_number" },
+            { entityType: "scene", sceneNumber: event.scene_number },
+          ],
+        );
+      }
+    }
+  }
+
+  for (const event of state.knowledge_events) {
+    if (event.character_id && !characterIds.has(event.character_id)) {
+      report(
+        `knowledge-${event.id}-character-${event.character_id}`,
+        `Knowledge event "${event.id}" references character "${event.character_id}", who does not exist.`,
+        [
+          { entityType: "knowledge_event", entityId: event.id, field: "character_id" },
+          { entityType: "character", entityId: event.character_id },
+        ],
+      );
+    }
+    if (event.fact_id && !factIds.has(event.fact_id)) {
+      report(
+        `knowledge-${event.id}-fact-${event.fact_id}`,
+        `Knowledge event "${event.id}" references fact "${event.fact_id}", which does not exist.`,
+        [
+          { entityType: "knowledge_event", entityId: event.id, field: "fact_id" },
+          { entityType: "fact", entityId: event.fact_id },
+        ],
+      );
+    }
+    if (
+      event.scene_number !== null &&
+      sceneNumbers.size > 0 &&
+      !sceneNumbers.has(event.scene_number)
+    ) {
+      report(
+        `knowledge-${event.id}-scene-${event.scene_number}`,
+        `Knowledge event "${event.id}" references scene ${event.scene_number}, which does not exist.`,
+        [
+          { entityType: "knowledge_event", entityId: event.id, field: "scene_number" },
+          { entityType: "scene", sceneNumber: event.scene_number },
+        ],
+      );
+    }
+  }
+
   for (const relationship of state.relationships) {
     for (const side of ["character_a", "character_b"] as const) {
       const id = relationship[side];

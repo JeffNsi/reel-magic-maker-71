@@ -133,6 +133,8 @@ describe("A. StoryState type validity", () => {
     expect(Object.keys(state).sort()).toEqual(
       [
         "characters",
+        "character_states",
+        "knowledge_events",
         "continuity",
         "facts",
         "film_bible",

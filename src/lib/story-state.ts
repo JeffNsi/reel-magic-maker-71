@@ -111,6 +111,74 @@ export const characterKnowledgeSchema = z.object({
   scene: z.number().int().nullable().default(null),
 });
 
+/**
+ * PHASE 2.1 — CHARACTER STATE + CHARACTER KNOWLEDGE.
+ *
+ * Both are append-only event logs: a later scene never rewrites an earlier
+ * event, so a transition (unknown -> revealed, apartment -> hospital) stays
+ * historically visible for the deterministic engine to reason about later.
+ * Nothing here infers, and nothing is written without evidence in StoryState.
+ */
+
+/** A pointer back into real StoryState content — never fabricated. */
+export const evidenceRefSchema = z.object({
+  scene_id: opt,
+  scene_number: z.number().int().nullable().default(null),
+  /** Which source field established this — e.g. "setting", "reveal". */
+  field: opt,
+  fact_id: opt,
+  value: opt,
+});
+export type EvidenceRef = z.infer<typeof evidenceRefSchema>;
+
+/** Which mind the knowledge belongs to — character or audience. */
+export const knowledgeHolderSchema = z.enum(["character", "reader"]);
+export type KnowledgeHolder = z.infer<typeof knowledgeHolderSchema>;
+
+export const knowledgeEventSchema = z.object({
+  id: text,
+  holder: knowledgeHolderSchema.default("character"),
+  /** Canonical character id; null only when holder is "reader". */
+  character_id: opt,
+  /** What is known — free text subject, kept verbatim from the source. */
+  subject: text,
+  /** Canonical fact id when the subject is a recorded fact. */
+  fact_id: opt,
+  state: knowledgeStateSchema,
+  scene_id: opt,
+  scene_number: z.number().int().nullable().default(null),
+  evidence: z.array(evidenceRefSchema).default([]),
+});
+export type KnowledgeEvent = z.infer<typeof knowledgeEventSchema>;
+
+export const stateAspectSchema = z.enum([
+  "location",
+  "physical",
+  "emotional",
+  "social",
+  "relationship",
+]);
+export type StateAspect = z.infer<typeof stateAspectSchema>;
+
+export const characterStateEventSchema = z.object({
+  id: text,
+  character_id: text,
+  aspect: stateAspectSchema,
+  value: text,
+  scene_id: opt,
+  scene_number: z.number().int().nullable().default(null),
+  evidence: z.array(evidenceRefSchema).default([]),
+});
+export type CharacterStateEvent = z.infer<typeof characterStateEventSchema>;
+
+/** Per-character append-only history. Events are ordered by scene, then id. */
+export const characterStateSchema = z.object({
+  character_id: text,
+  events: z.array(characterStateEventSchema).default([]),
+  knowledge: z.array(knowledgeEventSchema).default([]),
+});
+export type CharacterState = z.infer<typeof characterStateSchema>;
+
 export const characterSchema = z.object({
   id: text,
   name: text,
@@ -309,6 +377,10 @@ export const storyStateSchema = z.object({
   story_dna: storyDnaSchema,
   film_bible: filmBibleRefSchema,
   characters: z.array(characterSchema).default([]),
+  /** Phase 2.1 — append-only per-character state/knowledge history. */
+  character_states: z.array(characterStateSchema).default([]),
+  /** Phase 2.1 — flat append-only knowledge log (characters and reader). */
+  knowledge_events: z.array(knowledgeEventSchema).default([]),
   world: worldSchema,
   timeline: z.array(timelineEventSchema).default([]),
   facts: z.array(storyFactSchema).default([]),
@@ -550,6 +622,126 @@ function sceneStates(scenes: FilmScene[]): SceneState[] {
   });
 }
 
+/**
+ * PHASE 2.1 normalization — derive character state and knowledge events from
+ * what scenes explicitly establish. Rules:
+ *  - a scene's Scene Truth `setting` places the characters that scene names,
+ *  - a scene's Scene Truth `reveal` makes that subject "revealed" for those
+ *    characters and for the reader,
+ *  - names are resolved to canonical character ids; an unresolved name produces
+ *    nothing (the continuity engine already reports unknown cast members),
+ *  - nothing else is inferred, and no event is written without evidence.
+ * Output is append-only and deterministically ordered by scene, then by id.
+ */
+function characterHistory(
+  scenes: FilmScene[],
+  cast: StoryCharacter[],
+): { character_states: CharacterState[]; knowledge_events: KnowledgeEvent[] } {
+  const byName = new Map(cast.map((c) => [c.name.toLowerCase(), c.id] as const));
+  const resolve = (raw: string): string | null => byName.get(raw.trim().toLowerCase()) ?? null;
+
+  const stateEvents: CharacterStateEvent[] = [];
+  const knowledge: KnowledgeEvent[] = [];
+
+  for (const scene of scenes) {
+    const truth = scene.truth ?? null;
+    if (!truth) continue;
+    const present = list((truth.characters ?? "").split(/[,;]/))
+      .map(resolve)
+      .filter((id): id is string => Boolean(id));
+    const setting = clean(truth.setting);
+    const reveal = clean(truth.reveal);
+
+    if (setting) {
+      for (const id of present) {
+        stateEvents.push(
+          characterStateEventSchema.parse({
+            id: `state-${id}-location-${scene.scene_number}`,
+            character_id: id,
+            aspect: "location",
+            value: setting,
+            scene_id: scene.id,
+            scene_number: scene.scene_number,
+            evidence: [
+              {
+                scene_id: scene.id,
+                scene_number: scene.scene_number,
+                field: "setting",
+                value: setting,
+              },
+            ],
+          }),
+        );
+      }
+    }
+
+    if (reveal) {
+      const evidence = [
+        {
+          scene_id: scene.id,
+          scene_number: scene.scene_number,
+          field: "reveal",
+          value: reveal,
+        },
+      ];
+      for (const id of present) {
+        knowledge.push(
+          knowledgeEventSchema.parse({
+            id: `knowledge-character-${id}-${scene.scene_number}-${hash(reveal)}`,
+            holder: "character",
+            character_id: id,
+            subject: reveal,
+            state: "revealed",
+            scene_id: scene.id,
+            scene_number: scene.scene_number,
+            evidence,
+          }),
+        );
+      }
+      knowledge.push(
+        knowledgeEventSchema.parse({
+          id: `knowledge-reader-${scene.scene_number}-${hash(reveal)}`,
+          holder: "reader",
+          character_id: null,
+          subject: reveal,
+          state: "revealed",
+          scene_id: scene.id,
+          scene_number: scene.scene_number,
+          evidence,
+        }),
+      );
+    }
+  }
+
+  const order = <T extends { id: string; scene_number: number | null }>(events: T[]) =>
+    events
+      .slice()
+      .sort((a, b) => (a.scene_number ?? 0) - (b.scene_number ?? 0) || a.id.localeCompare(b.id));
+
+  const orderedStates = order(stateEvents);
+  const orderedKnowledge = order(knowledge);
+
+  const ids = Array.from(
+    new Set([
+      ...orderedStates.map((e) => e.character_id),
+      ...orderedKnowledge.map((e) => e.character_id ?? ""),
+    ]),
+  )
+    .filter(Boolean)
+    .sort();
+
+  return {
+    character_states: ids.map((id) =>
+      characterStateSchema.parse({
+        character_id: id,
+        events: orderedStates.filter((e) => e.character_id === id),
+        knowledge: orderedKnowledge.filter((e) => e.character_id === id),
+      }),
+    ),
+    knowledge_events: orderedKnowledge,
+  };
+}
+
 function twistRef(input: NormalizeInput, scenes: FilmScene[]) {
   const twist: Twist | null = input.film_bible?.twist ?? null;
   if (!twist) return twistRefSchema.parse({});
@@ -584,6 +776,9 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
     input.recommendation ? "recommendation" : "",
   ].filter(Boolean);
 
+  const cast = characters(input);
+  const history = characterHistory(scenes, cast);
+
   const content = {
     identity: identitySchema.parse({
       story_id: clean(input.film?.id),
@@ -603,7 +798,8 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
       ending_intention: clean(bible?.ending),
       has_twist: Boolean(bible?.twist),
     }),
-    characters: characters(input),
+    characters: cast,
+    ...history,
     world: world(input),
     timeline: timeline(scenes),
     facts: facts(input),
