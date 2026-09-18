@@ -151,6 +151,12 @@ function duplicateEntity(state: StoryState): Finding[] {
     "id",
   );
   byKey(
+    state.facts.map((f) => ({ id: f.id, label: f.statement })),
+    "fact",
+    (e) => e.id,
+    "id",
+  );
+  byKey(
     state.scenes.map((s) => ({ id: s.id, label: String(s.scene_number) })),
     "scene",
     (e) => e.label,
@@ -158,6 +164,151 @@ function duplicateEntity(state: StoryState): Finding[] {
   );
 
   return out;
+}
+
+/* --------------------------------------------------------- phase 2.2 rules */
+
+/**
+ * Two facts that answer the same question differently. Only fires on an exact
+ * normalized category match with differing values — similar-but-not-equal
+ * wording is never treated as a contradiction.
+ */
+function factContradiction(state: StoryState): Finding[] {
+  const out: Finding[] = [];
+  const byCategory = new Map<string, StoryState["facts"]>();
+  for (const fact of state.facts) {
+    const key = norm(fact.category);
+    if (!key) continue; // uncategorised facts cannot be proven to collide
+    byCategory.set(key, [...(byCategory.get(key) ?? []), fact]);
+  }
+  for (const key of Array.from(byCategory.keys()).sort()) {
+    const group = byCategory.get(key)!;
+    for (let i = 0; i < group.length; i += 1) {
+      for (let j = i + 1; j < group.length; j += 1) {
+        const a = group[i]!;
+        const b = group[j]!;
+        const valueA = norm(a.statement);
+        const valueB = norm(b.statement);
+        if (!valueA || !valueB || valueA === valueB) continue;
+        if (a.status !== "true" || b.status !== "true") continue; // history, not conflict
+        out.push(
+          finding(
+            "CONTINUITY_FACT_CONTRADICTION",
+            `${a.id}-vs-${b.id}`,
+            `Two active facts share the category "${a.category}" but say different things: "${a.statement}" and "${b.statement}".`,
+            [
+              { entityType: "fact", entityId: a.id, field: "statement", value: a.statement },
+              { entityType: "fact", entityId: b.id, field: "statement", value: b.statement },
+            ],
+          ),
+        );
+      }
+    }
+  }
+  return out;
+}
+
+/** A changed or retracted fact that knowledge or a thread still leans on. */
+function retractedFactInUse(state: StoryState): Finding[] {
+  const out: Finding[] = [];
+  const stale = new Map(
+    state.facts.filter((f) => f.status !== "true").map((f) => [f.id, f] as const),
+  );
+  if (!stale.size) return [];
+
+  for (const event of state.knowledge_events) {
+    if (!event.fact_id) continue;
+    const fact = stale.get(event.fact_id);
+    if (!fact) continue;
+    out.push(
+      finding(
+        "CONTINUITY_RETRACTED_FACT_IN_USE",
+        `knowledge-${event.id}-fact-${fact.id}`,
+        `Knowledge event "${event.id}" still references fact "${fact.id}", which is marked ${fact.status}.`,
+        [
+          { entityType: "knowledge_event", entityId: event.id, field: "fact_id" },
+          { entityType: "fact", entityId: fact.id, field: "status", value: fact.status },
+        ],
+      ),
+    );
+  }
+
+  for (const thread of state.open_threads) {
+    for (const id of thread.facts) {
+      const fact = stale.get(id);
+      if (!fact) continue;
+      out.push(
+        finding(
+          "CONTINUITY_RETRACTED_FACT_IN_USE",
+          `thread-${thread.id}-fact-${fact.id}`,
+          `Thread "${thread.id}" still references fact "${fact.id}", which is marked ${fact.status}.`,
+          [
+            { entityType: "thread", entityId: thread.id, field: "facts" },
+            { entityType: "fact", entityId: fact.id, field: "status", value: fact.status },
+          ],
+        ),
+      );
+    }
+  }
+  return out;
+}
+
+/** The same question asked twice. Exact normalized match only. */
+function duplicateThread(state: StoryState): Finding[] {
+  const out: Finding[] = [];
+  const seen = new Map<string, string[]>();
+  for (const thread of state.open_threads) {
+    const key = norm(thread.question);
+    if (!key) continue;
+    seen.set(key, [...(seen.get(key) ?? []), thread.id]);
+  }
+  for (const [key, ids] of Array.from(seen.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    if (ids.length < 2) continue;
+    out.push(
+      finding(
+        "CONTINUITY_DUPLICATE_THREAD",
+        `thread-${key.replace(/\s/g, "-")}`,
+        `${ids.length} open threads ask the same question: "${key}".`,
+        ids.map((id) => ({ entityType: "thread", entityId: id, field: "question", value: key })),
+      ),
+    );
+  }
+  return out;
+}
+
+/** A payoff cannot be paid off in no scene. */
+function payoffStatusInconsistent(state: StoryState): Finding[] {
+  return state.payoffs
+    .filter((payoff) => payoff.status === "paid_off" && payoff.payoff_scene === null)
+    .map((payoff) =>
+      finding(
+        "CONTINUITY_PAYOFF_STATUS_INCONSISTENT",
+        payoff.id,
+        `Payoff "${payoff.requirement}" is marked paid off, but no scene is recorded for it.`,
+        [
+          { entityType: "payoff", entityId: payoff.id, field: "status", value: payoff.status },
+          { entityType: "payoff", entityId: payoff.id, field: "payoff_scene" },
+        ],
+      ),
+    );
+}
+
+/** A thread explicitly closed with no scene claiming the resolution. */
+function threadResolvedWithoutScene(state: StoryState): Finding[] {
+  const claimed = new Set(state.scenes.flatMap((scene) => scene.threads_resolved));
+  return state.open_threads
+    .filter((thread) => thread.status === "resolved" && !claimed.has(thread.id))
+    .map((thread) =>
+      finding(
+        "CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE",
+        thread.id,
+        `Thread "${thread.question}" is marked resolved, but no scene records resolving it.`,
+        [
+          { entityType: "thread", entityId: thread.id, field: "status", value: thread.status },
+          { entityType: "thread", entityId: thread.id, field: "question", value: thread.question },
+        ],
+      ),
+    );
 }
 
 function invalidReference(state: StoryState): Finding[] {
@@ -640,6 +791,11 @@ const RULES: ((state: StoryState) => Finding[])[] = [
   twistBeforeForeshadowing,
   staleVersion,
   sceneTruthIncomplete,
+  factContradiction,
+  retractedFactInUse,
+  duplicateThread,
+  payoffStatusInconsistent,
+  threadResolvedWithoutScene,
 ];
 
 /** Stable ordering: severity, then rule, then finding id. */
