@@ -86,6 +86,8 @@ function FilmPage() {
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
     enabled: !!sessionId,
+    /** A missing film is an answer, not a network hiccup — say so immediately. */
+    retry: false,
     queryFn: () => fetchFilm({ data: { film_id: filmId, session_id: sessionId } }),
   });
 
@@ -359,7 +361,10 @@ function SceneCard({
             <span className="text-muted-foreground">Sells for {CLIP_PRICE_SEK} kr</span>
           </div>
 
-          <ClipPurchase sceneId={scene.id} ready={scene.status === "completed" && !!scene.video_url} />
+          <ClipPurchase
+            sceneId={scene.id}
+            ready={scene.status === "completed" && !!scene.video_url}
+          />
 
           {scene.clarity_note && (
             <p className="mt-3 rounded-xl bg-background/60 p-3 text-xs leading-relaxed text-muted-foreground">
