@@ -31,6 +31,8 @@ export const CATEGORIES = [
   "twist",
   "version",
   "scene_truth",
+  "fact",
+  "thread",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -46,6 +48,11 @@ export const RULE_IDS = [
   "CONTINUITY_TWIST_BEFORE_FORESHADOWING",
   "CONTINUITY_STALE_VERSION",
   "CONTINUITY_SCENE_TRUTH_INCOMPLETE",
+  "CONTINUITY_FACT_CONTRADICTION",
+  "CONTINUITY_RETRACTED_FACT_IN_USE",
+  "CONTINUITY_DUPLICATE_THREAD",
+  "CONTINUITY_PAYOFF_STATUS_INCONSISTENT",
+  "CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE",
 ] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
@@ -215,6 +222,61 @@ export const CONTINUITY_RULES: Record<RuleId, RuleDefinition> = {
     title: "Scene Truth is missing a required field",
     requires: "A scene that has Scene Truth where a required field is empty.",
     suggestedActions: ["Fill the missing required field before rendering the scene."],
+  },
+  CONTINUITY_FACT_CONTRADICTION: {
+    id: "CONTINUITY_FACT_CONTRADICTION",
+    severity: "high",
+    category: "fact",
+    title: "Two facts contradict each other",
+    requires:
+      "Two facts with the same normalized category whose recorded values differ.",
+    suggestedActions: [
+      "Decide which fact is true and retract the other.",
+      "Or split them into clearly different categories if both are meant to hold.",
+    ],
+  },
+  CONTINUITY_RETRACTED_FACT_IN_USE: {
+    id: "CONTINUITY_RETRACTED_FACT_IN_USE",
+    severity: "medium",
+    category: "fact",
+    title: "A changed or retracted fact is still referenced",
+    requires:
+      "A knowledge event or open thread referencing a fact whose status is changed or retracted.",
+    suggestedActions: [
+      "Point the reference at the fact that replaced it.",
+      "Or remove the stale reference if the fact no longer matters.",
+    ],
+  },
+  CONTINUITY_DUPLICATE_THREAD: {
+    id: "CONTINUITY_DUPLICATE_THREAD",
+    severity: "low",
+    category: "thread",
+    title: "The same open question is recorded twice",
+    requires: "Two open threads whose normalized questions are identical.",
+    suggestedActions: ["Merge the duplicate threads into one."],
+  },
+  CONTINUITY_PAYOFF_STATUS_INCONSISTENT: {
+    id: "CONTINUITY_PAYOFF_STATUS_INCONSISTENT",
+    severity: "medium",
+    category: "setup",
+    title: "Payoff status does not match its scene",
+    requires: "A payoff marked paid_off with no payoff scene recorded.",
+    suggestedActions: [
+      "Record the scene where the payoff lands.",
+      "Or move the payoff back to set_up until it lands on screen.",
+    ],
+  },
+  CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE: {
+    id: "CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE",
+    severity: "medium",
+    category: "thread",
+    title: "Thread is resolved but no scene resolves it",
+    requires:
+      "A thread explicitly marked resolved that no scene lists in its resolved threads.",
+    suggestedActions: [
+      "Mark the resolving scene so the resolution is traceable.",
+      "Or reopen the thread if it was closed by mistake.",
+    ],
   },
 };
 
