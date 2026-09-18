@@ -79,7 +79,10 @@ export type FilmView = {
   characters: { name: string; look: string }[];
   director_session_id: string | null;
   saved: boolean;
+  /** Set once the creator turns on the public share link. */
+  share_slug: string | null;
   scenes: FilmScene[];
+
 };
 
 export type FilmSummary = {
@@ -245,8 +248,9 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
   const { data: story } = await supabaseAdmin
     .from("stories")
     .select(
-      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id",
+      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id, share_slug",
     )
+
     .eq("id", film_id)
     .eq("session_id", session_id)
     .maybeSingle();
@@ -323,7 +327,9 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
     characters: characters.success ? characters.data : [],
     director_session_id: (story.director_session_id as string | null) ?? null,
     saved: !!saved,
+    share_slug: (story.share_slug as string | null) ?? null,
     scenes,
+
   };
 }
 
