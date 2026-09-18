@@ -20,6 +20,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VibeRouteImport } from './routes/vibe'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as FilmFilmIdRouteImport } from './routes/film.$filmId'
+import { Route as ShareSlugRouteImport } from './routes/share.$slug'
 import { Route as VibeIndexRouteImport } from './routes/vibe.index'
 import { Route as VibeMyListRouteImport } from './routes/vibe.my-list'
 import { Route as VibeProfileRouteImport } from './routes/vibe.profile'
@@ -84,6 +85,11 @@ const FilmFilmIdRoute = FilmFilmIdRouteImport.update({
   path: '/film/$filmId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareSlugRoute = ShareSlugRouteImport.update({
+  id: '/share/$slug',
+  path: '/share/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VibeIndexRoute = VibeIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/vibe': typeof VibeRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/film/$filmId': typeof FilmFilmIdRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/watchlist': typeof WatchlistRoute
   '/film/$filmId': typeof FilmFilmIdRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/vibe': typeof VibeRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/film/$filmId': typeof FilmFilmIdRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/vibe/my-list': typeof VibeMyListRoute
   '/vibe/profile': typeof VibeProfileRoute
   '/vibe/rewards': typeof VibeRewardsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/vibe'
     | '/watchlist'
     | '/film/$filmId'
+    | '/share/$slug'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/watchlist'
     | '/film/$filmId'
+    | '/share/$slug'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/vibe'
     | '/watchlist'
     | '/film/$filmId'
+    | '/share/$slug'
     | '/vibe/my-list'
     | '/vibe/profile'
     | '/vibe/rewards'
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   VibeRoute: typeof VibeRouteWithChildren
   WatchlistRoute: typeof WatchlistRoute
   FilmFilmIdRoute: typeof FilmFilmIdRoute
+  ShareSlugRoute: typeof ShareSlugRoute
   ApiInternalPipelineAuditRoute: typeof ApiInternalPipelineAuditRoute
   ApiPublicPaymentsSumupWebhookRoute: typeof ApiPublicPaymentsSumupWebhookRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/film/$filmId'
       fullPath: '/film/$filmId'
       preLoaderRoute: typeof FilmFilmIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$slug': {
+      id: '/share/$slug'
+      path: '/share/$slug'
+      fullPath: '/share/$slug'
+      preLoaderRoute: typeof ShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vibe/': {
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   VibeRoute: VibeRouteWithChildren,
   WatchlistRoute: WatchlistRoute,
   FilmFilmIdRoute: FilmFilmIdRoute,
+  ShareSlugRoute: ShareSlugRoute,
   ApiInternalPipelineAuditRoute: ApiInternalPipelineAuditRoute,
   ApiPublicPaymentsSumupWebhookRoute: ApiPublicPaymentsSumupWebhookRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
