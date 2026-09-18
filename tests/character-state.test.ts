@@ -170,9 +170,9 @@ describe("8-11. Scene origin, append-only, multiple events and characters", () =
     const reader = state.knowledge_events.filter((e) => e.holder === "reader");
     expect(reader).toHaveLength(1);
     expect(reader[0].character_id).toBeNull();
-    expect(state.character_states.every((c) => c.knowledge.every((k) => k.holder === "character"))).toBe(
-      true,
-    );
+    expect(
+      state.character_states.every((c) => c.knowledge.every((k) => k.holder === "character")),
+    ).toBe(true);
   });
 });
 
