@@ -110,7 +110,16 @@ const film: Partial<FilmView> = {
 const full = () =>
   normalizeStoryState({
     film,
-    scenes: [scene(), scene({ id: "scene-b", scene_number: 2, video_url: null, status: "idle", clarity_verdict: "risky" })],
+    scenes: [
+      scene(),
+      scene({
+        id: "scene-b",
+        scene_number: 2,
+        video_url: null,
+        status: "idle",
+        clarity_verdict: "risky",
+      }),
+    ],
     film_model: model,
     film_bible: bible,
   });
@@ -121,8 +130,21 @@ describe("A. StoryState type validity", () => {
     expect(storyStateSchema.safeParse(state).success).toBe(true);
     expect(Object.keys(state).sort()).toEqual(
       [
-        "characters","continuity","facts","film_bible","generation","identity","open_threads",
-        "payoffs","relationships","scenes","story_dna","timeline","twist","version","world",
+        "characters",
+        "continuity",
+        "facts",
+        "film_bible",
+        "generation",
+        "identity",
+        "open_threads",
+        "payoffs",
+        "relationships",
+        "scenes",
+        "story_dna",
+        "timeline",
+        "twist",
+        "version",
+        "world",
       ].sort(),
     );
   });
@@ -173,7 +195,10 @@ describe("D. Character knowledge representation", () => {
       ],
     });
     expect(parsed.characters[0].knowledge.map((k) => k.state)).toEqual([
-      "unknown","revealed","inferred","known",
+      "unknown",
+      "revealed",
+      "inferred",
+      "known",
     ]);
   });
 });
@@ -211,7 +236,14 @@ describe("H. Relationship representation", () => {
     const parsed = storyStateSchema.parse({
       ...emptyStoryState(),
       relationships: [
-        { id: "r1", character_a: "ruben", character_b: "mara", type: "colleagues", state: "strained", established_in_scene: 1 },
+        {
+          id: "r1",
+          character_a: "ruben",
+          character_b: "mara",
+          type: "colleagues",
+          state: "strained",
+          established_in_scene: 1,
+        },
       ],
     });
     expect(parsed.relationships[0].changed_in_scene).toBeNull();
@@ -225,7 +257,10 @@ describe("I. Open thread representation", () => {
     expect(threads[0].question).toBe("Does Mara already know?");
     expect(threads[0].status).toBe("open");
     expect(() =>
-      storyStateSchema.parse({ ...emptyStoryState(), open_threads: [{ id: "t", question: "q", status: "pending" }] }),
+      storyStateSchema.parse({
+        ...emptyStoryState(),
+        open_threads: [{ id: "t", question: "q", status: "pending" }],
+      }),
     ).toThrow();
   });
 });
@@ -250,7 +285,12 @@ describe("K. Scene representation", () => {
     expect(first.purpose).toBe("Recognition lands as grief");
     expect(first.revealed).toBe("The scar matches");
     expect(first.truth?.chosen_execution).toBe("Dossier photo beside his own hand");
-    expect(first.generation).toMatchObject({ status: "completed", has_clip: true, credit_cost: 70, recovered: true });
+    expect(first.generation).toMatchObject({
+      status: "completed",
+      has_clip: true,
+      credit_cost: 70,
+      recovered: true,
+    });
     expect(second.generation).toMatchObject({ status: "idle", has_clip: false });
   });
 });
@@ -383,7 +423,10 @@ describe("T. Existing generation regression protection", () => {
     expect(gen.scenes_rendered).toBe(1);
     expect(gen.budget_credits).toBe(140);
     expect(Object.keys(gen)).toEqual([
-      "based_on_version","scenes_total","scenes_rendered","budget_credits",
+      "based_on_version",
+      "scenes_total",
+      "scenes_rendered",
+      "budget_credits",
     ]);
   });
 

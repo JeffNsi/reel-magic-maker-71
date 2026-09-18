@@ -271,7 +271,9 @@ export const twistRefSchema = z.object({
 
 export const continuitySchema = z.object({
   /** Written by a later Continuity Engine; empty here by design. */
-  known_issues: z.array(z.object({ id: text, note: text, scenes: z.array(z.number()).default([]) })).default([]),
+  known_issues: z
+    .array(z.object({ id: text, note: text, scenes: z.array(z.number()).default([]) }))
+    .default([]),
   resolved_issues: z.array(text).default([]),
   last_validation: opt,
   affected_scenes: z.array(z.number().int()).default([]),
@@ -406,9 +408,7 @@ function dna(input: NormalizeInput): StoryDNA {
     main_conflict: clean(rec?.central_conflict),
     stakes: clean(rec?.emotional_journey),
     emotional_core: clean(
-      reality?.execution?.emotional_core ??
-        bible?.emotional_arc ??
-        model?.emotion,
+      reality?.execution?.emotional_core ?? bible?.emotional_arc ?? model?.emotion,
     ),
     tone: clean(bible?.mood),
     genre: clean(input.film?.style ?? null),
@@ -443,7 +443,9 @@ function characters(input: NormalizeInput): StoryCharacter[] {
 function world(input: NormalizeInput) {
   const setting = clean(input.film_bible?.setting ?? input.film?.setting);
   return worldSchema.parse({
-    locations: setting ? [{ id: slug(setting, "location-1"), name: setting, description: null }] : [],
+    locations: setting
+      ? [{ id: slug(setting, "location-1"), name: setting, description: null }]
+      : [],
     environment: clean(input.film_model?.world),
     rules: list(input.film_model?.continuity),
     objects: list(input.challenge?.reality?.anchors).map((name, i) => ({
