@@ -364,9 +364,13 @@ function hash(value: string): string {
   return (h >>> 0).toString(36);
 }
 
-/** Version identity ignores the version block itself so it stays deterministic. */
+/**
+ * Version identity is content-only: the version block and the back-reference to
+ * it are excluded, so recomputing the id of a finished state is stable.
+ */
 export function versionId(state: Omit<StoryState, "version"> | StoryState): string {
-  const { version: _version, ...content } = state as StoryState;
+  const { version: _version, generation, ...rest } = state as StoryState;
+  const content = { ...rest, generation: { ...generation, based_on_version: null } };
   return `v1.${hash(JSON.stringify(content))}`;
 }
 
