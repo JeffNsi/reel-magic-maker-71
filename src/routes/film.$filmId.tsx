@@ -9,7 +9,9 @@ import {
   BookmarkCheck,
   Clapperboard,
   Coins,
+  Copy,
   Eye,
+  Globe,
   Loader2,
   Play,
   Star,
@@ -20,6 +22,7 @@ import { ClipPurchase } from "@/components/film/clip-purchase";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
 import { approveRecovery, recoverScene } from "@/lib/recovery.functions";
+import { setFilmShare } from "@/lib/share.functions";
 import { checkStatus } from "@/lib/storyreel.functions";
 import {
   getFilm,
@@ -82,6 +85,7 @@ function FilmPage() {
   const runRecovery = useServerFn(recoverScene);
   const okRecovery = useServerFn(approveRecovery);
   const setSaved = useServerFn(toggleWatchlist);
+  const shareFilm = useServerFn(setFilmShare);
 
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
@@ -169,6 +173,31 @@ function FilmPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  /** Public sharing: off until the creator turns it on, and revocable. */
+  const share = useMutation({
+    mutationFn: (shared: boolean) =>
+      shareFilm({ data: { film_id: filmId, session_id: sessionId, shared } }),
+    onSuccess: async (result) => {
+      await filmQuery.refetch();
+      if (result.slug) {
+        const url = `${window.location.origin}/share/${result.slug}`;
+        try {
+          await navigator.clipboard.writeText(url);
+          toast.success("Public link copied — anyone with it can watch this film.");
+        } catch {
+          toast.success("Public link ready — copy it from the share box.");
+        }
+      } else {
+        toast.success("Sharing turned off. The old link no longer works.");
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const shareUrl = film?.share_slug
+    ? `${typeof window === "undefined" ? "" : window.location.origin}/share/${film.share_slug}`
+    : "";
+
   if (filmQuery.isLoading || !sessionId) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
@@ -238,6 +267,64 @@ function FilmPage() {
             </p>
           )}
         </header>
+
+        <section className="mt-8 rounded-2xl border border-border/70 bg-card p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                <Globe className="h-4 w-4 text-primary" />
+                Share this film
+              </p>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                {film.share_slug
+                  ? "Anyone with this link can watch the finished scenes. Your notes, budget and story plan stay private."
+                  : "Turn on a public link so clients can watch the finished scenes. Nothing else from this page is shared."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={film.share_slug ? "outline" : "default"}
+                size="sm"
+                disabled={share.isPending}
+                onClick={() => share.mutate(!film.share_slug)}
+              >
+                {share.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Globe className="mr-2 h-4 w-4" />
+                )}
+                {film.share_slug ? "Stop sharing" : "Create public link"}
+              </Button>
+            </div>
+          </div>
+
+          {film.share_slug && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-background/60 p-3">
+              <code className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {shareUrl}
+              </code>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success("Link copied.");
+                  } catch {
+                    toast.error("Copy the link from the box above.");
+                  }
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" /> Copy
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <a href={shareUrl} target="_blank" rel="noreferrer">
+                  Open
+                </a>
+              </Button>
+            </div>
+          )}
+        </section>
 
         <section className="mt-8 rounded-2xl border border-border/70 bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">

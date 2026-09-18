@@ -79,6 +79,8 @@ export type FilmView = {
   characters: { name: string; look: string }[];
   director_session_id: string | null;
   saved: boolean;
+  /** Set once the creator turns on the public share link. */
+  share_slug: string | null;
   scenes: FilmScene[];
 };
 
@@ -129,7 +131,9 @@ function readRecovery(value: unknown): FilmScene["recovery"] {
     pending?: unknown;
   };
   const outcome =
-    raw.outcome === "generated" || raw.outcome === "awaiting_approval" ? raw.outcome : "no_valid_recovery";
+    raw.outcome === "generated" || raw.outcome === "awaiting_approval"
+      ? raw.outcome
+      : "no_valid_recovery";
   const execution = typeof raw.selected_execution === "string" ? raw.selected_execution : "";
   const note =
     outcome === "no_valid_recovery"
@@ -178,9 +182,9 @@ async function askAi(system: string, user: string): Promise<unknown> {
     );
   }
 
-  const body = (await res.json().catch(() => null)) as
-    | { choices?: { message?: { content?: string } }[] }
-    | null;
+  const body = (await res.json().catch(() => null)) as {
+    choices?: { message?: { content?: string } }[];
+  } | null;
   const text = body?.choices?.[0]?.message?.content?.trim();
   if (!text) throw new Error("The director came back empty. Please try again.");
   try {
@@ -245,8 +249,9 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
   const { data: story } = await supabaseAdmin
     .from("stories")
     .select(
-      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id",
+      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id, share_slug",
     )
+
     .eq("id", film_id)
     .eq("session_id", session_id)
     .maybeSingle();
@@ -323,6 +328,7 @@ async function loadFilm(film_id: string, session_id: string): Promise<FilmView> 
     characters: characters.success ? characters.data : [],
     director_session_id: (story.director_session_id as string | null) ?? null,
     saved: !!saved,
+    share_slug: (story.share_slug as string | null) ?? null,
     scenes,
   };
 }
@@ -341,9 +347,7 @@ export const buildFilm = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => buildInput.parse(data))
   .handler(({ data }) => buildFilmCore(data));
 
-export async function buildFilmCore(
-  data: z.infer<typeof buildInput>,
-): Promise<FilmView> {
+export async function buildFilmCore(data: z.infer<typeof buildInput>): Promise<FilmView> {
   {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -428,7 +432,9 @@ export async function buildFilmCore(
 
     const rows = sceneList.map((scene, index) => {
       const complexity =
-        scene.complexity === undefined ? null : Math.round(Math.min(10, Math.max(0, scene.complexity)));
+        scene.complexity === undefined
+          ? null
+          : Math.round(Math.min(10, Math.max(0, scene.complexity)));
 
       /**
        * Scene Truth: the scene's own structured decisions, with the director's
@@ -465,12 +471,14 @@ export async function buildFilmCore(
        * The accepted turn travels with the scenes it touches — one twist
        * representation only, taken straight from the approved film bible.
        */
-      if (twist && (truth.twist || truth.reveal || truth.foreshadowing || index === sceneList.length - 1)) {
+      if (
+        twist &&
+        (truth.twist || truth.reveal || truth.foreshadowing || index === sceneList.length - 1)
+      ) {
         truth = mergeSceneTruth(truth, {
           twist: truth.twist || twist.statement || "",
           reveal: truth.reveal || twist.reveal || twist.visual_clue || "",
-          foreshadowing:
-            truth.foreshadowing || (twist.foreshadowing ?? []).slice(0, 4).join("; "),
+          foreshadowing: truth.foreshadowing || (twist.foreshadowing ?? []).slice(0, 4).join("; "),
           provenance: { twist: "ai_recommendation", reveal: "ai_recommendation" },
         });
         if (!truth.emotional_core && twist.emotional_purpose) {
@@ -764,7 +772,10 @@ export const listFilms = createServerFn({ method: "POST" })
         rendered_count: scenes.filter(
           (scene) => scene.generation_id && done.has(scene.generation_id as string),
         ).length,
-        total_cost: scenes.reduce((sum, scene) => sum + ((scene.credit_cost as number) ?? SHOT_COST), 0),
+        total_cost: scenes.reduce(
+          (sum, scene) => sum + ((scene.credit_cost as number) ?? SHOT_COST),
+          0,
+        ),
         saved: savedIds.has(row.id as string),
       };
     });
