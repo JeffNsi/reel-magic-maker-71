@@ -776,6 +776,9 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
     input.recommendation ? "recommendation" : "",
   ].filter(Boolean);
 
+  const cast = characters(input);
+  const history = characterHistory(scenes, cast);
+
   const content = {
     identity: identitySchema.parse({
       story_id: clean(input.film?.id),
