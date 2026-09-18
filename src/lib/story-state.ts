@@ -622,6 +622,126 @@ function sceneStates(scenes: FilmScene[]): SceneState[] {
   });
 }
 
+/**
+ * PHASE 2.1 normalization — derive character state and knowledge events from
+ * what scenes explicitly establish. Rules:
+ *  - a scene's Scene Truth `setting` places the characters that scene names,
+ *  - a scene's Scene Truth `reveal` makes that subject "revealed" for those
+ *    characters and for the reader,
+ *  - names are resolved to canonical character ids; an unresolved name produces
+ *    nothing (the continuity engine already reports unknown cast members),
+ *  - nothing else is inferred, and no event is written without evidence.
+ * Output is append-only and deterministically ordered by scene, then by id.
+ */
+function characterHistory(
+  scenes: FilmScene[],
+  cast: StoryCharacter[],
+): { character_states: CharacterState[]; knowledge_events: KnowledgeEvent[] } {
+  const byName = new Map(cast.map((c) => [c.name.toLowerCase(), c.id] as const));
+  const resolve = (raw: string): string | null => byName.get(raw.trim().toLowerCase()) ?? null;
+
+  const stateEvents: CharacterStateEvent[] = [];
+  const knowledge: KnowledgeEvent[] = [];
+
+  for (const scene of scenes) {
+    const truth = scene.truth ?? null;
+    if (!truth) continue;
+    const present = list((truth.characters ?? "").split(/[,;]/))
+      .map(resolve)
+      .filter((id): id is string => Boolean(id));
+    const setting = clean(truth.setting);
+    const reveal = clean(truth.reveal);
+
+    if (setting) {
+      for (const id of present) {
+        stateEvents.push(
+          characterStateEventSchema.parse({
+            id: `state-${id}-location-${scene.scene_number}`,
+            character_id: id,
+            aspect: "location",
+            value: setting,
+            scene_id: scene.id,
+            scene_number: scene.scene_number,
+            evidence: [
+              {
+                scene_id: scene.id,
+                scene_number: scene.scene_number,
+                field: "setting",
+                value: setting,
+              },
+            ],
+          }),
+        );
+      }
+    }
+
+    if (reveal) {
+      const evidence = [
+        {
+          scene_id: scene.id,
+          scene_number: scene.scene_number,
+          field: "reveal",
+          value: reveal,
+        },
+      ];
+      for (const id of present) {
+        knowledge.push(
+          knowledgeEventSchema.parse({
+            id: `knowledge-character-${id}-${scene.scene_number}-${hash(reveal)}`,
+            holder: "character",
+            character_id: id,
+            subject: reveal,
+            state: "revealed",
+            scene_id: scene.id,
+            scene_number: scene.scene_number,
+            evidence,
+          }),
+        );
+      }
+      knowledge.push(
+        knowledgeEventSchema.parse({
+          id: `knowledge-reader-${scene.scene_number}-${hash(reveal)}`,
+          holder: "reader",
+          character_id: null,
+          subject: reveal,
+          state: "revealed",
+          scene_id: scene.id,
+          scene_number: scene.scene_number,
+          evidence,
+        }),
+      );
+    }
+  }
+
+  const order = <T extends { id: string; scene_number: number | null }>(events: T[]) =>
+    events
+      .slice()
+      .sort((a, b) => (a.scene_number ?? 0) - (b.scene_number ?? 0) || a.id.localeCompare(b.id));
+
+  const orderedStates = order(stateEvents);
+  const orderedKnowledge = order(knowledge);
+
+  const ids = Array.from(
+    new Set([
+      ...orderedStates.map((e) => e.character_id),
+      ...orderedKnowledge.map((e) => e.character_id ?? ""),
+    ]),
+  )
+    .filter(Boolean)
+    .sort();
+
+  return {
+    character_states: ids.map((id) =>
+      characterStateSchema.parse({
+        character_id: id,
+        events: orderedStates.filter((e) => e.character_id === id),
+        knowledge: orderedKnowledge.filter((e) => e.character_id === id),
+      }),
+    ),
+    knowledge_events: orderedKnowledge,
+  };
+}
+
 function twistRef(input: NormalizeInput, scenes: FilmScene[]) {
   const twist: Twist | null = input.film_bible?.twist ?? null;
   if (!twist) return twistRefSchema.parse({});
