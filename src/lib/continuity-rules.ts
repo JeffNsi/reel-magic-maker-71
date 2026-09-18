@@ -51,9 +51,9 @@ export type RuleId = (typeof RULE_IDS)[number];
 
 /** Structured evidence — only ever filled from values present in StoryState. */
 export type Evidence = {
-  sceneId?: string;
-  sceneNumber?: number;
-  entityId?: string;
+  sceneId?: string | undefined;
+  sceneNumber?: number | undefined;
+  entityId?: string | undefined;
   entityType?:
     | "character"
     | "location"
