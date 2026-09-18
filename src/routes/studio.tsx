@@ -114,7 +114,9 @@ function Studio() {
                   asChild
                   className="h-11 rounded-full bg-primary px-8 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground hover:shadow-[0_0_24px_var(--glow)]"
                 >
-                  <Link to="/auth" search={{ plan: "studio" }}>Sign up for Studio</Link>
+                  <Link to="/auth" search={{ plan: "studio" }}>
+                    Sign up for Studio
+                  </Link>
                 </Button>
                 <Button
                   asChild
@@ -149,34 +151,44 @@ function Studio() {
 function StudioHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
         <Link
           to="/"
-          className="font-display text-2xl italic tracking-tight text-primary transition-opacity hover:opacity-80"
+          className="font-display text-xl italic tracking-tight text-primary transition-opacity hover:opacity-80 sm:text-2xl"
         >
           STORYREEL
         </Link>
-        <nav className="flex items-center gap-6">
+        <nav className="flex min-w-0 items-center gap-3 sm:gap-6">
           <Link
             to="/"
+            aria-label="Create"
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Film className="size-4" aria-hidden /> Create
+            <Film className="size-4 shrink-0" aria-hidden />{" "}
+            <span className="hidden sm:inline">Create</span>
           </Link>
-          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Clapperboard className="size-4" aria-hidden /> Scene editor
+          <span
+            aria-label="Scene editor"
+            className="flex items-center gap-2 text-sm font-medium text-foreground"
+          >
+            <Clapperboard className="size-4 shrink-0" aria-hidden />{" "}
+            <span className="hidden sm:inline">Scene editor</span>
           </span>
           <Link
             to="/history"
+            aria-label="My shorts"
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            <HistoryIcon className="size-4" aria-hidden /> My shorts
+            <HistoryIcon className="size-4 shrink-0" aria-hidden />{" "}
+            <span className="hidden sm:inline">My shorts</span>
           </Link>
           <Button
             asChild
-            className="h-9 rounded-full bg-primary px-5 text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:shadow-[0_0_20px_var(--glow)]"
+            className="h-9 shrink-0 rounded-full bg-primary px-4 text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:shadow-[0_0_20px_var(--glow)] sm:px-5"
           >
-            <Link to="/auth" search={{ plan: "studio" }}>Sign up</Link>
+            <Link to="/auth" search={{ plan: "studio" }}>
+              Sign up
+            </Link>
           </Button>
         </nav>
       </div>
@@ -600,7 +612,17 @@ function SceneCard({
     }
     narratedFor.current = scene.generation_id;
     narrateFn({ text: line, voice, music });
-  }, [audio, idea, music, narrateFn, narration, scene.generation_id, scene.status, scene.voice_url, voice]);
+  }, [
+    audio,
+    idea,
+    music,
+    narrateFn,
+    narration,
+    scene.generation_id,
+    scene.status,
+    scene.voice_url,
+    voice,
+  ]);
 
   const busy = scene.status === "queued" || scene.status === "processing";
 
@@ -698,7 +720,6 @@ function SceneCard({
           </SelectContent>
         </Select>
       </div>
-
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Button
