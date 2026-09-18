@@ -169,11 +169,8 @@ function invalidReference(state: StoryState): Finding[] {
   const relationshipIds = new Set(state.relationships.map((r) => r.id));
   const sceneNumbers = new Set(state.scenes.map((s) => s.scene_number));
 
-  const report = (
-    key: string,
-    message: string,
-    evidence: Evidence[],
-  ) => out.push(finding("CONTINUITY_INVALID_REFERENCE", key, message, evidence));
+  const report = (key: string, message: string, evidence: Evidence[]) =>
+    out.push(finding("CONTINUITY_INVALID_REFERENCE", key, message, evidence));
 
   for (const scene of state.scenes) {
     for (const id of scene.payoffs) {

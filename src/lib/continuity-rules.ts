@@ -212,9 +212,7 @@ export const CONTINUITY_RULES: Record<RuleId, RuleDefinition> = {
     category: "scene_truth",
     title: "Scene Truth is missing a required field",
     requires: "A scene that has Scene Truth where a required field is empty.",
-    suggestedActions: [
-      "Fill the missing required field before rendering the scene.",
-    ],
+    suggestedActions: ["Fill the missing required field before rendering the scene."],
   },
 };
 

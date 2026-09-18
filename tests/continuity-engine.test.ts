@@ -373,7 +373,8 @@ describe("engine guarantees", () => {
 
   it("the catalogue covers every declared rule id", () => {
     expect(Object.keys(CONTINUITY_RULES).sort()).toEqual([...RULE_IDS].sort());
-    for (const id of RULE_IDS) expect(CONTINUITY_RULES[id].suggestedActions.length).toBeGreaterThan(0);
+    for (const id of RULE_IDS)
+      expect(CONTINUITY_RULES[id].suggestedActions.length).toBeGreaterThan(0);
   });
 
   it("the report is advisory and version-stamped", () => {
