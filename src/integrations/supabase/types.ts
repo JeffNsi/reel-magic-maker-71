@@ -547,6 +547,8 @@ export type Database = {
           logline: string
           session_id: string
           setting: string
+          share_slug: string | null
+          shared_at: string | null
           style: string
           theme: string
           title: string
@@ -561,6 +563,8 @@ export type Database = {
           logline?: string
           session_id: string
           setting?: string
+          share_slug?: string | null
+          shared_at?: string | null
           style?: string
           theme?: string
           title?: string
@@ -575,6 +579,8 @@ export type Database = {
           logline?: string
           session_id?: string
           setting?: string
+          share_slug?: string | null
+          shared_at?: string | null
           style?: string
           theme?: string
           title?: string
