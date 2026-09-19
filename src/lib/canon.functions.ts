@@ -368,7 +368,7 @@ export const getCanon = createServerFn({ method: "POST" })
         environment_id: scene.environment_id,
         characters: scene.characters,
         status: scene.generation_status,
-        has_clip: scene.has_clip,
+        has_clip: scene.output_assets.length > 0,
       })),
       style_assets: assetsFor("style", "STYLE_01"),
     };
