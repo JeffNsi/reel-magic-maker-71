@@ -424,7 +424,9 @@ export function normalizeFilmState(input: NormalizeFilmInput): FilmState {
     ]
       .map((n) => clean(n)?.toLowerCase())
       .filter((n): n is string => n !== null);
-    const presentIds = [...new Set(named.map((n) => byName.get(n)).filter((v): v is string => !!v))];
+    const presentIds = [
+      ...new Set(named.map((n) => byName.get(n)).filter((v): v is string => !!v)),
+    ];
 
     /* wardrobe events are explicit, append-only and scene-owned */
     const wardrobeValue = clean(truth?.wardrobe);
