@@ -833,6 +833,9 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
 
   const cast = characters(input);
   const history = characterHistory(scenes, cast);
+  /** Canon first: scenes may only reference payoffs that exist here. */
+  const canonicalPayoffs = payoffs(input, scenes);
+
 
   const content = {
     identity: identitySchema.parse({
@@ -865,8 +868,8 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
       scenes,
       canonicalPayoffs.map((payoff) => payoff.id),
     ),
-
     twist: twistRef(input, scenes),
+
     continuity: continuitySchema.parse({
       affected_scenes: scenes
         .filter((scene) => scene.clarity_verdict && scene.clarity_verdict !== "clear")
