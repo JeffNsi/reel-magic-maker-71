@@ -40,8 +40,7 @@ const BLOCKING = new Set<Finding["severity"]>(["critical", "high"]);
 const WARNING = new Set<Finding["severity"]>(["medium", "low"]);
 
 export const RENDER_GATE_ALLOWED_REASON = "Scene is eligible for rendering.";
-export const RENDER_GATE_BLOCKED_REASON =
-  "Scene has unresolved high-severity continuity findings.";
+export const RENDER_GATE_BLOCKED_REASON = "Scene has unresolved high-severity continuity findings.";
 
 const sceneIdSchema = z.string().trim().min(1);
 
@@ -54,10 +53,7 @@ function appliesToScene(finding: Finding, sceneId: string): boolean {
  * Evaluate render eligibility for one scene. The input findings are never
  * mutated; ordering is the engine's deterministic finding ordering.
  */
-export function evaluateRenderGate(
-  findings: Finding[],
-  sceneId: string,
-): RenderGateResult {
+export function evaluateRenderGate(findings: Finding[], sceneId: string): RenderGateResult {
   const scene = sceneIdSchema.parse(sceneId);
   const relevant = (findings ?? []).filter((item) => appliesToScene(item, scene));
 

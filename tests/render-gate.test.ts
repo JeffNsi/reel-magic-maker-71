@@ -30,10 +30,7 @@ function finding(
     category: "scene_truth",
     title: "Test finding",
     message: `finding ${counter}`,
-    evidence:
-      sceneId === null
-        ? [{ sceneNumber: 1 }]
-        : [{ sceneId, sceneNumber: 1 }],
+    evidence: sceneId === null ? [{ sceneNumber: 1 }] : [{ sceneId, sceneNumber: 1 }],
     suggestedActions: [],
   };
 }
@@ -118,7 +115,10 @@ describe("evaluateRenderGate", () => {
 
   it("orders output deterministically (severity, then rule, then id)", () => {
     const z = { ...finding("high"), id: "CONTINUITY_INVALID_REFERENCE:z" };
-    const a = { ...finding("high", SCENE, "CONTINUITY_INVALID_REFERENCE"), id: "CONTINUITY_INVALID_REFERENCE:a" };
+    const a = {
+      ...finding("high", SCENE, "CONTINUITY_INVALID_REFERENCE"),
+      id: "CONTINUITY_INVALID_REFERENCE:a",
+    };
     const crit = finding("critical", SCENE, "CONTINUITY_TWIST_BEFORE_FORESHADOWING");
     const one = evaluateRenderGate([z, a, crit], SCENE);
     const two = evaluateRenderGate([crit, z, a], SCENE);
