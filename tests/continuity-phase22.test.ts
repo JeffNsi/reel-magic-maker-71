@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { check, checkReport } from "@/lib/continuity-engine";
 import { RULE_IDS } from "@/lib/continuity-rules";
-import {
-  emptyStoryState,
-  storyStateSchema,
-  type StoryState,
-} from "@/lib/story-state";
+import { emptyStoryState, storyStateSchema, type StoryState } from "@/lib/story-state";
 
 /**
  * PHASE 2.2 — facts, threads and payoff rules.
@@ -27,8 +23,7 @@ const fact = (
   status: "true" | "changed" | "retracted" = "true",
 ) => ({ id, statement: value, category, source: "user_decision" as const, status });
 
-const byRule = (state: StoryState, rule: string) =>
-  check(state).filter((f) => f.ruleId === rule);
+const byRule = (state: StoryState, rule: string) => check(state).filter((f) => f.ruleId === rule);
 
 describe("phase 2.2 — catalogue", () => {
   it("catalogue exposes the five new rules", () => {
@@ -73,10 +68,7 @@ describe("CONTINUITY_FACT_CONTRADICTION", () => {
 
   it("treats changed/retracted facts as history, not conflict", () => {
     const state = withState({
-      facts: [
-        fact("f1", "detective", "alive"),
-        fact("f2", "detective", "dead", "changed"),
-      ],
+      facts: [fact("f1", "detective", "alive"), fact("f2", "detective", "dead", "changed")],
     });
     expect(byRule(state, "CONTINUITY_FACT_CONTRADICTION")).toHaveLength(0);
   });
@@ -173,9 +165,7 @@ describe("CONTINUITY_PAYOFF_STATUS_INCONSISTENT", () => {
   it("accepts a paid_off payoff with a scene", () => {
     const state = withState({
       scenes: [{ id: "s1", scene_number: 3, title: "Reveal" }],
-      payoffs: [
-        { id: "p1", requirement: "The turn lands", status: "paid_off", payoff_scene: 3 },
-      ],
+      payoffs: [{ id: "p1", requirement: "The turn lands", status: "paid_off", payoff_scene: 3 }],
     });
     expect(byRule(state, "CONTINUITY_PAYOFF_STATUS_INCONSISTENT")).toHaveLength(0);
   });
@@ -199,9 +189,7 @@ describe("CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE", () => {
 
   it("accepts a resolved thread a scene claims", () => {
     const state = withState({
-      scenes: [
-        { id: "s1", scene_number: 4, title: "Answer", threads_resolved: ["t1"] },
-      ],
+      scenes: [{ id: "s1", scene_number: 4, title: "Answer", threads_resolved: ["t1"] }],
       open_threads: [{ id: "t1", question: "Why?", status: "resolved" }],
     });
     expect(byRule(state, "CONTINUITY_THREAD_RESOLVED_WITHOUT_SCENE")).toHaveLength(0);
@@ -221,18 +209,13 @@ describe("phase 2.2 — engine discipline", () => {
       facts: [fact("f1", "a", "one"), fact("f1", "b", "two")],
     });
     expect(
-      check(state).some(
-        (f) => f.ruleId === "CONTINUITY_DUPLICATE_ENTITY" && f.id.includes("fact"),
-      ),
+      check(state).some((f) => f.ruleId === "CONTINUITY_DUPLICATE_ENTITY" && f.id.includes("fact")),
     ).toBe(true);
   });
 
   it("never mutates its input", () => {
     const state = withState({
-      facts: [
-        fact("f1", "detective", "alive"),
-        fact("f2", "detective", "dead"),
-      ],
+      facts: [fact("f1", "detective", "alive"), fact("f2", "detective", "dead")],
       open_threads: [{ id: "t1", question: "Why?", status: "resolved" }],
     });
     const snapshot = JSON.stringify(state);
@@ -242,10 +225,7 @@ describe("phase 2.2 — engine discipline", () => {
 
   it("produces identical findings across runs", () => {
     const state = withState({
-      facts: [
-        fact("f1", "detective", "alive"),
-        fact("f2", "detective", "dead"),
-      ],
+      facts: [fact("f1", "detective", "alive"), fact("f2", "detective", "dead")],
       open_threads: [
         { id: "t1", question: "Who?" },
         { id: "t2", question: "who" },
