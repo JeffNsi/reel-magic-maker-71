@@ -718,9 +718,10 @@ function ConflictCenter({ filmId, sessionId }: { filmId: string; sessionId: stri
       )}
 
       <div className="mt-4 space-y-4">
-        {(report?.findings ?? []).map((finding) => (
+        {(report?.findings ?? []).map((finding, index) => (
           <div
-            key={`${finding.rule_id}-${finding.message}`}
+            key={`${finding.rule_id}-${index}`}
+
             className="rounded-xl border border-border p-4"
           >
             <p className="text-sm">{finding.title}</p>
