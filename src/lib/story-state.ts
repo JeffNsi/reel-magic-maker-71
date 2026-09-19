@@ -458,7 +458,15 @@ export type NormalizeInput = {
   evolution?: Evolution | null;
   recommendation?: Recommendation | null;
   challenge?: Challenge | null;
+  /**
+   * The story version a caller has persisted for this film, when one exists.
+   * Absent means unknown — `generation.based_on_version` then stays null rather
+   * than echoing the freshly computed id (which would make staleness
+   * undetectable by construction).
+   */
+  persisted_version?: string | null;
 };
+
 
 function dna(input: NormalizeInput): StoryDNA {
   const bible = input.film_bible ?? null;
