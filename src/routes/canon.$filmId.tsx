@@ -211,7 +211,7 @@ function CharacterCard({
       onSaved();
       toast.success(
         result.affected_scenes.length
-          ? `Saved as version ${result.affected_scenes.length ? result.version : result.version}. This affects scene ${result.affected_scenes.join(", ")} — nothing was regenerated.`
+          ? `Saved as version ${result.version}. This affects scene ${result.affected_scenes.join(", ")} — nothing was regenerated.`
           : `Saved as version ${result.version}.`,
       );
     },
