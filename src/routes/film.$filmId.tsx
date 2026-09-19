@@ -19,6 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ClipPurchase } from "@/components/film/clip-purchase";
+import { ContinuityPanel } from "@/components/film/continuity-panel";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
 import { approveRecovery, recoverScene } from "@/lib/recovery.functions";
@@ -364,6 +365,8 @@ function FilmPage() {
             are budgeted for two takes, so the number you see is what to set aside.
           </p>
         </section>
+
+        <ContinuityPanel filmId={filmId} sessionId={sessionId} />
 
         <ol className="mt-8 space-y-5">
           {film.scenes.map((scene) => (
