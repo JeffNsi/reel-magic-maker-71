@@ -635,7 +635,14 @@ function payoffs(input: NormalizeInput, scenes: FilmScene[]) {
   ];
 }
 
-function sceneStates(scenes: FilmScene[]): SceneState[] {
+/**
+ * `canonicalPayoffIds` are the payoff ids that actually exist in canon. A scene
+ * never references a payoff outside that set — no synthetic payoff is invented
+ * to satisfy a reference.
+ */
+function sceneStates(scenes: FilmScene[], canonicalPayoffIds: string[] = []): SceneState[] {
+  const canon = new Set(canonicalPayoffIds);
+
   return scenes.map((scene) => {
     const truth = scene.truth ?? null;
     return sceneStateSchema.parse({
@@ -657,7 +664,7 @@ function sceneStates(scenes: FilmScene[]): SceneState[] {
       facts_changed: [],
       threads_created: [],
       threads_resolved: [],
-      payoffs: truth?.reveal ? ["payoff-twist"] : [],
+      payoffs: truth?.reveal && canon.has("payoff-twist") ? ["payoff-twist"] : [],
       truth,
       generation: {
         status: scene.status,
@@ -853,8 +860,12 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
     facts: facts(input),
     relationships: [],
     open_threads: threads(input),
-    payoffs: payoffs(input, scenes),
-    scenes: sceneStates(scenes),
+    payoffs: canonicalPayoffs,
+    scenes: sceneStates(
+      scenes,
+      canonicalPayoffs.map((payoff) => payoff.id),
+    ),
+
     twist: twistRef(input, scenes),
     continuity: continuitySchema.parse({
       affected_scenes: scenes
