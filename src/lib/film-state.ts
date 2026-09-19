@@ -532,13 +532,13 @@ export function normalizeFilmState(input: NormalizeFilmInput): FilmState {
   return filmStateSchema.parse({
     film_id: clean(story.identity.story_id) ?? clean(film?.id) ?? "",
     film_version: 1,
-    title: clean(film?.title) ?? clean(story.story_dna.title) ?? "",
+    title: clean(film?.title) ?? "",
     characters,
     environments,
     props,
     wardrobe,
     visual_style: {
-      style: clean(film?.style) ?? clean(story.story_dna.style) ?? "",
+      style: clean(film?.style) ?? "",
       visual_direction: clean(ordered[0]?.truth?.visual_direction),
       lighting_logic: clean(ordered[0]?.truth?.lighting),
     },
