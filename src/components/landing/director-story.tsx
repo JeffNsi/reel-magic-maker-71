@@ -110,7 +110,7 @@ const CONCEPTS = [
 
 export function NotPromptToVideo() {
   return (
-    <section id="director" className="mt-24 scroll-mt-24">
+    <section className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
           This isn&apos;t just prompt-to-video.
@@ -238,7 +238,7 @@ export const DIRECTOR_STEPS = [
 
 export function DirectorSequence() {
   return (
-    <section id="how" className="mt-24 scroll-mt-24">
+    <section id="director" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
           What the Director actually does
