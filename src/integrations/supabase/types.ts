@@ -339,6 +339,330 @@ export type Database = {
           },
         ]
       }
+      film_canon_assets: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          prompt: string
+          storage_path: string
+          story_id: string
+          subject_canonical_id: string
+          subject_type: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          prompt?: string
+          storage_path: string
+          story_id: string
+          subject_canonical_id: string
+          subject_type: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          prompt?: string
+          storage_path?: string
+          story_id?: string
+          subject_canonical_id?: string
+          subject_type?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_assets_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_canon_characters: {
+        Row: {
+          age: string
+          appearance: string
+          body: string
+          build: string
+          canonical_id: string
+          continuity_constraints: Json
+          created_at: string
+          expression_profile: string
+          face: string
+          hair: string
+          height: string
+          id: string
+          locks: Json
+          name: string
+          personality: string
+          skin: string
+          story_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          age?: string
+          appearance?: string
+          body?: string
+          build?: string
+          canonical_id: string
+          continuity_constraints?: Json
+          created_at?: string
+          expression_profile?: string
+          face?: string
+          hair?: string
+          height?: string
+          id?: string
+          locks?: Json
+          name?: string
+          personality?: string
+          skin?: string
+          story_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          age?: string
+          appearance?: string
+          body?: string
+          build?: string
+          canonical_id?: string
+          continuity_constraints?: Json
+          created_at?: string
+          expression_profile?: string
+          face?: string
+          hair?: string
+          height?: string
+          id?: string
+          locks?: Json
+          name?: string
+          personality?: string
+          skin?: string
+          story_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_characters_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_canon_environments: {
+        Row: {
+          architecture: string
+          canonical_id: string
+          continuity_constraints: Json
+          created_at: string
+          furniture: string
+          id: string
+          layout: string
+          lighting: string
+          materials: string
+          name: string
+          palette: string
+          props: Json
+          story_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          architecture?: string
+          canonical_id: string
+          continuity_constraints?: Json
+          created_at?: string
+          furniture?: string
+          id?: string
+          layout?: string
+          lighting?: string
+          materials?: string
+          name?: string
+          palette?: string
+          props?: Json
+          story_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          architecture?: string
+          canonical_id?: string
+          continuity_constraints?: Json
+          created_at?: string
+          furniture?: string
+          id?: string
+          layout?: string
+          lighting?: string
+          materials?: string
+          name?: string
+          palette?: string
+          props?: Json
+          story_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_environments_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_canon_props: {
+        Row: {
+          appearance: string
+          canonical_id: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          owner_canonical_id: string | null
+          scene_number: number | null
+          state: string
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          appearance?: string
+          canonical_id: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          owner_canonical_id?: string | null
+          scene_number?: number | null
+          state?: string
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          appearance?: string
+          canonical_id?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          owner_canonical_id?: string | null
+          scene_number?: number | null
+          state?: string
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_props_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_canon_versions: {
+        Row: {
+          created_at: string
+          id: string
+          note: string
+          snapshot: Json
+          story_id: string
+          subject_canonical_id: string
+          subject_type: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string
+          snapshot?: Json
+          story_id: string
+          subject_canonical_id: string
+          subject_type: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string
+          snapshot?: Json
+          story_id?: string
+          subject_canonical_id?: string
+          subject_type?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_versions_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_canon_wardrobe: {
+        Row: {
+          accessories: string
+          canonical_id: string
+          changed_in_scene: number | null
+          character_canonical_id: string
+          created_at: string
+          description: string
+          from_scene: number | null
+          id: string
+          reason: string
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          accessories?: string
+          canonical_id: string
+          changed_in_scene?: number | null
+          character_canonical_id: string
+          created_at?: string
+          description?: string
+          from_scene?: number | null
+          id?: string
+          reason?: string
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          accessories?: string
+          canonical_id?: string
+          changed_in_scene?: number | null
+          character_canonical_id?: string
+          created_at?: string
+          description?: string
+          from_scene?: number | null
+          id?: string
+          reason?: string
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_canon_wardrobe_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       film_watchlist: {
         Row: {
           created_at: string
