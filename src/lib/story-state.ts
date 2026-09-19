@@ -887,7 +887,7 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
   const id = versionId(content as unknown as StoryState);
   return storyStateSchema.parse({
     ...content,
-    generation: { ...content.generation, based_on_version: id },
+    generation: { ...content.generation, based_on_version: clean(input.persisted_version) },
     version: versionSchema.parse({ schema: 1, id, derived_from: derived, created_at: null }),
   });
 }
