@@ -262,6 +262,14 @@ function StoryReel() {
       toast.error("Describe your story first.");
       return;
     }
+    if (!user) {
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (coins < COIN_COST) {
+      navigate({ to: "/vibe/rewards" });
+      return;
+    }
     setErrorMessage(null);
     setVideoUrl(null);
     setPhase("director");
@@ -320,12 +328,14 @@ function StoryReel() {
                 </Button>
                 <button
                   type="button"
-                  onClick={() =>
-                    document.getElementById("idea")?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  onClick={() => {
+                    const el = document.getElementById("idea");
+                    el?.scrollIntoView({ behavior: "smooth" });
+                    (el as HTMLTextAreaElement | null)?.focus();
+                  }}
                   className="text-xs text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
                 >
-                  Already know exactly what you want? Skip the Director — generate now
+                  Already know what you want? Write it below and skip the Director.
                 </button>
               </div>
             </section>
@@ -579,7 +589,7 @@ function CreateCard({
                 </>
               ) : (
                 <>
-                  Start with an idea
+                  Develop with the Director
                   <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
