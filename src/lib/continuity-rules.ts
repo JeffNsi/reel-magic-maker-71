@@ -228,8 +228,7 @@ export const CONTINUITY_RULES: Record<RuleId, RuleDefinition> = {
     severity: "high",
     category: "fact",
     title: "Two facts contradict each other",
-    requires:
-      "Two facts with the same normalized category whose recorded values differ.",
+    requires: "Two facts with the same normalized category whose recorded values differ.",
     suggestedActions: [
       "Decide which fact is true and retract the other.",
       "Or split them into clearly different categories if both are meant to hold.",
@@ -271,8 +270,7 @@ export const CONTINUITY_RULES: Record<RuleId, RuleDefinition> = {
     severity: "medium",
     category: "thread",
     title: "Thread is resolved but no scene resolves it",
-    requires:
-      "A thread explicitly marked resolved that no scene lists in its resolved threads.",
+    requires: "A thread explicitly marked resolved that no scene lists in its resolved threads.",
     suggestedActions: [
       "Mark the resolving scene so the resolution is traceable.",
       "Or reopen the thread if it was closed by mistake.",
