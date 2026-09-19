@@ -97,6 +97,11 @@ export const getContinuityReport = createServerFn({ method: "POST" })
       recommendation: (session?.recommendation ?? null) as Recommendation | null,
       challenge: (session?.challenge ?? null) as Challenge | null,
       evolution: (session?.evolution ?? null) as Evolution | null,
+      /**
+       * Nothing persists a story version today, so none is passed. The moment a
+       * caller stores one, the stale-version rule starts reporting.
+       */
+      persisted_version: null,
     });
 
     const report = checkReport(state);

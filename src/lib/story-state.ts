@@ -458,6 +458,13 @@ export type NormalizeInput = {
   evolution?: Evolution | null;
   recommendation?: Recommendation | null;
   challenge?: Challenge | null;
+  /**
+   * The story version a caller has persisted for this film, when one exists.
+   * Absent means unknown — `generation.based_on_version` then stays null rather
+   * than echoing the freshly computed id (which would make staleness
+   * undetectable by construction).
+   */
+  persisted_version?: string | null;
 };
 
 function dna(input: NormalizeInput): StoryDNA {
@@ -490,17 +497,56 @@ function dna(input: NormalizeInput): StoryDNA {
   });
 }
 
+/**
+ * Canonical identity key: trim, collapse whitespace, lowercase — nothing more.
+ * No substring or fuzzy matching, so "Julian" and "Julian Reyes" stay two
+ * separate people.
+ */
+function identityKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/**
+ * A bible cast entry carries the bare name plus an optional descriptor, written
+ * either after an em dash/hyphen ("Ruben — grey coat") or inside a trailing
+ * parenthetical ("Julian (29, charismatic)"). Only the bare name is canonical;
+ * the descriptor is metadata.
+ */
+function castEntry(raw: string): { name: string; descriptor: string | null } {
+  const dash = raw.search(/[—–-]/);
+  let name = dash >= 0 ? raw.slice(0, dash) : raw;
+  const parts = dash >= 0 ? [raw.slice(dash + 1)] : [];
+
+  const paren = /^([^(]*)\(([^)]*)\)\s*$/.exec(name);
+  if (paren) {
+    name = paren[1] ?? "";
+    parts.unshift(paren[2] ?? "");
+  }
+
+  const bare = name.trim().replace(/\s+/g, " ");
+  const descriptor = parts
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" — ");
+  return { name: bare || raw.trim(), descriptor: descriptor || null };
+}
+
 function characters(input: NormalizeInput): StoryCharacter[] {
   const fromFilm = (input.film?.characters ?? []).map((c) => ({
     name: (c.name ?? "").trim(),
     appearance: clean(c.look),
   }));
   const names = new Map<string, { name: string; appearance: string | null }>();
-  for (const entry of fromFilm) if (entry.name) names.set(entry.name.toLowerCase(), entry);
+  for (const entry of fromFilm) if (entry.name) names.set(identityKey(entry.name), entry);
   for (const raw of list(input.film_bible?.cast)) {
-    const name = (raw.split(/[—-]/)[0] ?? "").trim() || raw;
-    const key = name.toLowerCase();
-    if (!names.has(key)) names.set(key, { name, appearance: clean(raw.slice(name.length)) });
+    const { name, descriptor } = castEntry(raw);
+    const key = identityKey(name);
+    const existing = names.get(key);
+    if (!existing) {
+      names.set(key, { name, appearance: clean(descriptor) });
+    } else if (!existing.appearance && descriptor) {
+      existing.appearance = clean(descriptor);
+    }
   }
 
   return Array.from(names.values()).map((entry, index) =>
@@ -587,7 +633,14 @@ function payoffs(input: NormalizeInput, scenes: FilmScene[]) {
   ];
 }
 
-function sceneStates(scenes: FilmScene[]): SceneState[] {
+/**
+ * `canonicalPayoffIds` are the payoff ids that actually exist in canon. A scene
+ * never references a payoff outside that set — no synthetic payoff is invented
+ * to satisfy a reference.
+ */
+function sceneStates(scenes: FilmScene[], canonicalPayoffIds: string[] = []): SceneState[] {
+  const canon = new Set(canonicalPayoffIds);
+
   return scenes.map((scene) => {
     const truth = scene.truth ?? null;
     return sceneStateSchema.parse({
@@ -609,7 +662,7 @@ function sceneStates(scenes: FilmScene[]): SceneState[] {
       facts_changed: [],
       threads_created: [],
       threads_resolved: [],
-      payoffs: truth?.reveal ? ["payoff-twist"] : [],
+      payoffs: truth?.reveal && canon.has("payoff-twist") ? ["payoff-twist"] : [],
       truth,
       generation: {
         status: scene.status,
@@ -778,6 +831,8 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
 
   const cast = characters(input);
   const history = characterHistory(scenes, cast);
+  /** Canon first: scenes may only reference payoffs that exist here. */
+  const canonicalPayoffs = payoffs(input, scenes);
 
   const content = {
     identity: identitySchema.parse({
@@ -805,9 +860,13 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
     facts: facts(input),
     relationships: [],
     open_threads: threads(input),
-    payoffs: payoffs(input, scenes),
-    scenes: sceneStates(scenes),
+    payoffs: canonicalPayoffs,
+    scenes: sceneStates(
+      scenes,
+      canonicalPayoffs.map((payoff) => payoff.id),
+    ),
     twist: twistRef(input, scenes),
+
     continuity: continuitySchema.parse({
       affected_scenes: scenes
         .filter((scene) => scene.clarity_verdict && scene.clarity_verdict !== "clear")
@@ -825,7 +884,7 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
   const id = versionId(content as unknown as StoryState);
   return storyStateSchema.parse({
     ...content,
-    generation: { ...content.generation, based_on_version: id },
+    generation: { ...content.generation, based_on_version: clean(input.persisted_version) },
     version: versionSchema.parse({ schema: 1, id, derived_from: derived, created_at: null }),
   });
 }

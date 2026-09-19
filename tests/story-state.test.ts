@@ -316,7 +316,8 @@ describe("M. StoryState version identity", () => {
     const b = full();
     expect(a.version.id).toBe(b.version.id);
     expect(a.version.schema).toBe(1);
-    expect(a.generation.based_on_version).toBe(a.version.id);
+    expect(a.generation.based_on_version).toBeNull();
+
     const changed = normalizeStoryState({
       film,
       scenes: [scene({ title: "The garage, later" })],
