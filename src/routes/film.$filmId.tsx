@@ -368,6 +368,16 @@ function FilmPage() {
 
         <ContinuityPanel filmId={filmId} sessionId={sessionId} />
 
+        <Link
+          to="/canon/$filmId"
+          params={{ filmId }}
+          className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <Clapperboard className="h-4 w-4" /> Open the Continuity Center — characters, world,
+          timeline and conflicts
+        </Link>
+
+
         <ol className="mt-8 space-y-5">
           {film.scenes.map((scene) => (
             <SceneCard
