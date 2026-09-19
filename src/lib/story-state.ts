@@ -498,17 +498,56 @@ function dna(input: NormalizeInput): StoryDNA {
   });
 }
 
+/**
+ * Canonical identity key: trim, collapse whitespace, lowercase — nothing more.
+ * No substring or fuzzy matching, so "Julian" and "Julian Reyes" stay two
+ * separate people.
+ */
+function identityKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/**
+ * A bible cast entry carries the bare name plus an optional descriptor, written
+ * either after an em dash/hyphen ("Ruben — grey coat") or inside a trailing
+ * parenthetical ("Julian (29, charismatic)"). Only the bare name is canonical;
+ * the descriptor is metadata.
+ */
+function castEntry(raw: string): { name: string; descriptor: string | null } {
+  const dash = raw.search(/[—–-]/);
+  let name = dash >= 0 ? raw.slice(0, dash) : raw;
+  const parts = dash >= 0 ? [raw.slice(dash + 1)] : [];
+
+  const paren = /^([^(]*)\(([^)]*)\)\s*$/.exec(name);
+  if (paren) {
+    name = paren[1];
+    parts.unshift(paren[2]);
+  }
+
+  const bare = name.trim().replace(/\s+/g, " ");
+  const descriptor = parts
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" — ");
+  return { name: bare || raw.trim(), descriptor: descriptor || null };
+}
+
 function characters(input: NormalizeInput): StoryCharacter[] {
   const fromFilm = (input.film?.characters ?? []).map((c) => ({
     name: (c.name ?? "").trim(),
     appearance: clean(c.look),
   }));
   const names = new Map<string, { name: string; appearance: string | null }>();
-  for (const entry of fromFilm) if (entry.name) names.set(entry.name.toLowerCase(), entry);
+  for (const entry of fromFilm) if (entry.name) names.set(identityKey(entry.name), entry);
   for (const raw of list(input.film_bible?.cast)) {
-    const name = (raw.split(/[—-]/)[0] ?? "").trim() || raw;
-    const key = name.toLowerCase();
-    if (!names.has(key)) names.set(key, { name, appearance: clean(raw.slice(name.length)) });
+    const { name, descriptor } = castEntry(raw);
+    const key = identityKey(name);
+    const existing = names.get(key);
+    if (!existing) {
+      names.set(key, { name, appearance: clean(descriptor) });
+    } else if (!existing.appearance && descriptor) {
+      existing.appearance = clean(descriptor);
+    }
   }
 
   return Array.from(names.values()).map((entry, index) =>
@@ -519,6 +558,7 @@ function characters(input: NormalizeInput): StoryCharacter[] {
     }),
   );
 }
+
 
 function world(input: NormalizeInput) {
   const setting = clean(input.film_bible?.setting ?? input.film?.setting);
