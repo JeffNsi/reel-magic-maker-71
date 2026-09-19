@@ -632,7 +632,14 @@ export const saveCanonProp = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!current) throw new Error("That prop is not part of this film's canon.");
 
-    await archive(data.film_id, "prop", data.canonical_id, 1, current, "Replaced by a creator edit");
+    await archive(
+      data.film_id,
+      "prop",
+      data.canonical_id,
+      1,
+      current,
+      "Replaced by a creator edit",
+    );
 
     const { error } = await supabaseAdmin
       .from("film_canon_props")

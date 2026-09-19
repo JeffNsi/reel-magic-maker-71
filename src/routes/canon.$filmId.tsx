@@ -98,8 +98,8 @@ function ContinuityCenter() {
 
       <h1 className="mt-6 font-serif text-3xl italic">Continuity Center</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {canon ? canon.title : "Your film"} — the permanent truth every scene is built from. What you
-        change here is canon; a bad take never rewrites it.
+        {canon ? canon.title : "Your film"} — the permanent truth every scene is built from. What
+        you change here is canon; a bad take never rewrites it.
       </p>
 
       {canonQuery.isLoading && (
@@ -145,12 +145,7 @@ function ContinuityCenter() {
                 onSaved={refresh}
               />
             ))}
-            <WardrobeList
-              filmId={filmId}
-              sessionId={sessionId}
-              canon={canon}
-              onSaved={refresh}
-            />
+            <WardrobeList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
             <PropList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
           </TabsContent>
 
@@ -321,11 +316,7 @@ function CharacterCard({
         </div>
       </div>
 
-      <Button
-        className="mt-5"
-        disabled={mutation.isPending}
-        onClick={() => mutation.mutate()}
-      >
+      <Button className="mt-5" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
         {mutation.isPending ? "Saving…" : "Save as canon"}
       </Button>
     </section>
@@ -475,8 +466,7 @@ function WardrobeList({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const nameOf = (id: string) =>
-    canon.characters.find((c) => c.canonical_id === id)?.name ?? id;
+  const nameOf = (id: string) => canon.characters.find((c) => c.canonical_id === id)?.name ?? id;
 
   return (
     <section className={CARD}>
@@ -600,7 +590,9 @@ function PropList({
       </p>
 
       {canon.props.length === 0 && (
-        <p className="mt-4 text-sm text-muted-foreground">No props are tracked for this film yet.</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          No props are tracked for this film yet.
+        </p>
       )}
 
       <div className="mt-4 space-y-5">
@@ -727,7 +719,10 @@ function ConflictCenter({ filmId, sessionId }: { filmId: string; sessionId: stri
 
       <div className="mt-4 space-y-4">
         {(report?.findings ?? []).map((finding) => (
-          <div key={`${finding.rule_id}-${finding.message}`} className="rounded-xl border border-border p-4">
+          <div
+            key={`${finding.rule_id}-${finding.message}`}
+            className="rounded-xl border border-border p-4"
+          >
             <p className="text-sm">{finding.title}</p>
             <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
               {finding.severity}

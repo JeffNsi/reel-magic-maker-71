@@ -377,7 +377,6 @@ function FilmPage() {
           timeline and conflicts
         </Link>
 
-
         <ol className="mt-8 space-y-5">
           {film.scenes.map((scene) => (
             <SceneCard
