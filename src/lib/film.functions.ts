@@ -242,7 +242,7 @@ type SceneRow = {
   recovery: unknown;
 };
 
-async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
+export async function loadFilm(film_id: string, session_id: string): Promise<FilmView> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { signedUrl } = await import("@/lib/storyreel-core.server");
 
