@@ -520,8 +520,9 @@ function castEntry(raw: string): { name: string; descriptor: string | null } {
 
   const paren = /^([^(]*)\(([^)]*)\)\s*$/.exec(name);
   if (paren) {
-    name = paren[1];
-    parts.unshift(paren[2]);
+    name = paren[1] ?? "";
+    parts.unshift(paren[2] ?? "");
+
   }
 
   const bare = name.trim().replace(/\s+/g, " ");
