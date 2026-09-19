@@ -799,7 +799,7 @@ const RULES: ((state: StoryState) => Finding[])[] = [
 ];
 
 /** Stable ordering: severity, then rule, then finding id. */
-function sortFindings(findings: Finding[]): Finding[] {
+export function sortFindings(findings: Finding[]): Finding[] {
   return findings.slice().sort((a, b) => {
     const bySeverity = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
     if (bySeverity !== 0) return bySeverity;
