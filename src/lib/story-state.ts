@@ -467,7 +467,6 @@ export type NormalizeInput = {
   persisted_version?: string | null;
 };
 
-
 function dna(input: NormalizeInput): StoryDNA {
   const bible = input.film_bible ?? null;
   const model = input.film_model ?? null;
@@ -522,7 +521,6 @@ function castEntry(raw: string): { name: string; descriptor: string | null } {
   if (paren) {
     name = paren[1] ?? "";
     parts.unshift(paren[2] ?? "");
-
   }
 
   const bare = name.trim().replace(/\s+/g, " ");
@@ -559,7 +557,6 @@ function characters(input: NormalizeInput): StoryCharacter[] {
     }),
   );
 }
-
 
 function world(input: NormalizeInput) {
   const setting = clean(input.film_bible?.setting ?? input.film?.setting);
@@ -836,7 +833,6 @@ export function normalizeStoryState(input: NormalizeInput): StoryState {
   const history = characterHistory(scenes, cast);
   /** Canon first: scenes may only reference payoffs that exist here. */
   const canonicalPayoffs = payoffs(input, scenes);
-
 
   const content = {
     identity: identitySchema.parse({

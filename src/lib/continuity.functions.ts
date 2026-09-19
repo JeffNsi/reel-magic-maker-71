@@ -104,7 +104,6 @@ export const getContinuityReport = createServerFn({ method: "POST" })
       persisted_version: null,
     });
 
-
     const report = checkReport(state);
 
     const findings: ContinuityFinding[] = report.findings.map((finding) => ({
