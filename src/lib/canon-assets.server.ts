@@ -82,7 +82,8 @@ export async function generateReferenceImage(prompt: string): Promise<Uint8Array
       const record = parsed as Record<string, unknown>;
       if (record["error"]) {
         const error = record["error"] as Record<string, unknown>;
-        failure = typeof error["message"] === "string" ? error["message"] : "Image generation failed.";
+        failure =
+          typeof error["message"] === "string" ? error["message"] : "Image generation failed.";
         continue;
       }
       const image = pickImage(parsed);

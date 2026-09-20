@@ -873,13 +873,7 @@ function ReferencePack({
         </p>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="mt-3"
-        disabled={busy !== null}
-        onClick={run}
-      >
+      <Button variant="outline" size="sm" className="mt-3" disabled={busy !== null} onClick={run}>
         {busy ? (
           <>
             <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Making {busy}…
