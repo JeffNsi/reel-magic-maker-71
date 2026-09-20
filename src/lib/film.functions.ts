@@ -12,6 +12,11 @@ import {
   sceneTruthSchema,
   type SceneTruth,
 } from "@/lib/scene-truth";
+import {
+  referenceImageUrls,
+  resolveSceneReferences,
+  type SceneReferences,
+} from "@/lib/reference-resolver";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -663,7 +668,7 @@ export const renderScene = createServerFn({ method: "POST" })
      * Truth before a single credit is spent.
      */
     if (!fidelity.ok) {
-      prompt = buildGenerationRequest(truth, context, { minimal: true });
+      prompt = buildGenerationRequest(truth, context, { minimal: true, references });
       fidelity = checkFidelity(truth, prompt);
     }
 
@@ -683,6 +688,7 @@ export const renderScene = createServerFn({ method: "POST" })
       story_id: film.id,
       scene_number: scene.scene_number,
       narration: scene.narration,
+      references: referenceImageUrls(references),
     });
 
     await supabaseAdmin
