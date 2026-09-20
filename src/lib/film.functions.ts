@@ -640,7 +640,21 @@ export const renderScene = createServerFn({ method: "POST" })
       film_continuity: truth.continuity,
     };
 
-    let prompt = buildGenerationRequest(truth, context);
+    /**
+     * PHASE 3: the resolved reference manifest is read here and passed through.
+     * It never gates, never fails the render and never touches credits — when it
+     * cannot be resolved, or resolves text-only, this is a no-op.
+     */
+    let references: SceneReferences | null = null;
+    try {
+      const { loadResolverCanon } = await import("@/lib/canon.functions");
+      const canon = await loadResolverCanon(data.film_id, data.session_id);
+      references = resolveSceneReferences(canon, scene.scene_number);
+    } catch (err) {
+      console.info("reference resolve skipped", err instanceof Error ? err.message : "unknown");
+    }
+
+    let prompt = buildGenerationRequest(truth, context, { references });
     let fidelity = checkFidelity(truth, prompt);
 
     /**
