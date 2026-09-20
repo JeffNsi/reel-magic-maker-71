@@ -305,15 +305,35 @@ export const getCanon = createServerFn({ method: "POST" })
       supabaseAdmin.from("film_canon_assets").select("*").eq("story_id", story_id),
     ]);
 
-    const assetsFor = (type: string, id: string): CanonAsset[] =>
-      (assetRows.data ?? [])
-        .filter((row) => row.subject_type === type && row.subject_canonical_id === id)
+    /* Signed links for every stored reference image, in one round trip. */
+    const paths = (assetRows.data ?? []).map((row) => row.storage_path);
+    const signed = new Map<string, string>();
+    if (paths.length) {
+      const { data: links } = await supabaseAdmin.storage
+        .from(ASSET_BUCKET)
+        .createSignedUrls(paths, ASSET_URL_TTL);
+      for (const link of links ?? []) {
+        if (link.path && link.signedUrl) signed.set(link.path, link.signedUrl);
+      }
+    }
+
+    /** The newest pack for a subject — older versions stay in the table as history. */
+    const assetsFor = (type: string, id: string): CanonAsset[] => {
+      const rows = (assetRows.data ?? []).filter(
+        (row) => row.subject_type === type && row.subject_canonical_id === id,
+      );
+      if (!rows.length) return [];
+      const latest = Math.max(...rows.map((row) => row.version));
+      return rows
+        .filter((row) => row.version === latest)
         .map((row) => ({
           kind: row.kind,
           storage_path: row.storage_path,
           version: row.version,
+          url: signed.get(row.storage_path) ?? null,
         }))
         .sort((a, b) => a.kind.localeCompare(b.kind));
+    };
 
     const appearsIn = new Map(state.characters.map((c) => [c.canonical_id, c.appears_in]));
     const usedBy = new Map(state.environments.map((e) => [e.canonical_id, e.used_by]));
