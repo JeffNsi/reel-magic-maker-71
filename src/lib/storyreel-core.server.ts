@@ -28,9 +28,12 @@ export function falHeaders(key: string) {
 
 export function falSubmitError(status: number, detail: string) {
   if (/balance|locked|credit/i.test(detail)) {
-    return new Error("The video account is out of credit. Top up the fal.ai balance and try again.");
+    return new Error(
+      "The video account is out of credit. Top up the fal.ai balance and try again.",
+    );
   }
-  if (status === 401 || status === 403) return new Error("The video service rejected our credentials.");
+  if (status === 401 || status === 403)
+    return new Error("The video service rejected our credentials.");
   if (status === 429) {
     return new Error("The video service is busy right now. Please try again in a moment.");
   }
@@ -61,7 +64,8 @@ function aiVideoError(status: number, message: string) {
         "This project is out of AI credits. Top them up in Lovable to keep generating films.",
     );
   }
-  if (status === 403) return new Error(message || "AI film generation is blocked for this project.");
+  if (status === 403)
+    return new Error(message || "AI film generation is blocked for this project.");
   if (status === 429) {
     return new Error("The film service is busy right now. Please try again in a moment.");
   }
@@ -75,9 +79,7 @@ export async function submitLovableVideo(prompt: string, audio: boolean): Promis
     headers: { Authorization: `Bearer ${readAiKey()}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: LOVABLE_VIDEO_MODEL,
-      input: audio
-        ? prompt
-        : `${prompt} No dialogue. No music. No sound effects — silent footage.`,
+      input: audio ? prompt : `${prompt} No dialogue. No music. No sound effects — silent footage.`,
       response_format: {
         type: "video",
         resolution: "720p",
@@ -87,9 +89,7 @@ export async function submitLovableVideo(prompt: string, audio: boolean): Promis
     }),
   });
 
-  const payload = (await res.json().catch(() => null)) as
-    | { id?: string; message?: string }
-    | null;
+  const payload = (await res.json().catch(() => null)) as { id?: string; message?: string } | null;
 
   if (!res.ok || !payload?.id) {
     console.error("lovable video submit failed", res.status, JSON.stringify(payload));
@@ -115,9 +115,10 @@ export async function submitFalVideo(
     }),
   });
 
-  const payload = (await res.json().catch(() => null)) as
-    | { request_id?: string; detail?: unknown }
-    | null;
+  const payload = (await res.json().catch(() => null)) as {
+    request_id?: string;
+    detail?: unknown;
+  } | null;
 
   if (!res.ok || !payload?.request_id) {
     console.error("fal submit failed", res.status, JSON.stringify(payload));
@@ -126,7 +127,43 @@ export async function submitFalVideo(
   return payload.request_id;
 }
 
-export function submitVideo(provider: VideoProvider, prompt: string, audio: boolean) {
+/**
+ * PHASE 3 — reference conditioning.
+ *
+ * How strongly a reference image constrains the generated frame. A named
+ * constant, never a magic number, and logged with every generation.
+ */
+export const REFERENCE_WEIGHT = 0.85;
+
+/**
+ * Which engines accept image conditioning. Both current video endpoints are
+ * text-to-video, so references cannot be enforced there — the scene is honestly
+ * marked "text-only continuity" instead of pretending the lock holds.
+ */
+export const PROVIDER_ACCEPTS_IMAGE_REFERENCES: Record<VideoProvider, boolean> = {
+  lovable: false,
+  fal: false,
+  live: false,
+};
+
+export function submitVideo(
+  provider: VideoProvider,
+  prompt: string,
+  audio: boolean,
+  references: string[] = [],
+) {
+  const accepted = PROVIDER_ACCEPTS_IMAGE_REFERENCES[provider] ? references : [];
+  console.info(
+    "generation references",
+    JSON.stringify({
+      provider,
+      offered: references.length,
+      used: accepted.length,
+      reference_weight: REFERENCE_WEIGHT,
+      mode: accepted.length ? "image-conditioned" : "text-only",
+    }),
+  );
+
   return provider === "lovable"
     ? submitLovableVideo(prompt, audio)
     : submitFalVideo(prompt, audio, falModelFor(provider));
@@ -148,9 +185,10 @@ export async function providerProgress(
     const statusRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}/status`, {
       headers: falHeaders(key),
     });
-    const statusBody = (await statusRes.json().catch(() => null)) as
-      | { status?: string; queue_position?: number }
-      | null;
+    const statusBody = (await statusRes.json().catch(() => null)) as {
+      status?: string;
+      queue_position?: number;
+    } | null;
 
     if (!statusRes.ok) {
       console.error("fal status failed", statusRes.status, JSON.stringify(statusBody));
@@ -168,14 +206,17 @@ export async function providerProgress(
     const resultRes = await fetch(`${FAL_QUEUE_BASE}/${falModel}/requests/${taskId}`, {
       headers: falHeaders(key),
     });
-    const result = (await resultRes.json().catch(() => null)) as { video?: { url?: string } } | null;
+    const result = (await resultRes.json().catch(() => null)) as {
+      video?: { url?: string };
+    } | null;
     const sourceUrl = result?.video?.url;
     if (!resultRes.ok || !sourceUrl) {
       console.error("fal result failed", resultRes.status, JSON.stringify(result));
       return { state: "failed", message: "The video finished but could not be collected." };
     }
     const download = await fetch(sourceUrl);
-    if (!download.ok) return { state: "failed", message: "The finished video could not be downloaded." };
+    if (!download.ok)
+      return { state: "failed", message: "The finished video could not be downloaded." };
     return { state: "completed", bytes: await download.arrayBuffer() };
   }
 
@@ -183,9 +224,11 @@ export async function providerProgress(
   const jobRes = await fetch(`${AI_VIDEO_BASE}/${taskId}`, {
     headers: { Authorization: `Bearer ${key}` },
   });
-  const job = (await jobRes.json().catch(() => null)) as
-    | { status?: string; error?: { message?: string }; message?: string }
-    | null;
+  const job = (await jobRes.json().catch(() => null)) as {
+    status?: string;
+    error?: { message?: string };
+    message?: string;
+  } | null;
 
   if (!jobRes.ok) {
     console.error("lovable video status failed", jobRes.status, JSON.stringify(job));
@@ -222,6 +265,8 @@ export async function startGeneration(opts: {
   story_id?: string;
   scene_number?: number;
   narration?: string;
+  /** Resolved reference images, in the resolver's order. Empty = text-only. */
+  references?: string[];
 }): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const provider: VideoProvider = opts.provider ?? "lovable";
@@ -245,7 +290,7 @@ export async function startGeneration(opts: {
   if (error || !row) throw new Error("Could not start this scene. Please try again.");
 
   try {
-    const taskId = await submitVideo(provider, opts.prompt, opts.audio);
+    const taskId = await submitVideo(provider, opts.prompt, opts.audio, opts.references ?? []);
     await supabaseAdmin
       .from("generations")
       .update({ fal_request_id: taskId, status: "processing" })

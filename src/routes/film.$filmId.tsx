@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ClipPurchase } from "@/components/film/clip-purchase";
 import { ContinuityPanel } from "@/components/film/continuity-panel";
+import { SceneReferences } from "@/components/film/scene-references";
+import { getSceneReferencePlans, type SceneReferencePlan } from "@/lib/canon.functions";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
 import { approveRecovery, recoverScene } from "@/lib/recovery.functions";
@@ -87,6 +89,7 @@ function FilmPage() {
   const okRecovery = useServerFn(approveRecovery);
   const setSaved = useServerFn(toggleWatchlist);
   const shareFilm = useServerFn(setFilmShare);
+  const fetchReferencePlans = useServerFn(getSceneReferencePlans);
 
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
@@ -94,6 +97,14 @@ function FilmPage() {
     /** A missing film is an answer, not a network hiccup — say so immediately. */
     retry: false,
     queryFn: () => fetchFilm({ data: { film_id: filmId, session_id: sessionId } }),
+  });
+
+  /** Which references each scene would use — read-only, no credits, no generation. */
+  const plansQuery = useQuery({
+    queryKey: ["scene-references", filmId, sessionId],
+    enabled: !!sessionId,
+    retry: false,
+    queryFn: () => fetchReferencePlans({ data: { film_id: filmId, session_id: sessionId } }),
   });
 
   const film = filmQuery.data;
@@ -382,6 +393,7 @@ function FilmPage() {
             <SceneCard
               key={scene.id}
               scene={scene}
+              plan={(plansQuery.data ?? []).find((p) => p.scene_id === scene.id)}
               rendering={render.isPending && render.variables === scene.id}
               recovering={
                 (recover.isPending && recover.variables === scene.id) ||
@@ -401,6 +413,7 @@ function FilmPage() {
 
 function SceneCard({
   scene,
+  plan,
   rendering,
   recovering,
   onRender,
@@ -409,6 +422,7 @@ function SceneCard({
   onQueue,
 }: {
   scene: FilmScene;
+  plan: SceneReferencePlan | undefined;
   rendering: boolean;
   recovering: boolean;
   onRender: () => void;
@@ -502,6 +516,8 @@ function SceneCard({
               Film the Director's version
             </Button>
           )}
+
+          <SceneReferences plan={plan} />
 
           <div className="mt-5 flex items-center gap-3">
             <Button size="sm" disabled={rendering || working} onClick={onRender}>

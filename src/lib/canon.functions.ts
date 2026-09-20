@@ -3,6 +3,11 @@ import { z } from "zod";
 
 import { affectedScenes, normalizeFilmState, type FilmState } from "@/lib/film-state";
 import { normalizeStoryState } from "@/lib/story-state";
+import {
+  resolveSceneReferences,
+  type RefImage,
+  type ResolverCanon,
+} from "@/lib/reference-resolver";
 import type {
   Challenge,
   Evolution,
@@ -856,4 +861,154 @@ export const generateCanonAsset = createServerFn({ method: "POST" })
       storage_path: path,
       url: link?.signedUrl ?? null,
     };
+  });
+
+/* --------------------------------------------- PHASE 3: reference resolution */
+
+/**
+ * The canon as the pure resolver needs it: stored rows plus signed links, and
+ * the scene chain from the derived FilmState (camera, wardrobe, props, location).
+ * Read-only — no seeding, no writes, no generation.
+ */
+export async function loadResolverCanon(
+  film_id: string,
+  session_id: string,
+): Promise<ResolverCanon> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const state = await deriveState(film_id, session_id);
+
+  const [charRows, envRows, assetRows] = await Promise.all([
+    supabaseAdmin.from("film_canon_characters").select("*").eq("story_id", film_id),
+    supabaseAdmin.from("film_canon_environments").select("*").eq("story_id", film_id),
+    supabaseAdmin.from("film_canon_assets").select("*").eq("story_id", film_id),
+  ]);
+
+  const paths = (assetRows.data ?? []).map((row) => row.storage_path);
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    const { data: links } = await supabaseAdmin.storage
+      .from(ASSET_BUCKET)
+      .createSignedUrls(paths, ASSET_URL_TTL);
+    for (const link of links ?? []) {
+      if (link.path && link.signedUrl) signed.set(link.path, link.signedUrl);
+    }
+  }
+
+  /** Only the newest pack version per subject reaches generation. */
+  const assetsFor = (type: string, id: string): RefImage[] => {
+    const rows = (assetRows.data ?? []).filter(
+      (row) => row.subject_type === type && row.subject_canonical_id === id,
+    );
+    if (!rows.length) return [];
+    const latest = Math.max(...rows.map((row) => row.version));
+    return rows
+      .filter((row) => row.version === latest)
+      .map((row) => ({
+        kind: row.kind,
+        storage_path: row.storage_path,
+        version: row.version,
+        url: signed.get(row.storage_path) ?? null,
+      }))
+      .sort((a, b) => a.kind.localeCompare(b.kind));
+  };
+
+  return {
+    characters: (charRows.data ?? [])
+      .map((row) => ({
+        canonical_id: row.canonical_id,
+        name: str(row.name),
+        face: str(row.face),
+        hair: str(row.hair),
+        skin: str(row.skin),
+        body: str(row.body),
+        height: str(row.height),
+        build: str(row.build),
+        locks: readLocks(row.locks),
+        reference_assets: assetsFor("character", row.canonical_id),
+      }))
+      .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id)),
+    environments: (envRows.data ?? [])
+      .map((row) => ({
+        canonical_id: row.canonical_id,
+        name: str(row.name),
+        reference_assets: assetsFor("environment", row.canonical_id),
+      }))
+      .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id)),
+    style_assets: assetsFor("style", "STYLE_01"),
+    scenes: state.scenes.map((scene) => ({
+      scene_id: scene.scene_id,
+      scene_number: scene.scene_number,
+      title: scene.title,
+      characters: scene.characters,
+      environment_id: scene.environment_id,
+      camera: scene.camera,
+      wardrobe: scene.wardrobe[0]?.value ?? null,
+      props: scene.props,
+      location: scene.environment_id,
+    })),
+  };
+}
+
+export type SceneReferencePlan = {
+  scene_id: string;
+  scene_number: number;
+  shot_type: string;
+  mode: "image-conditioned" | "text-only";
+  /** Honest marker: the current engines are text-to-video. */
+  provider_conditions_on_images: boolean;
+  missing: string[];
+  previous_scene_status: string | null;
+  selections: {
+    label: string;
+    reason: string;
+    images: { kind: string; url: string | null }[];
+  }[];
+};
+
+/**
+ * What the creator sees before pressing generate: which references a scene would
+ * use, why, and whether the lock can actually be enforced. Pure read.
+ */
+export const getSceneReferencePlans = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => ref.parse(data))
+  .handler(async ({ data }): Promise<SceneReferencePlan[]> => {
+    const { PROVIDER_ACCEPTS_IMAGE_REFERENCES } = await import("@/lib/storyreel-core.server");
+    const canon = await loadResolverCanon(data.film_id, data.session_id);
+
+    return canon.scenes.map((scene) => {
+      const refs = resolveSceneReferences(canon, scene.scene_number);
+      const selections: SceneReferencePlan["selections"] = [];
+      for (const character of refs?.characters ?? []) {
+        selections.push({
+          label: `${character.characterId}${character.name ? ` — ${character.name}` : ""}`,
+          reason: character.reason,
+          images: character.images.map((image) => ({ kind: image.kind, url: image.url })),
+        });
+      }
+      if (refs?.environment) {
+        selections.push({
+          label: refs.environment.environmentId,
+          reason: "The location plate keeps architecture, materials and light consistent.",
+          images: refs.environment.images.map((image) => ({ kind: image.kind, url: image.url })),
+        });
+      }
+      if (refs?.style.length) {
+        selections.push({
+          label: "STYLE_01",
+          reason: "Style frames are appended last, capped at two, to hold the film's look.",
+          images: refs.style.map((image) => ({ kind: image.kind, url: image.url })),
+        });
+      }
+
+      return {
+        scene_id: scene.scene_id,
+        scene_number: scene.scene_number,
+        shot_type: refs?.shotType ?? "medium",
+        mode: refs?.mode ?? "text-only",
+        provider_conditions_on_images: PROVIDER_ACCEPTS_IMAGE_REFERENCES.lovable,
+        missing: refs?.missing ?? [],
+        previous_scene_status: refs?.previousSceneStatus ?? null,
+        selections,
+      };
+    });
   });

@@ -12,6 +12,11 @@ import {
   sceneTruthSchema,
   type SceneTruth,
 } from "@/lib/scene-truth";
+import {
+  referenceImageUrls,
+  resolveSceneReferences,
+  type SceneReferences,
+} from "@/lib/reference-resolver";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -640,7 +645,21 @@ export const renderScene = createServerFn({ method: "POST" })
       film_continuity: truth.continuity,
     };
 
-    let prompt = buildGenerationRequest(truth, context);
+    /**
+     * PHASE 3: the resolved reference manifest is read here and passed through.
+     * It never gates, never fails the render and never touches credits — when it
+     * cannot be resolved, or resolves text-only, this is a no-op.
+     */
+    let references: SceneReferences | null = null;
+    try {
+      const { loadResolverCanon } = await import("@/lib/canon.functions");
+      const canon = await loadResolverCanon(data.film_id, data.session_id);
+      references = resolveSceneReferences(canon, scene.scene_number);
+    } catch (err) {
+      console.info("reference resolve skipped", err instanceof Error ? err.message : "unknown");
+    }
+
+    let prompt = buildGenerationRequest(truth, context, { references });
     let fidelity = checkFidelity(truth, prompt);
 
     /**
@@ -649,7 +668,7 @@ export const renderScene = createServerFn({ method: "POST" })
      * Truth before a single credit is spent.
      */
     if (!fidelity.ok) {
-      prompt = buildGenerationRequest(truth, context, { minimal: true });
+      prompt = buildGenerationRequest(truth, context, { minimal: true, references });
       fidelity = checkFidelity(truth, prompt);
     }
 
@@ -669,6 +688,7 @@ export const renderScene = createServerFn({ method: "POST" })
       story_id: film.id,
       scene_number: scene.scene_number,
       narration: scene.narration,
+      references: referenceImageUrls(references),
     });
 
     await supabaseAdmin

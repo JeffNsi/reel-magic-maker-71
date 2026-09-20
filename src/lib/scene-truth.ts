@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { SceneReferences } from "@/lib/reference-resolver";
+
 /**
  * SCENE TRUTH CONTRACT
  *
@@ -162,11 +164,20 @@ export type GenerationContext = {
  * Turn Scene Truth into the request the video model receives. Only populated
  * fields appear; the required creative fields are written first so a length
  * budget can never cut them.
+ *
+ * Phase 3: when resolved references are supplied AND they are image-conditioned,
+ * the identity block (locked canonical truth only) and the previous-scene status
+ * block are appended. With no references, or in text-only mode, the output is
+ * byte-identical to what it has always been.
  */
 export function buildGenerationRequest(
   truth: SceneTruth,
   ctx: GenerationContext,
-  options: { limit?: number; minimal?: boolean } = {},
+  options: {
+    limit?: number;
+    minimal?: boolean;
+    references?: SceneReferences | null;
+  } = {},
 ): string {
   const limit = options.limit ?? 1800;
   const head = [
@@ -179,8 +190,9 @@ export function buildGenerationRequest(
     .filter(Boolean)
     .join(" ");
 
-  const fields = (options.minimal ? [...REQUIRED_TRUTH_FIELDS, "action", "setting"] : ORDER) as
-    SceneTruthField[];
+  const fields = (
+    options.minimal ? [...REQUIRED_TRUTH_FIELDS, "action", "setting"] : ORDER
+  ) as SceneTruthField[];
 
   const lines: string[] = [];
   for (const field of fields) {
@@ -197,9 +209,24 @@ export function buildGenerationRequest(
     ? `Project context — the creator's original idea (background only, the approved scene above wins): ${ctx.original_idea}`
     : "";
 
+  /* Continuity tail — only ever present for an image-conditioned scene. */
+  const tail: string[] = [];
+  const refs = options.references ?? null;
+  if (refs && refs.mode === "image-conditioned") {
+    for (const character of refs.characters) {
+      if (!character.locked.length) continue;
+      tail.push(
+        `IDENTITY LOCK ${character.characterId}${character.name ? ` (${character.name})` : ""} — ${character.locked.join("; ")}. Match the supplied reference images exactly.`,
+      );
+    }
+    if (refs.previousSceneStatus) {
+      tail.push(`PREVIOUS SCENE STATUS: ${refs.previousSceneStatus}`);
+    }
+  }
+
   /** Trim from the least essential end so the required fields always survive. */
   const assemble = (body: string[]) =>
-    [head, ...body, context].filter(Boolean).join("\n").trim();
+    [head, ...body, ...tail, context].filter(Boolean).join("\n").trim();
 
   let body = lines;
   let request = assemble(body);
@@ -211,10 +238,53 @@ export function buildGenerationRequest(
 }
 
 const STOP = new Set([
-  "the","a","an","and","or","of","to","in","on","at","by","for","with","from","that","this",
-  "her","his","their","its","she","he","they","it","as","is","are","was","were","be","been",
-  "into","over","must","should","one","own","two","between","while","without","not","no",
-  "shot","scene","film","camera",
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "by",
+  "for",
+  "with",
+  "from",
+  "that",
+  "this",
+  "her",
+  "his",
+  "their",
+  "its",
+  "she",
+  "he",
+  "they",
+  "it",
+  "as",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "into",
+  "over",
+  "must",
+  "should",
+  "one",
+  "own",
+  "two",
+  "between",
+  "while",
+  "without",
+  "not",
+  "no",
+  "shot",
+  "scene",
+  "film",
+  "camera",
 ]);
 
 function keyWords(value: string): string[] {
