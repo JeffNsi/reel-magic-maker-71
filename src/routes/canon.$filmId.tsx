@@ -234,7 +234,7 @@ function CharacterCard({
         <p className="text-xs text-muted-foreground">
           {draft.reference_pack_ready
             ? `${draft.reference_assets.length} reference image(s)`
-            : "Reference pack missing"}
+            : "No reference images yet"}
         </p>
       </header>
 
