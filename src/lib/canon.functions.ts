@@ -699,3 +699,161 @@ export const saveCanonProp = createServerFn({ method: "POST" })
 
     return { canonical_id: data.canonical_id };
   });
+
+/* ------------------------------------------------- reference pack generation */
+
+const assetRequest = ref.extend({
+  subject_type: z.enum(["character", "environment", "style"]),
+  subject_canonical_id: z.string().trim().min(1).max(120),
+  kind: z.string().trim().min(1).max(60),
+  /** Every image in one pack run shares a version; a rerun bumps it. */
+  version: z.number().int().min(1).max(500),
+});
+
+export type CanonAssetResult = {
+  subject_canonical_id: string;
+  kind: string;
+  version: number;
+  storage_path: string;
+  url: string | null;
+};
+
+const CHARACTER_ANGLE: Record<string, string> = {
+  front: "straight-on front view of the face and shoulders, neutral expression, eyes to camera",
+  "three-quarter-left": "three-quarter view turned to the left, face and shoulders",
+  "three-quarter-right": "three-quarter view turned to the right, face and shoulders",
+  profile: "exact side profile of the head and shoulders",
+  "full-body": "full body standing straight, head to feet, arms relaxed",
+  "close-up": "tight close-up of the face, showing skin texture and eye colour",
+};
+
+const ENVIRONMENT_ANGLE: Record<string, string> = {
+  wide: "wide establishing shot of the whole space, showing architecture and layout",
+  detail: "closer shot of the furniture, materials and surfaces of the same space",
+  lighting: "the same space showing its characteristic light: direction, colour and contrast",
+};
+
+function characterPrompt(row: Record<string, unknown>, kind: string, style: string): string {
+  const parts = [
+    `Character reference sheet image, ${CHARACTER_ANGLE[kind] ?? kind}.`,
+    `Visual style: ${style}.`,
+    `Name: ${str(row["name"])}.`,
+    str(row["age"]) && `Age: ${str(row["age"])}.`,
+    str(row["face"]) && `Face: ${str(row["face"])}.`,
+    str(row["hair"]) && `Hair: ${str(row["hair"])}.`,
+    str(row["skin"]) && `Skin: ${str(row["skin"])}.`,
+    str(row["body"]) && `Body: ${str(row["body"])}.`,
+    str(row["height"]) && `Height: ${str(row["height"])}.`,
+    str(row["build"]) && `Build: ${str(row["build"])}.`,
+    str(row["appearance"]) && `Overall appearance: ${str(row["appearance"])}.`,
+    "Plain neutral studio background, even soft lighting, no text, no watermark, no collage, one single person only.",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+function environmentPrompt(row: Record<string, unknown>, kind: string, style: string): string {
+  const parts = [
+    `Location reference image, ${ENVIRONMENT_ANGLE[kind] ?? kind}.`,
+    `Visual style: ${style}.`,
+    `Location: ${str(row["name"])}.`,
+    str(row["architecture"]) && `Architecture: ${str(row["architecture"])}.`,
+    str(row["layout"]) && `Layout: ${str(row["layout"])}.`,
+    str(row["furniture"]) && `Furniture: ${str(row["furniture"])}.`,
+    str(row["materials"]) && `Materials: ${str(row["materials"])}.`,
+    str(row["palette"]) && `Colour palette: ${str(row["palette"])}.`,
+    str(row["lighting"]) && `Lighting: ${str(row["lighting"])}.`,
+    "Empty of people, no text, no watermark, no collage.",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+/**
+ * Generate ONE reference image and store it as canon history.
+ *
+ * Owner-only, one image per call so the caller can build a pack incrementally
+ * and see progress. Nothing here renders a scene or touches generation.
+ */
+export const generateCanonAsset = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => assetRequest.parse(data))
+  .handler(async ({ data }): Promise<CanonAssetResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertOwner(data.film_id, data.session_id);
+
+    const state = await deriveState(data.film_id, data.session_id);
+    const style = state.visual_style.style || "cinematic";
+
+    let prompt: string;
+    if (data.subject_type === "character") {
+      const { data: row } = await supabaseAdmin
+        .from("film_canon_characters")
+        .select("*")
+        .eq("story_id", data.film_id)
+        .eq("canonical_id", data.subject_canonical_id)
+        .maybeSingle();
+      if (!row) throw new Error("That character is not part of this film's canon.");
+      prompt = characterPrompt(row as Record<string, unknown>, data.kind, style);
+    } else if (data.subject_type === "environment") {
+      const { data: row } = await supabaseAdmin
+        .from("film_canon_environments")
+        .select("*")
+        .eq("story_id", data.film_id)
+        .eq("canonical_id", data.subject_canonical_id)
+        .maybeSingle();
+      if (!row) throw new Error("That location is not part of this film's canon.");
+      prompt = environmentPrompt(row as Record<string, unknown>, data.kind, style);
+    } else {
+      prompt =
+        `Style reference frame for a film. Visual style: ${style}. ` +
+        `Film: ${state.title}. A single representative frame showing the film's lighting, ` +
+        `colour palette, contrast and texture. No text, no watermark, no collage.`;
+    }
+
+    const { generateReferenceImage } = await import("@/lib/canon-assets.server");
+    const bytes = await generateReferenceImage(prompt);
+
+    const path = `${data.film_id}/${data.subject_canonical_id}/${data.kind}-v${data.version}.png`;
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(ASSET_BUCKET)
+      .upload(path, bytes, { contentType: "image/png", upsert: true });
+    if (uploadError) throw new Error("The reference image could not be saved.");
+
+    const { data: existing } = await supabaseAdmin
+      .from("film_canon_assets")
+      .select("id")
+      .eq("story_id", data.film_id)
+      .eq("subject_type", data.subject_type)
+      .eq("subject_canonical_id", data.subject_canonical_id)
+      .eq("kind", data.kind)
+      .eq("version", data.version)
+      .maybeSingle();
+
+    if (existing) {
+      await supabaseAdmin
+        .from("film_canon_assets")
+        .update({ storage_path: path, prompt })
+        .eq("id", existing.id);
+    } else {
+      const { error } = await supabaseAdmin.from("film_canon_assets").insert({
+        story_id: data.film_id,
+        subject_type: data.subject_type,
+        subject_canonical_id: data.subject_canonical_id,
+        kind: data.kind,
+        storage_path: path,
+        prompt,
+        version: data.version,
+      });
+      if (error) throw new Error(error.message);
+    }
+
+    const { data: link } = await supabaseAdmin.storage
+      .from(ASSET_BUCKET)
+      .createSignedUrl(path, ASSET_URL_TTL);
+
+    return {
+      subject_canonical_id: data.subject_canonical_id,
+      kind: data.kind,
+      version: data.version,
+      storage_path: path,
+      url: link?.signedUrl ?? null,
+    };
+  });
