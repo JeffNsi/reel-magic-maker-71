@@ -110,9 +110,13 @@ export function shotTypeFor(camera: string | null): ShotType {
   return "medium";
 }
 
-function screenDirectionFor(camera: string | null): { direction: "left" | "right"; stated: boolean } {
+function screenDirectionFor(camera: string | null): {
+  direction: "left" | "right";
+  stated: boolean;
+} {
   const value = (camera ?? "").toLowerCase();
-  if (/\bright\b|camera right|screen right/.test(value)) return { direction: "right", stated: true };
+  if (/\bright\b|camera right|screen right/.test(value))
+    return { direction: "right", stated: true };
   if (/\bleft\b|camera left|screen left/.test(value)) return { direction: "left", stated: true };
   return { direction: "left", stated: false };
 }

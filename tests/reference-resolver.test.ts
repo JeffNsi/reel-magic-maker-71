@@ -7,10 +7,7 @@ import {
   type ResolverCanon,
 } from "@/lib/reference-resolver";
 import { buildGenerationRequest, emptySceneTruth, mergeSceneTruth } from "@/lib/scene-truth";
-import {
-  PROVIDER_ACCEPTS_IMAGE_REFERENCES,
-  REFERENCE_WEIGHT,
-} from "@/lib/storyreel-core.server";
+import { PROVIDER_ACCEPTS_IMAGE_REFERENCES, REFERENCE_WEIGHT } from "@/lib/storyreel-core.server";
 
 const image = (kind: string, version = 1) => ({
   kind,
@@ -131,10 +128,7 @@ describe("resolveSceneReferences", () => {
 
   it("medium picks front + three-quarter, defaulting to left and saying so", () => {
     const refs = resolveSceneReferences(canon(), 1);
-    expect(refs?.characters[0]?.images.map((i) => i.kind)).toEqual([
-      "front",
-      "three-quarter-left",
-    ]);
+    expect(refs?.characters[0]?.images.map((i) => i.kind)).toEqual(["front", "three-quarter-left"]);
     expect(refs?.characters[0]?.reason).toContain("default");
   });
 

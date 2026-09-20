@@ -190,8 +190,9 @@ export function buildGenerationRequest(
     .filter(Boolean)
     .join(" ");
 
-  const fields = (options.minimal ? [...REQUIRED_TRUTH_FIELDS, "action", "setting"] : ORDER) as
-    SceneTruthField[];
+  const fields = (
+    options.minimal ? [...REQUIRED_TRUTH_FIELDS, "action", "setting"] : ORDER
+  ) as SceneTruthField[];
 
   const lines: string[] = [];
   for (const field of fields) {
@@ -237,10 +238,53 @@ export function buildGenerationRequest(
 }
 
 const STOP = new Set([
-  "the","a","an","and","or","of","to","in","on","at","by","for","with","from","that","this",
-  "her","his","their","its","she","he","they","it","as","is","are","was","were","be","been",
-  "into","over","must","should","one","own","two","between","while","without","not","no",
-  "shot","scene","film","camera",
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "by",
+  "for",
+  "with",
+  "from",
+  "that",
+  "this",
+  "her",
+  "his",
+  "their",
+  "its",
+  "she",
+  "he",
+  "they",
+  "it",
+  "as",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "into",
+  "over",
+  "must",
+  "should",
+  "one",
+  "own",
+  "two",
+  "between",
+  "while",
+  "without",
+  "not",
+  "no",
+  "shot",
+  "scene",
+  "film",
+  "camera",
 ]);
 
 function keyWords(value: string): string[] {
