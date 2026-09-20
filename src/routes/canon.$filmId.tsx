@@ -324,6 +324,17 @@ function CharacterCard({
       <Button className="mt-5" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
         {mutation.isPending ? "Saving…" : "Save as canon"}
       </Button>
+
+      <ReferencePack
+        filmId={filmId}
+        sessionId={sessionId}
+        subjectType="character"
+        subjectId={draft.canonical_id}
+        kinds={CHARACTER_PACK_KINDS}
+        assets={draft.reference_assets}
+        label={draft.name || draft.canonical_id}
+        onDone={onSaved}
+      />
     </section>
   );
 }
