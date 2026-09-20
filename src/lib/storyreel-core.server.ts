@@ -258,6 +258,8 @@ export async function startGeneration(opts: {
   story_id?: string;
   scene_number?: number;
   narration?: string;
+  /** Resolved reference images, in the resolver's order. Empty = text-only. */
+  references?: string[];
 }): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const provider: VideoProvider = opts.provider ?? "lovable";
@@ -281,7 +283,7 @@ export async function startGeneration(opts: {
   if (error || !row) throw new Error("Could not start this scene. Please try again.");
 
   try {
-    const taskId = await submitVideo(provider, opts.prompt, opts.audio);
+    const taskId = await submitVideo(provider, opts.prompt, opts.audio, opts.references ?? []);
     await supabaseAdmin
       .from("generations")
       .update({ fal_request_id: taskId, status: "processing" })
