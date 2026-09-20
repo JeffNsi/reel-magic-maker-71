@@ -429,6 +429,17 @@ function EnvironmentCard({
       <Button className="mt-5" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
         {mutation.isPending ? "Saving…" : "Save as canon"}
       </Button>
+
+      <ReferencePack
+        filmId={filmId}
+        sessionId={sessionId}
+        subjectType="environment"
+        subjectId={draft.canonical_id}
+        kinds={ENVIRONMENT_PACK_KINDS}
+        assets={draft.reference_assets}
+        label={draft.name || draft.canonical_id}
+        onDone={onSaved}
+      />
     </section>
   );
 }
