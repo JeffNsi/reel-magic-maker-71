@@ -150,6 +150,7 @@ function ContinuityCenter() {
                 onSaved={refresh}
               />
             ))}
+            <StylePack filmId={filmId} sessionId={sessionId} canon={canon} onDone={refresh} />
             <WardrobeList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
             <PropList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
           </TabsContent>
