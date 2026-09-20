@@ -13,10 +13,15 @@ import { getSessionId } from "@/lib/session";
 import { getContinuityReport } from "@/lib/continuity.functions";
 import {
   getCanon,
+  generateCanonAsset,
   saveCanonCharacter,
   saveCanonEnvironment,
   saveCanonProp,
   saveCanonWardrobe,
+  CHARACTER_PACK_KINDS,
+  ENVIRONMENT_PACK_KINDS,
+  STYLE_PACK_KINDS,
+  type CanonAsset,
   type CanonCharacter,
   type CanonEnvironment,
   type CanonLocks,
