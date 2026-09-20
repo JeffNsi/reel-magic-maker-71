@@ -126,7 +126,43 @@ export async function submitFalVideo(
   return payload.request_id;
 }
 
-export function submitVideo(provider: VideoProvider, prompt: string, audio: boolean) {
+/**
+ * PHASE 3 — reference conditioning.
+ *
+ * How strongly a reference image constrains the generated frame. A named
+ * constant, never a magic number, and logged with every generation.
+ */
+export const REFERENCE_WEIGHT = 0.85;
+
+/**
+ * Which engines accept image conditioning. Both current video endpoints are
+ * text-to-video, so references cannot be enforced there — the scene is honestly
+ * marked "text-only continuity" instead of pretending the lock holds.
+ */
+export const PROVIDER_ACCEPTS_IMAGE_REFERENCES: Record<VideoProvider, boolean> = {
+  lovable: false,
+  fal: false,
+  live: false,
+};
+
+export function submitVideo(
+  provider: VideoProvider,
+  prompt: string,
+  audio: boolean,
+  references: string[] = [],
+) {
+  const accepted = PROVIDER_ACCEPTS_IMAGE_REFERENCES[provider] ? references : [];
+  console.info(
+    "generation references",
+    JSON.stringify({
+      provider,
+      offered: references.length,
+      used: accepted.length,
+      reference_weight: REFERENCE_WEIGHT,
+      mode: accepted.length ? "image-conditioned" : "text-only",
+    }),
+  );
+
   return provider === "lovable"
     ? submitLovableVideo(prompt, audio)
     : submitFalVideo(prompt, audio, falModelFor(provider));
