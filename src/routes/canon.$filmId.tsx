@@ -752,3 +752,150 @@ function Labeled({ label, children }: { label: string; children: React.ReactNode
     </label>
   );
 }
+
+/* --------------------------------------------------------- reference packs */
+
+/**
+ * Generate and show one subject's reference pack. Images are made one at a
+ * time so progress is visible; a rerun writes a new pack version and leaves the
+ * previous images in place as history.
+ */
+function ReferencePack({
+  filmId,
+  sessionId,
+  subjectType,
+  subjectId,
+  kinds,
+  assets,
+  label,
+  onDone,
+}: {
+  filmId: string;
+  sessionId: string;
+  subjectType: "character" | "environment" | "style";
+  subjectId: string;
+  kinds: readonly string[];
+  assets: CanonAsset[];
+  label: string;
+  onDone: () => void;
+}) {
+  const generate = useServerFn(generateCanonAsset);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const packVersion = assets.length ? Math.max(...assets.map((a) => a.version)) : 0;
+
+  const run = async () => {
+    const version = packVersion + 1;
+    try {
+      for (const kind of kinds) {
+        setBusy(kind);
+        await generate({
+          data: {
+            film_id: filmId,
+            session_id: sessionId,
+            subject_type: subjectType,
+            subject_canonical_id: subjectId,
+            kind,
+            version,
+          },
+        });
+      }
+      toast.success(`${label} reference pack saved as version ${version}.`);
+      onDone();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <p className={FIELD}>Reference pack</p>
+      {assets.length > 0 ? (
+        <>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Version {packVersion} · {assets.length} image{assets.length === 1 ? "" : "s"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {assets.map((asset) =>
+              asset.url ? (
+                <img
+                  key={asset.kind}
+                  src={asset.url}
+                  alt={`${label} — ${asset.kind}`}
+                  title={asset.kind}
+                  className="h-20 w-20 rounded-lg border border-border object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <span
+                  key={asset.kind}
+                  className="flex h-20 w-20 items-center justify-center rounded-lg border border-border text-[10px] text-muted-foreground"
+                >
+                  {asset.kind}
+                </span>
+              ),
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Reference pack missing — every scene is still described from words alone.
+        </p>
+      )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-3"
+        disabled={busy !== null}
+        onClick={run}
+      >
+        {busy ? (
+          <>
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Making {busy}…
+          </>
+        ) : assets.length > 0 ? (
+          `Regenerate pack (${kinds.length} images)`
+        ) : (
+          `Generate reference pack (${kinds.length} images)`
+        )}
+      </Button>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Images are only made when you press this, and each one uses credits.
+      </p>
+    </div>
+  );
+}
+
+function StylePack({
+  filmId,
+  sessionId,
+  canon,
+  onDone,
+}: {
+  filmId: string;
+  sessionId: string;
+  canon: CanonView;
+  onDone: () => void;
+}) {
+  return (
+    <section className={CARD}>
+      <h2 className="font-serif text-xl italic">Style reference</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        The look every scene is graded against: {canon.style}.
+      </p>
+      <ReferencePack
+        filmId={filmId}
+        sessionId={sessionId}
+        subjectType="style"
+        subjectId="STYLE_01"
+        kinds={STYLE_PACK_KINDS}
+        assets={canon.style_assets}
+        label="Style"
+        onDone={onDone}
+      />
+    </section>
+  );
+}
