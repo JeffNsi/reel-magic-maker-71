@@ -39,7 +39,30 @@ export type CanonLocks = {
   accessories: boolean;
 };
 
-export type CanonAsset = { kind: string; storage_path: string; version: number };
+export type CanonAsset = {
+  kind: string;
+  storage_path: string;
+  version: number;
+  /** Short-lived signed link so the Continuity Center can show the image. */
+  url: string | null;
+};
+
+/** The reference pack: one image per angle, generated from locked canonical truth. */
+export const CHARACTER_PACK_KINDS = [
+  "front",
+  "three-quarter-left",
+  "three-quarter-right",
+  "profile",
+  "full-body",
+  "close-up",
+] as const;
+
+export const ENVIRONMENT_PACK_KINDS = ["wide", "detail", "lighting"] as const;
+
+export const STYLE_PACK_KINDS = ["style-frame-1", "style-frame-2"] as const;
+
+const ASSET_BUCKET = "films";
+const ASSET_URL_TTL = 60 * 60 * 6;
 
 export type CanonCharacter = {
   canonical_id: string;
