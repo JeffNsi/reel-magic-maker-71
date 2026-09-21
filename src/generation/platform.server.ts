@@ -3,10 +3,12 @@
  * and never sees a key. The Authorization header is never logged.
  */
 
-import type { PlatformFlavor } from "./catalog/types";
+import { platformOf } from "./catalog";
+import type { ModelEntry, PlatformFlavor } from "./catalog/types";
 import {
   availablePlatforms,
   baseUrlFor,
+  houseFalKey,
   keyAuthHeader,
   platformBaseUrl,
   platformConfig,
@@ -209,3 +211,27 @@ export function createPlatformClient(opts: {
 }
 
 export type PlatformClient = ReturnType<typeof createPlatformClient>;
+
+/**
+ * Which account a given model runs on, resolved at call time. The creator's own
+ * pasted key always wins; fal.ai additionally falls back to the house key, so
+ * the fal models stay pressable without the creator configuring anything.
+ */
+export function credentialsFor(
+  entry: ModelEntry,
+  creatorKey: string | null,
+): { apiKey: string; baseUrl: string; flavor: PlatformFlavor } {
+  const flavor = platformOf(entry);
+  const baseUrl = baseUrlFor(flavor);
+  if (!baseUrl) {
+    throw new PlatformError(
+      "key",
+      `${entry.label} runs on a platform that has no address configured yet, so it cannot be reached. Pick a fal.ai model, or have the platform address configured.`,
+    );
+  }
+  const apiKey = creatorKey ?? (flavor === "fal" ? houseFalKey() : null);
+  if (!apiKey) {
+    throw new PlatformError("key", "Add your platform API key to generate with this engine.");
+  }
+  return { apiKey, baseUrl, flavor };
+}
