@@ -111,7 +111,11 @@ function keyOrThrow(): string {
 
 function failureOf(err: unknown): { message: string; category: string; kind: string } {
   if (err instanceof PlatformError) {
-    return { message: err.message, category: diagnoseFailure(err.message).category, kind: err.kind };
+    return {
+      message: err.message,
+      category: diagnoseFailure(err.message).category,
+      kind: err.kind,
+    };
   }
   const message = err instanceof Error ? err.message : "The run could not be started.";
   return { message, category: diagnoseFailure(message).category, kind: "request" };
@@ -229,7 +233,8 @@ export const pollRuns = createServerFn({ method: "POST" })
     if (open.length === 0) return { runs: [] as RunRow[], key_missing: false };
 
     const key = platformKeyFromRequest();
-    if (!key) return { runs: open.map((r) => asRun(r as Record<string, unknown>)), key_missing: true };
+    if (!key)
+      return { runs: open.map((r) => asRun(r as Record<string, unknown>)), key_missing: true };
 
     const client = createPlatformClient({ apiKey: key, baseUrl: platformBaseUrl() });
 
@@ -382,7 +387,10 @@ export const listLibrary = createServerFn({ method: "POST" })
     for (const kind of ["image", "video", "audio"] as const) {
       const { data: files } = await context.supabase.storage
         .from(BUCKET)
-        .list(`${context.userId}/${kind}`, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+        .list(`${context.userId}/${kind}`, {
+          limit: 100,
+          sortBy: { column: "created_at", order: "desc" },
+        });
       for (const file of files ?? []) {
         const path = `${context.userId}/${kind}/${file.name}`;
         const { data: signed } = await context.supabase.storage

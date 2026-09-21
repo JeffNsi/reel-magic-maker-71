@@ -147,8 +147,7 @@ function EnginePage() {
   });
 
   const star = useMutation({
-    mutationFn: (run: RunRow) =>
-      favourite({ data: { run_id: run.id, favourite: !run.favourite } }),
+    mutationFn: (run: RunRow) => favourite({ data: { run_id: run.id, favourite: !run.favourite } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generation-runs"] }),
     onError: (error: Error) => toast.error(error.message),
   });
@@ -217,10 +216,7 @@ function EnginePage() {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="count">Results</Label>
-                  <Select
-                    value={String(count)}
-                    onValueChange={(next) => setCount(Number(next))}
-                  >
+                  <Select value={String(count)} onValueChange={(next) => setCount(Number(next))}>
                     <SelectTrigger id="count" className="w-20">
                       <SelectValue />
                     </SelectTrigger>

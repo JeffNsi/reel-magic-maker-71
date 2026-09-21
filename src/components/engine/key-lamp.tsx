@@ -61,7 +61,11 @@ export function KeyLamp({
   });
 
   const hasKey = held.data?.held ?? false;
-  const lamp = busy ? "bg-primary animate-pulse" : hasKey ? "bg-emerald-400" : "bg-muted-foreground";
+  const lamp = busy
+    ? "bg-primary animate-pulse"
+    : hasKey
+      ? "bg-emerald-400"
+      : "bg-muted-foreground";
 
   return (
     <>

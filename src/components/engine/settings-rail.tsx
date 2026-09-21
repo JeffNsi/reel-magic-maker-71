@@ -41,11 +41,16 @@ export function SettingsRail({
         const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 
         if (field.type === "enum") {
-          const value = typeof settings[key] === "string" ? (settings[key] as string) : field.default;
+          const value =
+            typeof settings[key] === "string" ? (settings[key] as string) : field.default;
           return (
             <div key={key} className="space-y-2">
               <Label htmlFor={id}>{label}</Label>
-              <Select value={value} disabled={disabled ?? false} onValueChange={(next) => onChange(key, next)}>
+              <Select
+                value={value}
+                disabled={disabled ?? false}
+                onValueChange={(next) => onChange(key, next)}
+              >
                 <SelectTrigger id={id}>
                   <SelectValue />
                 </SelectTrigger>
@@ -62,7 +67,8 @@ export function SettingsRail({
         }
 
         if (field.type === "range") {
-          const value = typeof settings[key] === "number" ? (settings[key] as number) : field.default;
+          const value =
+            typeof settings[key] === "number" ? (settings[key] as number) : field.default;
           return (
             <div key={key} className="space-y-2">
               <div className="flex items-baseline justify-between">
@@ -82,7 +88,8 @@ export function SettingsRail({
           );
         }
 
-        const value = typeof settings[key] === "boolean" ? (settings[key] as boolean) : field.default;
+        const value =
+          typeof settings[key] === "boolean" ? (settings[key] as boolean) : field.default;
         return (
           <div key={key} className="flex items-center justify-between gap-4">
             <Label htmlFor={id}>{label}</Label>
