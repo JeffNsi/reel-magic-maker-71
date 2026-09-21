@@ -9,10 +9,11 @@ import { defaultSettings, getModel } from "@/generation/catalog";
 import type { MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
 import {
   PlatformError,
+  availablePlatforms,
   createPlatformClient,
   credentialsFor,
 } from "@/generation/platform.server";
-import { toPlatform } from "@/generation/to-platform";
+import { platformPathFor, toPlatform } from "@/generation/to-platform";
 import { diagnoseFailure } from "@/lib/generation-recovery";
 
 type Authed = { supabase: SupabaseClient<Database>; userId: string };
@@ -111,14 +112,6 @@ function nativeCountKey(entry: ModelEntry): string | null {
 async function currentKey(): Promise<string | null> {
   const { platformKeyFromRequest } = await import("./platform-key.server");
   return platformKeyFromRequest();
-}
-
-async function keyOrThrow(): Promise<string> {
-  const key = await currentKey();
-  if (!key) {
-    throw new PlatformError("key", "Add your platform API key to generate with this engine.");
-  }
-  return key;
 }
 
 function failureOf(err: unknown): { message: string; category: string; kind: string } {
@@ -263,6 +256,7 @@ export const pollRuns = createServerFn({ method: "POST" })
     const open = rows ?? [];
     if (open.length === 0) return { runs: [] as RunRow[], key_missing: false };
 
+
     const creatorKey = await currentKey();
 
     const updated = await Promise.all(
@@ -331,7 +325,7 @@ export const pollRuns = createServerFn({ method: "POST" })
       }),
     );
 
-    return { runs: updated, key_missing: !creatorKey && missingKey };
+    return { runs: updated, key_missing: availablePlatforms(creatorKey).length === 0 };
   });
 
 /** Re-run a recorded run with its exact prompt, model, media and settings. */
