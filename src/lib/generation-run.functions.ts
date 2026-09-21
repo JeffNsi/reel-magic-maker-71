@@ -150,6 +150,10 @@ export const submitRuns = createServerFn({ method: "POST" })
     const aspect = aspectOf(entry, settings);
     const batchId = crypto.randomUUID();
 
+    // Key and platform address are checked BEFORE any row is written, so a
+    // missing key never leaves an orphan run stuck at "queued".
+    const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
+
     const rows = Array.from({ length: requests }, (_, index) => ({
       user_id: context.userId,
       batch_id: batchId,
