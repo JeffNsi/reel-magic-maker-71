@@ -9,6 +9,37 @@ export { platformBaseUrl, platformConfig };
 
 const MODEL_ID = /^[a-z0-9][a-z0-9._/-]*$/i;
 
+/**
+ * Every platform failure carries a kind so the UI can act on it: reopen the key
+ * modal, say when to retry, or report a platform outage. Never a bare message.
+ */
+export type PlatformFailureKind = "key" | "rate_limited" | "platform" | "gateway" | "request";
+
+export class PlatformError extends Error {
+  readonly kind: PlatformFailureKind;
+  readonly status: number;
+  readonly retry_after_seconds: number | null;
+
+  constructor(
+    kind: PlatformFailureKind,
+    message: string,
+    status = 0,
+    retryAfterSeconds: number | null = null,
+  ) {
+    super(message);
+    this.name = "PlatformError";
+    this.kind = kind;
+    this.status = status;
+    this.retry_after_seconds = retryAfterSeconds;
+  }
+}
+
+function retryAfter(res: Response): number | null {
+  const raw = res.headers.get("retry-after");
+  const n = raw ? Number(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 3600) : null;
+}
+
 export type PlatformSubmit = {
   request_id: string;
   status_url: string | null;
