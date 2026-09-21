@@ -3,6 +3,10 @@
  * and never sees a key. The Authorization header is never logged.
  */
 
+import { keyAuthHeader, platformBaseUrl, platformConfig } from "./platform-config.server";
+
+export { platformBaseUrl, platformConfig };
+
 const MODEL_ID = /^[a-z0-9][a-z0-9._/-]*$/i;
 
 export type PlatformSubmit = {
@@ -26,12 +30,6 @@ type RawStatus = {
   detail?: string;
 };
 
-export function platformBaseUrl(): string {
-  const url = process.env["HF_API_BASE_URL"];
-  if (!url) throw new Error("The generation platform isn't configured yet.");
-  return url.replace(/\/+$/, "");
-}
-
 function reason(raw: RawStatus): string {
   if (typeof raw.error === "string" && raw.error) return raw.error;
   if (raw.error && typeof raw.error === "object" && raw.error.message) return raw.error.message;
@@ -41,7 +39,7 @@ function reason(raw: RawStatus): string {
 
 export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) {
   const headers = {
-    Authorization: `Key ${opts.apiKey}`,
+    ...keyAuthHeader(opts.apiKey),
     "Content-Type": "application/json",
   };
   const base = opts.baseUrl.replace(/\/+$/, "");
