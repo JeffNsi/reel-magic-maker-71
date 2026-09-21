@@ -175,8 +175,6 @@ export const submitRuns = createServerFn({ method: "POST" })
 
     if (error || !inserted) throw new Error("The run could not be recorded. Please try again.");
 
-    const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
-
     const results = await Promise.all(
       inserted.map(async (row) => {
         try {
