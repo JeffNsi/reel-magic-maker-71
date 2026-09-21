@@ -28,8 +28,13 @@ export const removePlatformKey = createServerFn({ method: "POST" }).handler(asyn
   return { held: false as const };
 });
 
-/** Only whether a key is held — the value itself never crosses the boundary. */
+/**
+ * Whether a key is held, and which generation accounts can actually be reached
+ * right now. The key value itself never crosses the boundary.
+ */
 export const platformKeyStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { platformKeyFromRequest } = await import("./platform-key.server");
-  return { held: Boolean(platformKeyFromRequest()) };
+  const { availablePlatforms } = await import("@/generation/platform-config.server");
+  const key = platformKeyFromRequest();
+  return { held: Boolean(key), platforms: availablePlatforms(key) };
 });
