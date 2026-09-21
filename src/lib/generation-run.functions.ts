@@ -236,7 +236,7 @@ export const pollRuns = createServerFn({ method: "POST" })
     const open = rows ?? [];
     if (open.length === 0) return { runs: [] as RunRow[], key_missing: false };
 
-    const key = platformKeyFromRequest();
+    const key = await currentKey();
     if (!key)
       return { runs: open.map((r) => asRun(r as Record<string, unknown>)), key_missing: true };
 
