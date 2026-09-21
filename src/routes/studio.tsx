@@ -3,6 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+import { SceneEngine } from "@/components/film/scene-engine";
+import { getScenePlanes, type ScenePlaneView } from "@/lib/scene-plane.functions";
 import {
   ArrowLeft,
   Clapperboard,
@@ -278,6 +281,7 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
   const queryClient = useQueryClient();
   const load = useServerFn(getStory);
   const poll = useServerFn(checkStatus);
+  const planes = useServerFn(getScenePlanes);
 
   const storyQuery = useQuery({
     queryKey: ["story", storyId, sessionId],
@@ -307,6 +311,15 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
       return pendingIds.length;
     },
   });
+
+  /* The Director's engine plan per scene: model choice, canonical references,
+   * omissions and the render gate. Pure read — no credits, no provider call. */
+  const plansQuery = useQuery({
+    queryKey: ["scene-planes", storyId, sessionId],
+    retry: false,
+    queryFn: () => planes({ data: { film_id: storyId, session_id: sessionId } }),
+  });
+  const planByScene = new Map((plansQuery.data ?? []).map((plan) => [plan.scene_id, plan] as const));
 
   const setStory = (next: StoryView) =>
     queryClient.setQueryData(["story", storyId, sessionId], next);
@@ -366,6 +379,7 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
             scene={scene}
             sessionId={sessionId}
             onSaved={setStory}
+            plan={planByScene.get(scene.id)}
           />
         ))}
       </div>
@@ -505,17 +519,18 @@ function SceneCard({
   scene,
   sessionId,
   onSaved,
+  plan,
 }: {
   story: StoryView;
   scene: SceneView;
   sessionId: string;
   onSaved: (s: StoryView) => void;
+  plan: ScenePlaneView | undefined;
 }) {
   const [title, setTitle] = useState(scene.title);
   const [idea, setIdea] = useState(scene.idea);
   const [narration, setNarration] = useState(scene.narration);
   const [audio, setAudio] = useState(true);
-  const [engine, setEngine] = useState<"lovable" | "fal" | "live">("lovable");
   const [voice, setVoice] = useState("alloy");
   const [music, setMusic] = useState("wonder");
   const [voiceUrl, setVoiceUrl] = useState<string | null>(scene.voice_url);
@@ -567,7 +582,13 @@ function SceneCard({
         },
       });
       return render({
-        data: { story_id: story.id, session_id: sessionId, scene_id: scene.id, audio, engine },
+        data: {
+          story_id: story.id,
+          session_id: sessionId,
+          scene_id: scene.id,
+          audio,
+          engine: "lovable" as const,
+        },
       });
     },
     onSuccess: (result) => {
@@ -706,20 +727,18 @@ function SceneCard({
             </Select>
           </div>
         )}
-        <Select value={engine} onValueChange={(v) => setEngine(v as "lovable" | "fal" | "live")}>
-          <SelectTrigger
-            className="h-11 rounded-xl border-border bg-background/60 text-sm"
-            aria-label="Film engine"
-          >
-            <SelectValue placeholder="Film engine" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="lovable">Ezy — included credits</SelectItem>
-            <SelectItem value="fal">Strong — your own account</SelectItem>
-            <SelectItem value="live">Live — realtime engine</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
+
+      {/* The Director's engine replaces the old three-way engine list: its model
+        * choice with the reason, the canonical references travelling with the
+        * prompt, and an advanced rail that overrides this press only. */}
+      <SceneEngine
+        plan={plan}
+        filmId={story.id}
+        sessionId={sessionId}
+        ezyBusy={generateMutation.isPending || busy}
+        onEzy={() => generateMutation.mutate()}
+      />
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Button

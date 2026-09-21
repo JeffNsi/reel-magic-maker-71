@@ -14,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MODELS, getModel } from "@/generation/catalog";
+import { MODELS, getModel, platformOf } from "@/generation/catalog";
 import { formatNotesFor } from "@/lib/director-plane";
+import { platformKeyStatus } from "@/lib/generation-key.functions";
 import { listRuns, pollRuns, setRunFavourite } from "@/lib/generation-run.functions";
 import { renderScenePlane, type ScenePlaneView } from "@/lib/scene-plane.functions";
 
@@ -44,6 +45,16 @@ export function SceneEngine({
   const list = useServerFn(listRuns);
   const poll = useServerFn(pollRuns);
   const favourite = useServerFn(setRunFavourite);
+  const keyStatus = useServerFn(platformKeyStatus);
+
+  /* Which generation accounts are reachable: the creator's own pasted key, and
+   * the house fal.ai account. Models on neither are listed but not pressable. */
+  const availability = useQuery({
+    queryKey: ["platform-key"],
+    retry: false,
+    queryFn: () => keyStatus({}),
+  });
+  const platforms = availability.data?.platforms ?? [];
 
   const [open, setOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
@@ -114,7 +125,9 @@ export function SceneEngine({
         The Director's engine
       </p>
 
-      <p className="mt-2 text-xs font-semibold text-foreground">{plan.model.label}</p>
+      <p className="mt-2 text-xs font-semibold text-foreground">
+        {plan.model.label} · {plan.model.platform === "fal" ? "fal.ai" : "queue platform"}
+      </p>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{plan.model.reason}</p>
 
       {plan.references.length > 0 && (
@@ -169,7 +182,7 @@ export function SceneEngine({
           onClick={() => generate.mutate()}
         >
           {generate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Render with Strong — your own account, no credits
+          Render on the model's own platform — no credits
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setOpen((prev) => !prev)}>
           <SlidersHorizontal className="mr-2 h-4 w-4" />
@@ -196,9 +209,12 @@ export function SceneEngine({
             <SelectContent className="max-h-72">
               {MODELS.filter((model) => model.surface === "video").map((model) => {
                 const modelNotes = formatNotesFor(model);
+                const reachable =
+                  platforms.length === 0 || platforms.includes(platformOf(model));
                 return (
-                  <SelectItem key={model.id} value={model.id}>
+                  <SelectItem key={model.id} value={model.id} disabled={!reachable}>
                     {model.label}
+                    {reachable ? "" : " — needs your own key"}
                     {modelNotes.length
                       ? ` — ${modelNotes.map((n) => `no ${n.wanted}, offers ${n.offered}`).join("; ")}`
                       : ""}

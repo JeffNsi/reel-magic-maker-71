@@ -1,5 +1,11 @@
-import { MODELS, defaultSettings, getModel } from "@/generation/catalog";
-import type { GenerationPlane, MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
+import { MODELS, defaultSettings, getModel, platformOf } from "@/generation/catalog";
+import type {
+  GenerationPlane,
+  MediaItem,
+  MediaRole,
+  ModelEntry,
+  PlatformFlavor,
+} from "@/generation/catalog/types";
 import { buildGenerationRequest, type GenerationContext, type SceneTruth } from "@/lib/scene-truth";
 import type { SceneReferences } from "@/lib/reference-resolver";
 
@@ -155,12 +161,20 @@ function conditionsOnImages(entry: ModelEntry): boolean {
  * The Director's default model for a scene, and the one line that explains it.
  * Deterministic: the catalogue order breaks every tie, never a random pick.
  */
-export function pickModelForScene(references: SceneReferences | null): {
+export function pickModelForScene(
+  references: SceneReferences | null,
+  options: { platforms?: readonly PlatformFlavor[] } = {},
+): {
   id: string;
   label: string;
   reason: string;
 } {
-  const video = MODELS.filter((m) => m.surface === "video");
+  /* Only models on an account that can actually be reached are eligible — the
+   * Director never picks a model the creator could not press. */
+  const reachable = options.platforms
+    ? MODELS.filter((m) => options.platforms!.includes(platformOf(m)))
+    : MODELS;
+  const video = reachable.filter((m) => m.surface === "video");
   const wantsImages = !!references && references.mode === "image-conditioned";
 
   const candidates = video.filter((m) => {
@@ -188,7 +202,7 @@ export function pickModelForScene(references: SceneReferences | null): {
     }
   }
 
-  const fallback = pool[0] ?? MODELS[0];
+  const fallback = pool[0] ?? reachable[0];
   if (!fallback) {
     return { id: "", label: "", reason: "No model in the catalogue can render this scene." };
   }
