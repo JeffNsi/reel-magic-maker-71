@@ -237,9 +237,7 @@ export const listRuns = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let query = context.supabase.from("generation_runs").select(RUN_COLUMNS);
     if (data.scene_id) query = query.eq("scene_id", data.scene_id);
-    const { data: rows } = await query
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
+    const { data: rows } = await query.order("created_at", { ascending: false }).limit(data.limit);
     return { runs: (rows ?? []).map((row) => asRun(row as Record<string, unknown>)) };
   });
 

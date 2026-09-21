@@ -1,10 +1,5 @@
 import { MODELS, defaultSettings, getModel } from "@/generation/catalog";
-import type {
-  GenerationPlane,
-  MediaItem,
-  MediaRole,
-  ModelEntry,
-} from "@/generation/catalog/types";
+import type { GenerationPlane, MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
 import { buildGenerationRequest, type GenerationContext, type SceneTruth } from "@/lib/scene-truth";
 import type { SceneReferences } from "@/lib/reference-resolver";
 
@@ -172,7 +167,8 @@ export function pickModelForScene(references: SceneReferences | null): {
     const ratio = ratioField(m);
     const vertical = !ratio || ratio.values.includes(HOUSE_ASPECT);
     const duration = durationField(m);
-    const fiveSeconds = !duration || (HOUSE_DURATION >= duration.min && HOUSE_DURATION <= duration.max);
+    const fiveSeconds =
+      !duration || (HOUSE_DURATION >= duration.min && HOUSE_DURATION <= duration.max);
     return vertical && fiveSeconds;
   });
 
