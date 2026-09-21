@@ -322,15 +322,24 @@ export const getCanon = createServerFn({ method: "POST" })
       }
     }
 
-    /** The newest pack for a subject — older versions stay in the table as history. */
+    /**
+     * The newest image PER ANGLE for a subject — older versions stay in the table
+     * as history. Per angle, not per run: a pack run that stopped partway (credits
+     * ran out on image 3 of 6) writes only the angles it finished at the new
+     * version, and the angles already paid for must keep counting instead of
+     * disappearing behind the newer, smaller run.
+     */
     const assetsFor = (type: string, id: string): CanonAsset[] => {
       const rows = (assetRows.data ?? []).filter(
         (row) => row.subject_type === type && row.subject_canonical_id === id,
       );
       if (!rows.length) return [];
-      const latest = Math.max(...rows.map((row) => row.version));
+      const latestOf = new Map<string, number>();
+      for (const row of rows) {
+        latestOf.set(row.kind, Math.max(latestOf.get(row.kind) ?? 0, row.version));
+      }
       return rows
-        .filter((row) => row.version === latest)
+        .filter((row) => row.version === latestOf.get(row.kind))
         .map((row) => ({
           kind: row.kind,
           storage_path: row.storage_path,
@@ -894,15 +903,21 @@ export async function loadResolverCanon(
     }
   }
 
-  /** Only the newest pack version per subject reaches generation. */
+  /**
+   * The newest image per angle reaches generation. Keeping it per angle means a
+   * half-finished pack run never hides the angles that were already generated.
+   */
   const assetsFor = (type: string, id: string): RefImage[] => {
     const rows = (assetRows.data ?? []).filter(
       (row) => row.subject_type === type && row.subject_canonical_id === id,
     );
     if (!rows.length) return [];
-    const latest = Math.max(...rows.map((row) => row.version));
+    const latestOf = new Map<string, number>();
+    for (const row of rows) {
+      latestOf.set(row.kind, Math.max(latestOf.get(row.kind) ?? 0, row.version));
+    }
     return rows
-      .filter((row) => row.version === latest)
+      .filter((row) => row.version === latestOf.get(row.kind))
       .map((row) => ({
         kind: row.kind,
         storage_path: row.storage_path,
