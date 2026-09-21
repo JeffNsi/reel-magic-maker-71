@@ -3,9 +3,16 @@
  * and never sees a key. The Authorization header is never logged.
  */
 
-import { keyAuthHeader, platformBaseUrl, platformConfig } from "./platform-config.server";
+import type { PlatformFlavor } from "./catalog/types";
+import {
+  availablePlatforms,
+  baseUrlFor,
+  keyAuthHeader,
+  platformBaseUrl,
+  platformConfig,
+} from "./platform-config.server";
 
-export { platformBaseUrl, platformConfig };
+export { availablePlatforms, baseUrlFor, platformBaseUrl, platformConfig };
 
 const MODEL_ID = /^[a-z0-9][a-z0-9._/-]*$/i;
 
@@ -68,12 +75,17 @@ function reason(raw: RawStatus): string {
   return "The generation platform rejected this run without a reason.";
 }
 
-export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) {
+export function createPlatformClient(opts: {
+  apiKey: string;
+  baseUrl: string;
+  flavor?: PlatformFlavor;
+}) {
   const headers = {
     ...keyAuthHeader(opts.apiKey),
     "Content-Type": "application/json",
   };
   const base = opts.baseUrl.replace(/\/+$/, "");
+  const flavor: PlatformFlavor = opts.flavor ?? "higgsfield";
 
   function assertModel(model: string) {
     if (!MODEL_ID.test(model) || model.includes("..")) {
@@ -143,10 +155,21 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
       };
     },
 
-    async status(requestId: string): Promise<PlatformStatus> {
-      const res = await fetch(`${base}/requests/${encodeURIComponent(requestId)}/status`, {
-        headers,
-      });
+    /**
+     * fal.ai scopes a run under its model path and serves the finished payload
+     * from a second endpoint; the queue platform answers both from one. The
+     * model path is required for fal and ignored elsewhere.
+     */
+    async status(requestId: string, modelPath?: string): Promise<PlatformStatus> {
+      const id = encodeURIComponent(requestId);
+      let statusUrl = `${base}/requests/${id}/status`;
+      if (flavor === "fal") {
+        if (!modelPath) return { state: "processing", queue_position: null };
+        assertModel(modelPath);
+        statusUrl = `${base}/${modelPath}/requests/${id}/status`;
+      }
+
+      const res = await fetch(statusUrl, { headers });
       const raw = (await res.json().catch(() => null)) as RawStatus | null;
 
       if (!res.ok) {
@@ -157,6 +180,17 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
 
       const state = (raw?.status ?? "").toLowerCase();
       if (state === "completed" || state === "succeeded") {
+        if (flavor === "fal" && modelPath) {
+          /* fal keeps the finished media behind the result endpoint. */
+          const done = await fetch(`${base}/${modelPath}/requests/${id}`, { headers });
+          const body = (await done.json().catch(() => null)) as RawStatus | null;
+          if (!done.ok) return { state: "failed", reason: reason(body ?? {}) };
+          return {
+            state: "completed",
+            images: (body?.images ?? []).map((i) => i.url).filter((u): u is string => Boolean(u)),
+            video: body?.video?.url ?? null,
+          };
+        }
         return {
           state: "completed",
           images: (raw?.images ?? []).map((i) => i.url).filter((u): u is string => Boolean(u)),
