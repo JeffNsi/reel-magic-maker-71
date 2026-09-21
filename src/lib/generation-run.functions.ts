@@ -8,7 +8,6 @@ import type { MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/type
 import { PlatformError, createPlatformClient, platformBaseUrl } from "@/generation/platform.server";
 import { toPlatform } from "@/generation/to-platform";
 import { diagnoseFailure } from "@/lib/generation-recovery";
-import { platformKeyFromRequest } from "@/lib/generation-key.functions";
 
 /**
  * Run lifecycle for the creator's own platform account (STRONG engine).
@@ -101,8 +100,13 @@ function nativeCountKey(entry: ModelEntry): string | null {
   return field && field.type === "range" ? "batchSize" : null;
 }
 
-function keyOrThrow(): string {
-  const key = platformKeyFromRequest();
+async function currentKey(): Promise<string | null> {
+  const { platformKeyFromRequest } = await import("./platform-key.server");
+  return platformKeyFromRequest();
+}
+
+async function keyOrThrow(): Promise<string> {
+  const key = await currentKey();
   if (!key) {
     throw new PlatformError("key", "Add your platform API key to generate with this engine.");
   }
@@ -167,7 +171,7 @@ export const submitRuns = createServerFn({ method: "POST" })
 
     if (error || !inserted) throw new Error("The run could not be recorded. Please try again.");
 
-    const client = createPlatformClient({ apiKey: keyOrThrow(), baseUrl: platformBaseUrl() });
+    const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
 
     const results = await Promise.all(
       inserted.map(async (row) => {
