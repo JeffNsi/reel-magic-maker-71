@@ -7,6 +7,13 @@
 
 export type Surface = "image" | "video";
 
+/**
+ * Which generation platform a model actually lives on. Both are real accounts:
+ * "higgsfield" is the queue platform behind HF_API_BASE_URL, "fal" is the
+ * fal.ai queue. A model is only offered when its platform has credentials.
+ */
+export type PlatformFlavor = "higgsfield" | "fal";
+
 export type MediaRole = "start" | "end" | "reference" | "video" | "audio";
 
 export type SettingField =
@@ -25,6 +32,8 @@ export type ModelEntry = {
   id: string;
   surface: Surface;
   label: string;
+  /** Defaults to the queue platform when absent. */
+  platform?: PlatformFlavor;
   /** Per-role maximum media count. A role that is absent is not accepted at all. */
   roles: Partial<Record<MediaRole, number>>;
   settings: Record<string, SettingField>;
