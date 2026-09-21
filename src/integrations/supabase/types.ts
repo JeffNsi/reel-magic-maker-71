@@ -710,8 +710,10 @@ export type Database = {
           prompt: string
           queue_position: number | null
           request_id: string | null
+          scene_id: string | null
           settings: Json
           status: string
+          story_id: string | null
           surface: string
           updated_at: string
           user_id: string
@@ -734,8 +736,10 @@ export type Database = {
           prompt?: string
           queue_position?: number | null
           request_id?: string | null
+          scene_id?: string | null
           settings?: Json
           status?: string
+          story_id?: string | null
           surface: string
           updated_at?: string
           user_id: string
@@ -758,14 +762,31 @@ export type Database = {
           prompt?: string
           queue_position?: number | null
           request_id?: string | null
+          scene_id?: string | null
           settings?: Json
           status?: string
+          story_id?: string | null
           surface?: string
           updated_at?: string
           user_id?: string
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "generation_runs_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "story_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_runs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generations: {
         Row: {
