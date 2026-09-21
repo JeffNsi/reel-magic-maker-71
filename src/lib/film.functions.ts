@@ -10,6 +10,7 @@ import {
   mergeSceneTruth,
   readSceneTruth,
   sceneTruthSchema,
+  type GenerationContext,
   type SceneTruth,
 } from "@/lib/scene-truth";
 import {
