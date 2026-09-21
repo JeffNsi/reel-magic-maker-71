@@ -9,6 +9,37 @@ export { platformBaseUrl, platformConfig };
 
 const MODEL_ID = /^[a-z0-9][a-z0-9._/-]*$/i;
 
+/**
+ * Every platform failure carries a kind so the UI can act on it: reopen the key
+ * modal, say when to retry, or report a platform outage. Never a bare message.
+ */
+export type PlatformFailureKind = "key" | "rate_limited" | "platform" | "gateway" | "request";
+
+export class PlatformError extends Error {
+  readonly kind: PlatformFailureKind;
+  readonly status: number;
+  readonly retry_after_seconds: number | null;
+
+  constructor(
+    kind: PlatformFailureKind,
+    message: string,
+    status = 0,
+    retryAfterSeconds: number | null = null,
+  ) {
+    super(message);
+    this.name = "PlatformError";
+    this.kind = kind;
+    this.status = status;
+    this.retry_after_seconds = retryAfterSeconds;
+  }
+}
+
+function retryAfter(res: Response): number | null {
+  const raw = res.headers.get("retry-after");
+  const n = raw ? Number(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 3600) : null;
+}
+
 export type PlatformSubmit = {
   request_id: string;
   status_url: string | null;
@@ -67,17 +98,43 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
           JSON.stringify({ model, error: raw?.error }),
         );
         if (res.status === 401 || res.status === 403) {
-          throw new Error("The platform rejected this API key. Check the key and try again.");
+          throw new PlatformError(
+            "key",
+            "The platform rejected this API key. Enter a valid key and try again.",
+            res.status,
+          );
         }
-        if (res.status === 429)
-          throw new Error("The platform is rate limiting this account right now.");
-        throw new Error(raw?.error || "The platform could not start this generation.");
+        if (res.status === 429) {
+          const wait = retryAfter(res);
+          throw new PlatformError(
+            "rate_limited",
+            wait
+              ? `The platform is rate limiting this account. Try again in about ${wait} second(s).`
+              : "The platform is rate limiting this account. Try again in about a minute.",
+            429,
+            wait,
+          );
+        }
+        if (res.status >= 500) {
+          throw new PlatformError(
+            "platform",
+            "The generation platform is having trouble right now. The run was not started, so nothing was charged.",
+            res.status,
+          );
+        }
+        throw new PlatformError(
+          "request",
+          raw?.error || "The platform could not start this generation.",
+          res.status,
+        );
       }
       if (!raw?.request_id) {
         console.error("platform submit missing request_id", JSON.stringify({ model }));
-        const err = new Error("The platform accepted the request but returned no run id.");
-        (err as Error & { status?: number }).status = 502;
-        throw err;
+        throw new PlatformError(
+          "gateway",
+          "The platform accepted the request but returned no run id.",
+          502,
+        );
       }
       return {
         request_id: raw.request_id,

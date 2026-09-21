@@ -692,6 +692,81 @@ export type Database = {
           },
         ]
       }
+      generation_runs: {
+        Row: {
+          aspect_ratio: string
+          batch_id: string
+          batch_index: number
+          created_at: string
+          deadline_at: string
+          error_category: string | null
+          error_message: string | null
+          favourite: boolean
+          id: string
+          images: Json
+          media: Json
+          model: string
+          model_label: string
+          prompt: string
+          queue_position: number | null
+          request_id: string | null
+          settings: Json
+          status: string
+          surface: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          aspect_ratio?: string
+          batch_id: string
+          batch_index?: number
+          created_at?: string
+          deadline_at?: string
+          error_category?: string | null
+          error_message?: string | null
+          favourite?: boolean
+          id?: string
+          images?: Json
+          media?: Json
+          model: string
+          model_label: string
+          prompt?: string
+          queue_position?: number | null
+          request_id?: string | null
+          settings?: Json
+          status?: string
+          surface: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          aspect_ratio?: string
+          batch_id?: string
+          batch_index?: number
+          created_at?: string
+          deadline_at?: string
+          error_category?: string | null
+          error_message?: string | null
+          favourite?: boolean
+          id?: string
+          images?: Json
+          media?: Json
+          model?: string
+          model_label?: string
+          prompt?: string
+          queue_position?: number | null
+          request_id?: string | null
+          settings?: Json
+          status?: string
+          surface?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       generations: {
         Row: {
           coins_spent: number
