@@ -28,17 +28,22 @@ function validateSettings(entry: ModelEntry, settings: Record<string, unknown>) 
     const raw = key in settings ? settings[key] : field.default;
     if (field.type === "enum") {
       if (typeof raw !== "string" || !field.values.includes(raw)) {
-        throw new Error(`${entry.label} does not accept ${key} = ${String(raw)}. Allowed: ${field.values.join(", ")}.`);
+        throw new Error(
+          `${entry.label} does not accept ${key} = ${String(raw)}. Allowed: ${field.values.join(", ")}.`,
+        );
       }
       out[key] = raw;
     } else if (field.type === "range") {
       const n = typeof raw === "number" ? raw : Number(raw);
       if (!Number.isFinite(n) || n < field.min || n > field.max) {
-        throw new Error(`${entry.label} accepts ${key} between ${field.min} and ${field.max} — got ${String(raw)}.`);
+        throw new Error(
+          `${entry.label} accepts ${key} between ${field.min} and ${field.max} — got ${String(raw)}.`,
+        );
       }
       out[key] = n;
     } else {
-      if (typeof raw !== "boolean") throw new Error(`${entry.label} accepts ${key} as true or false.`);
+      if (typeof raw !== "boolean")
+        throw new Error(`${entry.label} accepts ${key} as true or false.`);
       out[key] = raw;
     }
   }

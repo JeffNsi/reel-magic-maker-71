@@ -67,7 +67,10 @@ export const recraft41: ModelEntry = {
   roles: { reference: 2 },
   settings: {
     aspectRatio: enumField(IMAGE_RATIOS, "9:16"),
-    style: enumField(["realistic_image", "digital_illustration", "vector_illustration"], "realistic_image"),
+    style: enumField(
+      ["realistic_image", "digital_illustration", "vector_illustration"],
+      "realistic_image",
+    ),
     batchSize: range(1, 4, 1, 1),
   },
   paths: { text: "recraft-4.1", reference: "recraft-4.1/reference" },

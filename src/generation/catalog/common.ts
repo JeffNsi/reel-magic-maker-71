@@ -7,7 +7,9 @@ export function enumField(values: readonly string[], def: string): SettingField 
 }
 
 export function range(min: number, max: number, def: number, step?: number): SettingField {
-  return step === undefined ? { type: "range", min, max, default: def } : { type: "range", min, max, default: def, step };
+  return step === undefined
+    ? { type: "range", min, max, default: def }
+    : { type: "range", min, max, default: def, step };
 }
 
 export function boolField(def: boolean): SettingField {

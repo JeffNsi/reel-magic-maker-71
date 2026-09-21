@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { MODELS, defaultSettings, getModel, modelsForSurface, supportsVertical } from "@/generation/catalog";
+import {
+  MODELS,
+  defaultSettings,
+  getModel,
+  modelsForSurface,
+  supportsVertical,
+} from "@/generation/catalog";
 import { toPlatform } from "@/generation/to-platform";
 
 describe("generation catalogue", () => {
@@ -38,7 +44,12 @@ describe("plane to platform mapping", () => {
   it("maps settings to platform field names", () => {
     const req = toPlatform(plane);
     expect(req.path).toBe("kling-3-std");
-    expect(req.body).toMatchObject({ aspect_ratio: "9:16", duration: 5, generate_audio: false, cfg_scale: 0.5 });
+    expect(req.body).toMatchObject({
+      aspect_ratio: "9:16",
+      duration: 5,
+      generate_audio: false,
+      cfg_scale: 0.5,
+    });
   });
 
   it("drops unknown settings instead of forwarding them", () => {
@@ -47,11 +58,15 @@ describe("plane to platform mapping", () => {
   });
 
   it("rejects a value outside the declared enum", () => {
-    expect(() => toPlatform({ ...plane, settings: { ...plane.settings, aspectRatio: "21:9" } })).toThrow(/does not accept/);
+    expect(() =>
+      toPlatform({ ...plane, settings: { ...plane.settings, aspectRatio: "21:9" } }),
+    ).toThrow(/does not accept/);
   });
 
   it("rejects a value outside the declared range", () => {
-    expect(() => toPlatform({ ...plane, settings: { ...plane.settings, duration: 99 } })).toThrow(/between 3 and 15/);
+    expect(() => toPlatform({ ...plane, settings: { ...plane.settings, duration: 99 } })).toThrow(
+      /between 3 and 15/,
+    );
   });
 
   it("rejects a media role the model does not take", () => {

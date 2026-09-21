@@ -63,11 +63,16 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
       const raw = (await res.json().catch(() => null)) as RawSubmit | null;
 
       if (!res.ok) {
-        console.error("platform submit failed", res.status, JSON.stringify({ model, error: raw?.error }));
+        console.error(
+          "platform submit failed",
+          res.status,
+          JSON.stringify({ model, error: raw?.error }),
+        );
         if (res.status === 401 || res.status === 403) {
           throw new Error("The platform rejected this API key. Check the key and try again.");
         }
-        if (res.status === 429) throw new Error("The platform is rate limiting this account right now.");
+        if (res.status === 429)
+          throw new Error("The platform is rate limiting this account right now.");
         throw new Error(raw?.error || "The platform could not start this generation.");
       }
       if (!raw?.request_id) {
@@ -84,11 +89,14 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
     },
 
     async status(requestId: string): Promise<PlatformStatus> {
-      const res = await fetch(`${base}/requests/${encodeURIComponent(requestId)}/status`, { headers });
+      const res = await fetch(`${base}/requests/${encodeURIComponent(requestId)}/status`, {
+        headers,
+      });
       const raw = (await res.json().catch(() => null)) as RawStatus | null;
 
       if (!res.ok) {
-        if (res.status >= 500 || res.status === 429) return { state: "processing", queue_position: null };
+        if (res.status >= 500 || res.status === 429)
+          return { state: "processing", queue_position: null };
         return { state: "failed", reason: reason(raw ?? {}) };
       }
 

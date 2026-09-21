@@ -78,7 +78,11 @@ export const seedance20: ModelEntry = {
     sound: boolField(false),
     cameraFixed: boolField(false),
   },
-  paths: { text: "seedance-2.0", image: "seedance-2.0/image", firstLast: "seedance-2.0/first-last" },
+  paths: {
+    text: "seedance-2.0",
+    image: "seedance-2.0/image",
+    firstLast: "seedance-2.0/first-last",
+  },
 };
 
 export const seedance20Fast: ModelEntry = {

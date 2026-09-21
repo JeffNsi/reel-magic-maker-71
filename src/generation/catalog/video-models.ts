@@ -29,7 +29,12 @@ export const wan3: ModelEntry = {
     sound: boolField(false),
     shift: range(1, 10, 5, 0.1),
   },
-  paths: { text: "wan-3", image: "wan-3/image", firstLast: "wan-3/first-last", reference: "wan-3/reference" },
+  paths: {
+    text: "wan-3",
+    image: "wan-3/image",
+    firstLast: "wan-3/first-last",
+    reference: "wan-3/reference",
+  },
 };
 
 export const wan3Prime: ModelEntry = {
@@ -140,7 +145,11 @@ export const ltx25Fast: ModelEntry = {
     resolution: enumField(["720p", "1080p"], "720p"),
     sound: boolField(false),
   },
-  paths: { text: "ltx-2.5-fast", image: "ltx-2.5-fast/image", firstLast: "ltx-2.5-fast/first-last" },
+  paths: {
+    text: "ltx-2.5-fast",
+    image: "ltx-2.5-fast/image",
+    firstLast: "ltx-2.5-fast/first-last",
+  },
 };
 
 export const ltx25Pro: ModelEntry = {
@@ -167,7 +176,11 @@ export const grokVideo15: ModelEntry = {
     duration: range(5, 10, 5, 1),
     sound: boolField(true),
   },
-  paths: { text: "grok-video-1.5", image: "grok-video-1.5/image", reference: "grok-video-1.5/reference" },
+  paths: {
+    text: "grok-video-1.5",
+    image: "grok-video-1.5/image",
+    reference: "grok-video-1.5/reference",
+  },
 };
 
 export const pixverse6: ModelEntry = {
