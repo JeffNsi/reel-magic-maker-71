@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { platformOf } from "@/generation/catalog";
+import type { PlatformFlavor } from "@/generation/catalog/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   compileScenePlane,
@@ -36,7 +38,7 @@ export type ScenePlaneView = {
   scene_id: string;
   scene_number: number;
   /** The Director's default pick and the one line explaining it. */
-  model: { id: string; label: string; reason: string };
+  model: { id: string; label: string; reason: string; platform: PlatformFlavor };
   settings: Record<string, string | number | boolean>;
   references: PlaneReference[];
   omitted: OmittedReference[];
@@ -51,6 +53,13 @@ export type ScenePlaneView = {
 };
 
 type SceneRefs = { scene_id: string; refs: SceneReferences | null };
+
+/** Which generation accounts this request can actually reach. */
+async function reachablePlatforms(): Promise<PlatformFlavor[]> {
+  const { platformKeyFromRequest } = await import("./platform-key.server");
+  const { availablePlatforms } = await import("@/generation/platform-config.server");
+  return availablePlatforms(platformKeyFromRequest());
+}
 
 async function resolveAll(film_id: string, session_id: string): Promise<SceneRefs[]> {
   try {
@@ -75,7 +84,12 @@ function viewOf(
   return {
     scene_id: scene.id,
     scene_number: scene.scene_number,
-    model: { id: compiled.model.id, label: compiled.model.label, reason: pick.reason },
+    model: {
+      id: compiled.model.id,
+      label: compiled.model.label,
+      reason: pick.reason,
+      platform: platformOf(compiled.model_entry),
+    },
     settings: compiled.plane.settings as Record<string, string | number | boolean>,
     references: compiled.references,
     omitted: compiled.omitted,
@@ -98,13 +112,14 @@ export const getScenePlanes = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ref.parse(data))
   .handler(async ({ data }): Promise<ScenePlaneView[]> => {
     const film = await loadFilm(data.film_id, data.session_id);
+    const platforms = await reachablePlatforms();
     const resolved = await resolveAll(data.film_id, data.session_id);
     const byScene = new Map(resolved.map((entry) => [entry.scene_id, entry.refs] as const));
 
     const views: ScenePlaneView[] = [];
     for (const scene of film.scenes) {
       const refs = byScene.get(scene.id) ?? null;
-      const pick = pickModelForScene(refs);
+      const pick = pickModelForScene(refs, { platforms });
       if (!pick.id) continue;
       const { truth, ctx } = sceneGenerationInput(film, scene);
       const compiled = compileScenePlane({
@@ -144,7 +159,7 @@ export const renderScenePlane = createServerFn({ method: "POST" })
 
     const resolved = await resolveAll(data.film_id, data.session_id);
     const refs = resolved.find((entry) => entry.scene_id === scene.id)?.refs ?? null;
-    const pick = pickModelForScene(refs);
+    const pick = pickModelForScene(refs, { platforms: await reachablePlatforms() });
     const modelId = data.model_id ?? pick.id;
 
     const { truth, ctx } = sceneGenerationInput(film, scene);
