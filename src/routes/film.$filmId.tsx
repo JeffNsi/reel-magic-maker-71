@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ClipPurchase } from "@/components/film/clip-purchase";
 import { ContinuityPanel } from "@/components/film/continuity-panel";
+import { SceneEngine } from "@/components/film/scene-engine";
 import { SceneReferences } from "@/components/film/scene-references";
 import { getSceneReferencePlans, type SceneReferencePlan } from "@/lib/canon.functions";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
@@ -90,6 +91,7 @@ function FilmPage() {
   const setSaved = useServerFn(toggleWatchlist);
   const shareFilm = useServerFn(setFilmShare);
   const fetchReferencePlans = useServerFn(getSceneReferencePlans);
+  const fetchEnginePlans = useServerFn(getScenePlanes);
 
   const filmQuery = useQuery({
     queryKey: ["film", filmId, sessionId],
@@ -105,6 +107,17 @@ function FilmPage() {
     enabled: !!sessionId,
     retry: false,
     queryFn: () => fetchReferencePlans({ data: { film_id: filmId, session_id: sessionId } }),
+  });
+
+  /**
+   * What the Director would generate each scene with: model, reasoning, settings
+   * and references. Read-only — nothing is generated and no credits are spent.
+   */
+  const enginePlansQuery = useQuery({
+    queryKey: ["scene-planes", filmId, sessionId],
+    enabled: !!sessionId,
+    retry: false,
+    queryFn: () => fetchEnginePlans({ data: { film_id: filmId, session_id: sessionId } }),
   });
 
   const film = filmQuery.data;
@@ -394,6 +407,9 @@ function FilmPage() {
               key={scene.id}
               scene={scene}
               plan={(plansQuery.data ?? []).find((p) => p.scene_id === scene.id)}
+              enginePlan={(enginePlansQuery.data ?? []).find((p) => p.scene_id === scene.id)}
+              filmId={filmId}
+              sessionId={sessionId}
               rendering={render.isPending && render.variables === scene.id}
               recovering={
                 (recover.isPending && recover.variables === scene.id) ||
@@ -414,6 +430,9 @@ function FilmPage() {
 function SceneCard({
   scene,
   plan,
+  enginePlan,
+  filmId,
+  sessionId,
   rendering,
   recovering,
   onRender,
@@ -423,6 +442,9 @@ function SceneCard({
 }: {
   scene: FilmScene;
   plan: SceneReferencePlan | undefined;
+  enginePlan: ScenePlaneView | undefined;
+  filmId: string;
+  sessionId: string;
   rendering: boolean;
   recovering: boolean;
   onRender: () => void;
@@ -519,19 +541,31 @@ function SceneCard({
 
           <SceneReferences plan={plan} />
 
+          {enginePlan ? (
+            <SceneEngine
+              plan={enginePlan}
+              filmId={filmId}
+              sessionId={sessionId}
+              ezyBusy={rendering || working}
+              onEzy={onRender}
+            />
+          ) : null}
+
           <div className="mt-5 flex items-center gap-3">
-            <Button size="sm" disabled={rendering || working} onClick={onRender}>
-              {rendering || working ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Clapperboard className="mr-2 h-4 w-4" />
-              )}
-              {working
-                ? "Filming…"
-                : scene.status === "completed"
-                  ? "Render again with Ezy"
-                  : "Render with Ezy"}
-            </Button>
+            {enginePlan ? null : (
+              <Button size="sm" disabled={rendering || working} onClick={onRender}>
+                {rendering || working ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Clapperboard className="mr-2 h-4 w-4" />
+                )}
+                {working
+                  ? "Filming…"
+                  : scene.status === "completed"
+                    ? "Render again with Ezy"
+                    : "Render with Ezy"}
+              </Button>
+            )}
             {scene.status === "completed" && scene.video_url && (
               <a
                 href={scene.video_url}
