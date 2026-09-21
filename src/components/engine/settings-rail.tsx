@@ -45,7 +45,7 @@ export function SettingsRail({
           return (
             <div key={key} className="space-y-2">
               <Label htmlFor={id}>{label}</Label>
-              <Select value={value} disabled={disabled} onValueChange={(next) => onChange(key, next)}>
+              <Select value={value} disabled={disabled ?? false} onValueChange={(next) => onChange(key, next)}>
                 <SelectTrigger id={id}>
                   <SelectValue />
                 </SelectTrigger>
@@ -75,7 +75,7 @@ export function SettingsRail({
                 max={field.max}
                 step={field.step ?? 1}
                 value={[value]}
-                disabled={disabled}
+                disabled={disabled ?? false}
                 onValueChange={([next]) => onChange(key, next)}
               />
             </div>
@@ -89,7 +89,7 @@ export function SettingsRail({
             <Switch
               id={id}
               checked={value}
-              disabled={disabled}
+              disabled={disabled ?? false}
               onCheckedChange={(next) => onChange(key, next)}
             />
           </div>

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import type { Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { defaultSettings, getModel } from "@/generation/catalog";
 import type { MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
@@ -36,6 +37,9 @@ const planeSchema = z.object({
   settings: z.record(z.string(), z.unknown()).default({}),
 });
 
+/** Settings are persisted as JSON, so only JSON scalars ever reach a row. */
+export type SettingValue = string | number | boolean;
+
 export type RunRow = {
   id: string;
   batch_id: string;
@@ -44,7 +48,7 @@ export type RunRow = {
   model: string;
   model_label: string;
   prompt: string;
-  settings: Record<string, unknown>;
+  settings: Record<string, SettingValue>;
   media: Partial<Record<MediaRole, MediaItem[]>>;
   aspect_ratio: string;
   status: "queued" | "processing" | "completed" | "failed";
@@ -69,7 +73,7 @@ function asRun(row: Record<string, unknown>): RunRow {
     model: String(row["model"]),
     model_label: String(row["model_label"] ?? row["model"]),
     prompt: String(row["prompt"] ?? ""),
-    settings: (row["settings"] as Record<string, unknown>) ?? {},
+    settings: (row["settings"] as Record<string, SettingValue>) ?? {},
     media: (row["media"] as Partial<Record<MediaRole, MediaItem[]>>) ?? {},
     aspect_ratio: String(row["aspect_ratio"] ?? "9:16"),
     status: (row["status"] as RunRow["status"]) ?? "queued",
@@ -84,7 +88,7 @@ function asRun(row: Record<string, unknown>): RunRow {
 }
 
 /** The declared aspect ratio, so a skeleton tile has the right shape at once. */
-function aspectOf(entry: ModelEntry, settings: Record<string, unknown>): string {
+function aspectOf(entry: ModelEntry, settings: Record<string, SettingValue>): string {
   const field = entry.settings["aspectRatio"];
   if (!field || field.type !== "enum") return "9:16";
   const chosen = settings["aspectRatio"];
@@ -124,7 +128,10 @@ export const submitRuns = createServerFn({ method: "POST" })
     const entry = getModel(data.plane.model);
     if (!entry) throw new Error(`Unknown model: ${data.plane.model}`);
 
-    const settings = { ...defaultSettings(entry), ...data.plane.settings };
+    const settings = {
+      ...defaultSettings(entry),
+      ...data.plane.settings,
+    } as Record<string, SettingValue>;
     const countKey = nativeCountKey(entry);
     // Native count models render the whole batch in one request; the rest get one
     // request per result so every tile clears on its own clock.
@@ -143,8 +150,8 @@ export const submitRuns = createServerFn({ method: "POST" })
       model: entry.id,
       model_label: entry.label,
       prompt: data.plane.prompt.text.trim(),
-      settings,
-      media: data.plane.media,
+      settings: settings as unknown as Json,
+      media: data.plane.media as unknown as Json,
       aspect_ratio: aspect,
       status: "queued",
     }));
@@ -299,7 +306,14 @@ export const retryRun = createServerFn({ method: "POST" })
       .single();
     if (!row) throw new Error("That run is no longer available.");
     const run = asRun(row as Record<string, unknown>);
-    return { plane: { model: run.model, prompt: { text: run.prompt }, media: run.media, settings: run.settings } };
+    return {
+      plane: {
+        model: run.model,
+        prompt: { text: run.prompt },
+        media: run.media,
+        settings: run.settings,
+      },
+    };
   });
 
 export const setRunFavourite = createServerFn({ method: "POST" })
