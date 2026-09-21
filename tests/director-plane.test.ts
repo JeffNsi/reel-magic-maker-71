@@ -141,7 +141,7 @@ describe("compileScenePlane", () => {
   it("gives the opening frame to the environment plate when the model takes one", () => {
     const compiled = compile("kling-o3");
     const start = compiled?.plane.media["start"]?.[0]?.url;
-    expect(start).toBe("https://example.test/wide-v1.png");
+    expect(start).toBe("https://example.test/detail-v1.png");
   });
 
   it("falls back to text only, unchanged, on a model that cannot read images", () => {
