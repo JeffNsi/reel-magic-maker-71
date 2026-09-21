@@ -56,6 +56,8 @@ export function SceneEngine({
   const runs = useQuery({
     queryKey: ["scene-runs", plan?.scene_id],
     enabled: !!plan?.scene_id,
+    /* Signed out there is no run history to show: one honest miss, no retry storm. */
+    retry: false,
     queryFn: () => list({ data: { limit: 12, scene_id: plan?.scene_id ?? "" } }),
   });
 
