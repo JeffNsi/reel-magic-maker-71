@@ -98,17 +98,43 @@ export function createPlatformClient(opts: { apiKey: string; baseUrl: string }) 
           JSON.stringify({ model, error: raw?.error }),
         );
         if (res.status === 401 || res.status === 403) {
-          throw new Error("The platform rejected this API key. Check the key and try again.");
+          throw new PlatformError(
+            "key",
+            "The platform rejected this API key. Enter a valid key and try again.",
+            res.status,
+          );
         }
-        if (res.status === 429)
-          throw new Error("The platform is rate limiting this account right now.");
-        throw new Error(raw?.error || "The platform could not start this generation.");
+        if (res.status === 429) {
+          const wait = retryAfter(res);
+          throw new PlatformError(
+            "rate_limited",
+            wait
+              ? `The platform is rate limiting this account. Try again in about ${wait} second(s).`
+              : "The platform is rate limiting this account. Try again in about a minute.",
+            429,
+            wait,
+          );
+        }
+        if (res.status >= 500) {
+          throw new PlatformError(
+            "platform",
+            "The generation platform is having trouble right now. The run was not started, so nothing was charged.",
+            res.status,
+          );
+        }
+        throw new PlatformError(
+          "request",
+          raw?.error || "The platform could not start this generation.",
+          res.status,
+        );
       }
       if (!raw?.request_id) {
         console.error("platform submit missing request_id", JSON.stringify({ model }));
-        const err = new Error("The platform accepted the request but returned no run id.");
-        (err as Error & { status?: number }).status = 502;
-        throw err;
+        throw new PlatformError(
+          "gateway",
+          "The platform accepted the request but returned no run id.",
+          502,
+        );
       }
       return {
         request_id: raw.request_id,
