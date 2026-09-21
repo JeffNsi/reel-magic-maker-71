@@ -26,6 +26,7 @@ import { getSceneReferencePlans, type SceneReferencePlan } from "@/lib/canon.fun
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
 import { getSessionId } from "@/lib/session";
 import { approveRecovery, recoverScene } from "@/lib/recovery.functions";
+import { getScenePlanes, type ScenePlaneView } from "@/lib/scene-plane.functions";
 import { setFilmShare } from "@/lib/share.functions";
 import { checkStatus } from "@/lib/storyreel.functions";
 import {
