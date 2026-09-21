@@ -20,7 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { MODELS, defaultSettings, getModel, supportsVertical } from "@/generation/catalog";
+import {
+  MODELS,
+  defaultSettings,
+  getModel,
+  platformOf,
+  supportsVertical,
+} from "@/generation/catalog";
 import type { MediaItem, MediaRole } from "@/generation/catalog/types";
 import {
   listRuns,
@@ -160,7 +166,8 @@ function EnginePage() {
         <div>
           <h1 className="font-serif text-4xl italic tracking-tight">Engine room</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {MODELS.length} models on your own generation account. Every run is kept.
+            {MODELS.length} models. {reachableCount} of them can be pressed with the accounts
+            available right now — every run is kept.
           </p>
         </div>
         <KeyLamp busy={open.length > 0} open={keyOpen} onOpenChange={setKeyOpen} />
@@ -263,11 +270,16 @@ function EnginePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
-                  {MODELS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.label}
-                    </SelectItem>
-                  ))}
+                  {MODELS.map((model) => {
+                    const reachable =
+                      platforms.length === 0 || platforms.includes(platformOf(model));
+                    return (
+                      <SelectItem key={model.id} value={model.id} disabled={!reachable}>
+                        {model.label}
+                        {reachable ? "" : " — needs your own key"}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
 
