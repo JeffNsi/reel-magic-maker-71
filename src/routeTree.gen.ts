@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as EngineRouteImport } from './routes/engine'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SelftestRouteImport } from './routes/selftest'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngineRoute = EngineRouteImport.update({
+  id: '/engine',
+  path: '/engine',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -143,6 +149,7 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/engine'
     | '/history'
     | '/privacy'
     | '/selftest'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/engine'
     | '/history'
     | '/privacy'
     | '/selftest'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/engine'
     | '/history'
     | '/privacy'
     | '/selftest'
@@ -283,6 +295,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  EngineRoute: typeof EngineRoute
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
   SelftestRoute: typeof SelftestRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engine': {
+      id: '/engine'
+      path: '/engine'
+      fullPath: '/engine'
+      preLoaderRoute: typeof EngineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -472,6 +492,7 @@ const VibeRouteWithChildren = VibeRoute._addFileChildren(VibeRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  EngineRoute: EngineRoute,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
   SelftestRoute: SelftestRoute,
