@@ -74,6 +74,20 @@ function EnginePage() {
   const poll = useServerFn(pollRuns);
   const retry = useServerFn(retryRun);
   const favourite = useServerFn(setRunFavourite);
+  const keyStatus = useServerFn(platformKeyStatus);
+
+  /* Which generation accounts are reachable right now: the creator's own pasted
+   * key, and the house fal.ai account. A model on neither cannot be pressed. */
+  const availability = useQuery({
+    queryKey: ["platform-key"],
+    retry: false,
+    queryFn: () => keyStatus({}),
+  });
+  const platforms = availability.data?.platforms ?? [];
+  const reachableCount =
+    platforms.length === 0
+      ? 0
+      : MODELS.filter((model) => platforms.includes(platformOf(model))).length;
 
   const [modelId, setModelId] = useState(MODELS[0]?.id ?? "");
   const [prompt, setPrompt] = useState("");
