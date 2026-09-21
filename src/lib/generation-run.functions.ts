@@ -7,7 +7,11 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { defaultSettings, getModel } from "@/generation/catalog";
 import type { MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
-import { PlatformError, createPlatformClient, platformBaseUrl } from "@/generation/platform.server";
+import {
+  PlatformError,
+  createPlatformClient,
+  credentialsFor,
+} from "@/generation/platform.server";
 import { toPlatform } from "@/generation/to-platform";
 import { diagnoseFailure } from "@/lib/generation-recovery";
 
@@ -168,7 +172,7 @@ export async function submitPlane(
 
   // Key and platform address are checked BEFORE any row is written, so a
   // missing key never leaves an orphan run stuck at "queued".
-  const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
+  const client = createPlatformClient(credentialsFor(entry, await currentKey()));
 
   const rows = Array.from({ length: requests }, (_, index) => ({
     user_id: context.userId,
@@ -259,11 +263,7 @@ export const pollRuns = createServerFn({ method: "POST" })
     const open = rows ?? [];
     if (open.length === 0) return { runs: [] as RunRow[], key_missing: false };
 
-    const key = await currentKey();
-    if (!key)
-      return { runs: open.map((r) => asRun(r as Record<string, unknown>)), key_missing: true };
-
-    const client = createPlatformClient({ apiKey: key, baseUrl: platformBaseUrl() });
+    const creatorKey = await currentKey();
 
     const updated = await Promise.all(
       open.map(async (row) => {
@@ -288,8 +288,16 @@ export const pollRuns = createServerFn({ method: "POST" })
 
         if (!requestId) return asRun(record);
 
+        const entry = getModel(String(record["model"] ?? ""));
+        if (!entry) return asRun(record);
+
         try {
-          const status = await client.status(requestId);
+          const client = createPlatformClient(credentialsFor(entry, creatorKey));
+          const path = platformPathFor(
+            entry,
+            (record["media"] as Partial<Record<MediaRole, MediaItem[]>>) ?? {},
+          );
+          const status = await client.status(requestId, path);
           const patch =
             status.state === "completed"
               ? {
@@ -323,7 +331,7 @@ export const pollRuns = createServerFn({ method: "POST" })
       }),
     );
 
-    return { runs: updated, key_missing: false };
+    return { runs: updated, key_missing: !creatorKey && missingKey };
   });
 
 /** Re-run a recorded run with its exact prompt, model, media and settings. */
