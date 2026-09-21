@@ -281,6 +281,7 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
   const queryClient = useQueryClient();
   const load = useServerFn(getStory);
   const poll = useServerFn(checkStatus);
+  const planes = useServerFn(getScenePlanes);
 
   const storyQuery = useQuery({
     queryKey: ["story", storyId, sessionId],
