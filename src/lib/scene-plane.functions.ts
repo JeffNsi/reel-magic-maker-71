@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { platformOf } from "@/generation/catalog";
+import { getModel, platformOf } from "@/generation/catalog";
 import type { PlatformFlavor } from "@/generation/catalog/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -76,6 +76,11 @@ async function resolveAll(film_id: string, session_id: string): Promise<SceneRef
   }
 }
 
+function platformFor(modelId: string): PlatformFlavor {
+  const entry = getModel(modelId);
+  return entry ? platformOf(entry) : "higgsfield";
+}
+
 function viewOf(
   scene: { id: string; scene_number: number },
   compiled: CompiledPlane,
@@ -88,7 +93,7 @@ function viewOf(
       id: compiled.model.id,
       label: compiled.model.label,
       reason: pick.reason,
-      platform: platformOf(compiled.model_entry),
+      platform: platformFor(compiled.model.id),
     },
     settings: compiled.plane.settings as Record<string, string | number | boolean>,
     references: compiled.references,
