@@ -10,6 +10,7 @@ import {
   mergeSceneTruth,
   readSceneTruth,
   sceneTruthSchema,
+  type GenerationContext,
   type SceneTruth,
 } from "@/lib/scene-truth";
 import {
@@ -510,6 +511,38 @@ export async function buildFilmCore(data: z.infer<typeof buildInput>): Promise<F
 
     return loadFilm(story.id as string, data.session_id);
   }
+}
+
+/**
+ * The Scene Truth and prompt context one scene is generated from — exactly the
+ * pair renderScene builds, exposed so the Director's plane compiler reads the
+ * same truth instead of reconstructing it. Pure: no AI, no credits, no writes.
+ */
+export function sceneGenerationInput(
+  film: FilmView,
+  scene: FilmScene,
+): { truth: SceneTruth; ctx: GenerationContext } {
+  const cast = film.characters
+    .filter((c) => c.name || c.look)
+    .map((c) => `${c.name}: ${c.look}`)
+    .join(". ");
+
+  const truth =
+    scene.truth ??
+    mergeSceneTruth(emptySceneTruth(), { action: scene.idea.trim(), setting: film.setting });
+
+  return {
+    truth,
+    ctx: {
+      style_prefix: STYLE_PREFIX[film.style] ?? STYLE_PREFIX["cinematic"] ?? "",
+      original_idea: film.logline || "",
+      scene_number: scene.scene_number,
+      scene_title: scene.title,
+      cast,
+      film_setting: film.setting,
+      film_continuity: truth.continuity,
+    },
+  };
 }
 
 /** The film with its scenes, budgets, clarity notes and playable clips. */
