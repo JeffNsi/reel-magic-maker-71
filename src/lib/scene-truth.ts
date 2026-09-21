@@ -214,7 +214,10 @@ export function buildGenerationRequest(
   const refs = options.references ?? null;
   if (refs && refs.mode === "image-conditioned") {
     for (const character of refs.characters) {
+      /* Only a character that actually has reference images may be told to
+       * match them. A style-only scene never pretends the lock is enforced. */
       if (!character.locked.length) continue;
+      if (!character.images.some((image) => !!image.url)) continue;
       tail.push(
         `IDENTITY LOCK ${character.characterId}${character.name ? ` (${character.name})` : ""} — ${character.locked.join("; ")}. Match the supplied reference images exactly.`,
       );

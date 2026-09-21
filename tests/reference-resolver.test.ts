@@ -236,6 +236,22 @@ describe("prompt compiler", () => {
     expect(prompt).toContain("PREVIOUS SCENE STATUS:");
     expect(prompt).not.toBe(buildGenerationRequest(truth, ctx));
   });
+
+  it("a character with no reference images is never told to match images", () => {
+    const styleOnly = canon({
+      characters: [
+        {
+          ...canon().characters[0]!,
+          reference_assets: [],
+        },
+      ],
+      environments: [],
+    });
+    const refs = resolveSceneReferences(styleOnly, 2);
+    expect(refs?.mode).toBe("image-conditioned");
+    const prompt = buildGenerationRequest(truth, ctx, { references: refs });
+    expect(prompt).not.toContain("IDENTITY LOCK");
+  });
 });
 
 describe("provider adapter", () => {
