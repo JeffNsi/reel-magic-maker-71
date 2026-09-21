@@ -1,13 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import type { Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { defaultSettings, getModel } from "@/generation/catalog";
 import type { MediaItem, MediaRole, ModelEntry } from "@/generation/catalog/types";
 import { PlatformError, createPlatformClient, platformBaseUrl } from "@/generation/platform.server";
 import { toPlatform } from "@/generation/to-platform";
 import { diagnoseFailure } from "@/lib/generation-recovery";
+
+type Authed = { supabase: SupabaseClient<Database>; userId: string };
 
 /**
  * Run lifecycle for the creator's own platform account (STRONG engine).
@@ -132,89 +136,108 @@ export const submitRuns = createServerFn({ method: "POST" })
       .object({ plane: planeSchema, count: z.number().int().min(1).max(MAX_BATCH).default(1) })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const entry = getModel(data.plane.model);
-    if (!entry) throw new Error(`Unknown model: ${data.plane.model}`);
+  .handler(({ data, context }) => submitPlane(context, data.plane, data.count));
 
-    const settings = {
-      ...defaultSettings(entry),
-      ...data.plane.settings,
-    } as Record<string, SettingValue>;
-    const countKey = nativeCountKey(entry);
-    // Native count models render the whole batch in one request; the rest get one
-    // request per result so every tile clears on its own clock.
-    const requests = countKey ? 1 : data.count;
-    if (countKey) settings[countKey] = data.count;
+/**
+ * The submit core, shared by the free-form studio and the Director's scene
+ * presses. `link` ties the run to a film and scene so the scene view can show
+ * its own output assets — history only, never canonical truth.
+ */
+export async function submitPlane(
+  context: Authed,
+  plane: z.infer<typeof planeSchema>,
+  count: number,
+  link: { story_id?: string; scene_id?: string } = {},
+): Promise<{ runs: RunRow[] }> {
+  const entry = getModel(plane.model);
+  if (!entry) throw new Error(`Unknown model: ${plane.model}`);
 
-    const resolved = toPlatform({ ...data.plane, settings });
-    const aspect = aspectOf(entry, settings);
-    const batchId = crypto.randomUUID();
+  const settings = {
+    ...defaultSettings(entry),
+    ...plane.settings,
+  } as Record<string, SettingValue>;
+  const countKey = nativeCountKey(entry);
+  // Native count models render the whole batch in one request; the rest get one
+  // request per result so every tile clears on its own clock.
+  const requests = countKey ? 1 : count;
+  if (countKey) settings[countKey] = count;
 
-    // Key and platform address are checked BEFORE any row is written, so a
-    // missing key never leaves an orphan run stuck at "queued".
-    const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
+  const resolved = toPlatform({ ...plane, settings });
+  const aspect = aspectOf(entry, settings);
+  const batchId = crypto.randomUUID();
 
-    const rows = Array.from({ length: requests }, (_, index) => ({
-      user_id: context.userId,
-      batch_id: batchId,
-      batch_index: index,
-      surface: entry.surface,
-      model: entry.id,
-      model_label: entry.label,
-      prompt: data.plane.prompt.text.trim(),
-      settings: settings as unknown as Json,
-      media: data.plane.media as unknown as Json,
-      aspect_ratio: aspect,
-      status: "queued",
-    }));
+  // Key and platform address are checked BEFORE any row is written, so a
+  // missing key never leaves an orphan run stuck at "queued".
+  const client = createPlatformClient({ apiKey: await keyOrThrow(), baseUrl: platformBaseUrl() });
 
-    const { data: inserted, error } = await context.supabase
-      .from("generation_runs")
-      .insert(rows)
-      .select(RUN_COLUMNS);
+  const rows = Array.from({ length: requests }, (_, index) => ({
+    user_id: context.userId,
+    batch_id: batchId,
+    batch_index: index,
+    surface: entry.surface,
+    model: entry.id,
+    model_label: entry.label,
+    prompt: plane.prompt.text.trim(),
+    settings: settings as unknown as Json,
+    media: plane.media as unknown as Json,
+    aspect_ratio: aspect,
+    status: "queued",
+    story_id: link.story_id ?? null,
+    scene_id: link.scene_id ?? null,
+  }));
 
-    if (error || !inserted) throw new Error("The run could not be recorded. Please try again.");
+  const { data: inserted, error } = await context.supabase
+    .from("generation_runs")
+    .insert(rows)
+    .select(RUN_COLUMNS);
 
-    const results = await Promise.all(
-      inserted.map(async (row) => {
-        try {
-          const submitted = await client.submit(resolved.path, resolved.body);
-          const { data: updated } = await context.supabase
-            .from("generation_runs")
-            .update({ request_id: submitted.request_id, status: "processing" })
-            .eq("id", row.id as string)
-            .select(RUN_COLUMNS)
-            .single();
-          return asRun((updated ?? row) as Record<string, unknown>);
-        } catch (err) {
-          const failure = failureOf(err);
-          const { data: updated } = await context.supabase
-            .from("generation_runs")
-            .update({
-              status: "failed",
-              error_message: failure.message,
-              error_category: failure.kind,
-            })
-            .eq("id", row.id as string)
-            .select(RUN_COLUMNS)
-            .single();
-          return asRun((updated ?? row) as Record<string, unknown>);
-        }
-      }),
-    );
+  if (error || !inserted) throw new Error("The run could not be recorded. Please try again.");
 
-    return { runs: results };
-  });
+  const results = await Promise.all(
+    inserted.map(async (row) => {
+      try {
+        const submitted = await client.submit(resolved.path, resolved.body);
+        const { data: updated } = await context.supabase
+          .from("generation_runs")
+          .update({ request_id: submitted.request_id, status: "processing" })
+          .eq("id", row.id as string)
+          .select(RUN_COLUMNS)
+          .single();
+        return asRun((updated ?? row) as Record<string, unknown>);
+      } catch (err) {
+        const failure = failureOf(err);
+        const { data: updated } = await context.supabase
+          .from("generation_runs")
+          .update({
+            status: "failed",
+            error_message: failure.message,
+            error_category: failure.kind,
+          })
+          .eq("id", row.id as string)
+          .select(RUN_COLUMNS)
+          .single();
+        return asRun((updated ?? row) as Record<string, unknown>);
+      }
+    }),
+  );
+
+  return { runs: results };
+}
 
 export const listRuns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ limit: z.number().int().min(1).max(200).default(48) }).parse(input ?? {}),
+    z
+      .object({
+        limit: z.number().int().min(1).max(200).default(48),
+        scene_id: z.string().uuid().optional(),
+      })
+      .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { data: rows } = await context.supabase
-      .from("generation_runs")
-      .select(RUN_COLUMNS)
+    let query = context.supabase.from("generation_runs").select(RUN_COLUMNS);
+    if (data.scene_id) query = query.eq("scene_id", data.scene_id);
+    const { data: rows } = await query
       .order("created_at", { ascending: false })
       .limit(data.limit);
     return { runs: (rows ?? []).map((row) => asRun(row as Record<string, unknown>)) };
