@@ -4,16 +4,29 @@ import {
   MODELS,
   defaultSettings,
   getModel,
+  modelsForPlatforms,
   modelsForSurface,
+  platformOf,
   supportsVertical,
 } from "@/generation/catalog";
 import { toPlatform } from "@/generation/to-platform";
 
 describe("generation catalogue", () => {
-  it("carries 8 image and 30 video models with unique ids", () => {
+  it("carries 8 image and 32 video models with unique ids", () => {
     expect(modelsForSurface("image")).toHaveLength(8);
-    expect(modelsForSurface("video")).toHaveLength(30);
+    /* 30 on the queue platform plus the two fal.ai video models. */
+    expect(modelsForSurface("video")).toHaveLength(32);
     expect(new Set(MODELS.map((m) => m.id)).size).toBe(MODELS.length);
+  });
+
+  it("assigns every model to a real platform and filters by it", () => {
+    for (const model of MODELS) {
+      expect(["higgsfield", "fal"]).toContain(platformOf(model));
+    }
+    const fal = modelsForPlatforms(["fal"], "video");
+    expect(fal.length).toBe(2);
+    expect(fal.every((m) => platformOf(m) === "fal")).toBe(true);
+    expect(modelsForPlatforms([], "video")).toHaveLength(0);
   });
 
   it("resolves a model by id", () => {
