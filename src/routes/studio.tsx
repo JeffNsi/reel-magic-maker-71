@@ -319,7 +319,9 @@ function StoryEditor({ storyId, sessionId }: { storyId: string; sessionId: strin
     retry: false,
     queryFn: () => planes({ data: { film_id: storyId, session_id: sessionId } }),
   });
-  const planByScene = new Map((plansQuery.data ?? []).map((plan) => [plan.scene_id, plan] as const));
+  const planByScene = new Map(
+    (plansQuery.data ?? []).map((plan) => [plan.scene_id, plan] as const),
+  );
 
   const setStory = (next: StoryView) =>
     queryClient.setQueryData(["story", storyId, sessionId], next);
@@ -730,8 +732,8 @@ function SceneCard({
       </div>
 
       {/* The Director's engine replaces the old three-way engine list: its model
-        * choice with the reason, the canonical references travelling with the
-        * prompt, and an advanced rail that overrides this press only. */}
+       * choice with the reason, the canonical references travelling with the
+       * prompt, and an advanced rail that overrides this press only. */}
       <SceneEngine
         plan={plan}
         filmId={story.id}
