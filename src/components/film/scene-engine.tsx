@@ -209,8 +209,7 @@ export function SceneEngine({
             <SelectContent className="max-h-72">
               {MODELS.filter((model) => model.surface === "video").map((model) => {
                 const modelNotes = formatNotesFor(model);
-                const reachable =
-                  platforms.length === 0 || platforms.includes(platformOf(model));
+                const reachable = platforms.length === 0 || platforms.includes(platformOf(model));
                 return (
                   <SelectItem key={model.id} value={model.id} disabled={!reachable}>
                     {model.label}

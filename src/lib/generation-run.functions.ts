@@ -256,7 +256,6 @@ export const pollRuns = createServerFn({ method: "POST" })
     const open = rows ?? [];
     if (open.length === 0) return { runs: [] as RunRow[], key_missing: false };
 
-
     const creatorKey = await currentKey();
 
     const updated = await Promise.all(

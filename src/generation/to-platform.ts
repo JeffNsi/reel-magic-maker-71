@@ -66,7 +66,10 @@ function validateMedia(entry: ModelEntry, media: Partial<Record<MediaRole, Media
 }
 
 /** Which submit path the filled roles imply, falling back to the text path. */
-export function platformPathFor(entry: ModelEntry, media: Partial<Record<MediaRole, MediaItem[]>>): string {
+export function platformPathFor(
+  entry: ModelEntry,
+  media: Partial<Record<MediaRole, MediaItem[]>>,
+): string {
   const p = entry.paths ?? {};
   if (media.start?.length && media.end?.length && p.firstLast) return p.firstLast;
   if (media.reference?.length && p.reference) return p.reference;
