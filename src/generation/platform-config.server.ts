@@ -39,6 +39,27 @@ export function houseFalKey(): string | null {
   return process.env["FAL_KEY"] ?? null;
 }
 
+/**
+ * A platform key configured on the project itself, for the owner who would
+ * rather keep it in the project than paste it into every browser. A key pasted
+ * in the browser always wins over it.
+ */
+export function houseCreatorKey(): string | null {
+  const key = process.env["PLATFORM_API_KEY"];
+  return key && key.trim() ? key.trim() : null;
+}
+
+/** The key a request should generate with: the browser's, else the project's. */
+export function effectiveCreatorKey(cookieKey: string | null): string | null {
+  return cookieKey ?? houseCreatorKey();
+}
+
+/** Where the key in force came from, so the UI can say it plainly. */
+export function creatorKeySource(cookieKey: string | null): "browser" | "project" | null {
+  if (cookieKey) return "browser";
+  return houseCreatorKey() ? "project" : null;
+}
+
 /** Server-only base URL for the queue platform. Read at call time. */
 export function platformBaseUrl(): string {
   const url = higgsfieldBaseUrl();
@@ -60,8 +81,9 @@ export function baseUrlFor(flavor: PlatformFlavor): string | null {
  * models stay pressable without the creator configuring anything.
  */
 export function availablePlatforms(creatorKey: string | null): PlatformFlavor[] {
+  const key = effectiveCreatorKey(creatorKey);
   const out: PlatformFlavor[] = [];
-  if (creatorKey || houseFalKey()) out.push("fal");
-  if (higgsfieldBaseUrl() && creatorKey) out.push("higgsfield");
+  if (key || houseFalKey()) out.push("fal");
+  if (higgsfieldBaseUrl() && key) out.push("higgsfield");
   return out;
 }
