@@ -55,6 +55,7 @@ export function SceneEngine({
     queryFn: () => keyStatus({}),
   });
   const platforms = availability.data?.platforms ?? [];
+  const keySource = availability.data?.source ?? null;
 
   const [open, setOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
@@ -129,6 +130,13 @@ export function SceneEngine({
         {plan.model.label} · {plan.model.platform === "fal" ? "fal.ai" : "queue platform"}
       </p>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{plan.model.reason}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {keySource === "project"
+          ? "Running on the key configured on this project — no credits."
+          : keySource === "browser"
+            ? "Running on the key you pasted in this browser — no credits."
+            : "No platform key held yet, so only the house account's models can be pressed."}
+      </p>
 
       {plan.references.length > 0 && (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">

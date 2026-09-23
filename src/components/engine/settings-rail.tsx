@@ -1,3 +1,4 @@
+import { rolesSummary } from "@/generation/catalog";
 import type { ModelEntry } from "@/generation/catalog/types";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,16 +27,26 @@ export function SettingsRail({
   disabled?: boolean;
 }) {
   const fields = Object.entries(entry.settings);
+  const caps = (
+    <p className="text-xs leading-relaxed text-muted-foreground">
+      {entry.label}: {rolesSummary(entry)}
+    </p>
+  );
+
   if (fields.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">
-        {entry.label} takes no settings — the prompt alone drives it.
-      </p>
+      <div className="space-y-2">
+        {caps}
+        <p className="text-xs text-muted-foreground">
+          {entry.label} takes no settings — the prompt alone drives it.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-5">
+      {caps}
       {fields.map(([key, field]) => {
         const id = `setting-${key}`;
         const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());

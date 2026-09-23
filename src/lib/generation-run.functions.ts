@@ -50,6 +50,8 @@ export type SettingValue = string | number | boolean;
 
 export type RunRow = {
   id: string;
+  /** Which scene this run belongs to, when it was pressed from a scene. */
+  scene_id: string | null;
   batch_id: string;
   batch_index: number;
   surface: string;
@@ -70,11 +72,12 @@ export type RunRow = {
 };
 
 const RUN_COLUMNS =
-  "id, batch_id, batch_index, surface, model, model_label, prompt, settings, media, aspect_ratio, status, queue_position, images, video_url, error_message, error_category, favourite, deadline_at, created_at";
+  "scene_id, id, batch_id, batch_index, surface, model, model_label, prompt, settings, media, aspect_ratio, status, queue_position, images, video_url, error_message, error_category, favourite, deadline_at, created_at";
 
 function asRun(row: Record<string, unknown>): RunRow {
   return {
     id: String(row["id"]),
+    scene_id: (row["scene_id"] as string | null) ?? null,
     batch_id: String(row["batch_id"]),
     batch_index: Number(row["batch_index"] ?? 0),
     surface: String(row["surface"] ?? "video"),
@@ -228,12 +231,14 @@ export const listRuns = createServerFn({ method: "POST" })
       .object({
         limit: z.number().int().min(1).max(200).default(48),
         scene_id: z.string().uuid().optional(),
+        story_id: z.string().uuid().optional(),
       })
       .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
     let query = context.supabase.from("generation_runs").select(RUN_COLUMNS);
     if (data.scene_id) query = query.eq("scene_id", data.scene_id);
+    if (data.story_id) query = query.eq("story_id", data.story_id);
     const { data: rows } = await query.order("created_at", { ascending: false }).limit(data.limit);
     return { runs: (rows ?? []).map((row) => asRun(row as Record<string, unknown>)) };
   });

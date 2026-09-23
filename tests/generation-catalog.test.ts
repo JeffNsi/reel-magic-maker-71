@@ -7,6 +7,7 @@ import {
   modelsForPlatforms,
   modelsForSurface,
   platformOf,
+  rolesSummary,
   supportsVertical,
 } from "@/generation/catalog";
 import { toPlatform } from "@/generation/to-platform";
@@ -133,5 +134,51 @@ describe("plane to platform mapping", () => {
 
   it("is deterministic for identical input", () => {
     expect(JSON.stringify(toPlatform(plane))).toBe(JSON.stringify(toPlatform(plane)));
+  });
+});
+
+describe("catalogue is complete enough to run", () => {
+  it("gives every model at least one setting or an honest text-only note", () => {
+    for (const model of MODELS) {
+      const summary = rolesSummary(model);
+      expect(summary.length).toBeGreaterThan(0);
+      if (Object.keys(model.roles).length === 0) expect(summary).toContain("Text only");
+      else expect(summary).toContain("Takes up to");
+    }
+  });
+
+  it("submits every model's own defaults without a rejection", () => {
+    for (const model of MODELS) {
+      const media: Record<string, { url: string; kind: "image" | "video" | "audio" }[]> = {};
+      for (const [role, cap] of Object.entries(model.roles)) {
+        if (!cap) continue;
+        const kind = role === "video" ? "video" : role === "audio" ? "audio" : "image";
+        media[role] = Array.from({ length: cap }, (_, i) => ({
+          url: `https://example.com/${role}-${i}.${kind === "image" ? "png" : "mp4"}`,
+          kind: kind as "image" | "video" | "audio",
+        }));
+      }
+      const resolved = toPlatform({
+        model: model.id,
+        prompt: { text: "a locked identity shot" },
+        media,
+        settings: defaultSettings(model),
+      });
+      expect(resolved.path.length).toBeGreaterThan(0);
+      expect(resolved.body["prompt"] ?? resolved.body["video_url"]).toBeTruthy();
+    }
+  });
+
+  it("refuses a role the model never declared", () => {
+    const textOnly = MODELS.find((m) => Object.keys(m.roles).length === 0);
+    expect(textOnly).toBeTruthy();
+    expect(() =>
+      toPlatform({
+        model: textOnly!.id,
+        prompt: { text: "x" },
+        media: { reference: [{ url: "https://example.com/a.png", kind: "image" }] },
+        settings: defaultSettings(textOnly!),
+      }),
+    ).toThrow();
   });
 });

@@ -34,7 +34,13 @@ export const removePlatformKey = createServerFn({ method: "POST" }).handler(asyn
  */
 export const platformKeyStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { platformKeyFromRequest } = await import("./platform-key.server");
-  const { availablePlatforms } = await import("@/generation/platform-config.server");
+  const { availablePlatforms, creatorKeySource, effectiveCreatorKey } =
+    await import("@/generation/platform-config.server");
   const key = platformKeyFromRequest();
-  return { held: Boolean(key), platforms: availablePlatforms(key) };
+  return {
+    held: Boolean(effectiveCreatorKey(key)),
+    /** "browser" = pasted here, "project" = configured on the project itself. */
+    source: creatorKeySource(key),
+    platforms: availablePlatforms(key),
+  };
 });

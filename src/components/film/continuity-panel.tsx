@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck } from "lucide-react";
 
+import { listRuns } from "@/lib/generation-run.functions";
 import {
   getContinuityReport,
   type ContinuityFinding,
@@ -49,7 +50,25 @@ export function ContinuityPanel({ filmId, sessionId }: { filmId: string; session
     queryFn: () => fetchReport({ data: { film_id: filmId, session_id: sessionId } }),
   });
 
+  /* The clips this film has generated, shown as history beside the canon check.
+   * A clip is never canonical truth and never feeds a continuity rule; it is
+   * listed here only so the creator can see what has actually been rendered.
+   * Signed out there is nothing to read: one honest miss, no retry storm. */
+  const fetchRuns = useServerFn(listRuns);
+  const clipsQuery = useQuery({
+    queryKey: ["film-clips", filmId],
+    retry: false,
+    queryFn: () => fetchRuns({ data: { story_id: filmId, limit: 60 } }),
+  });
+
   const report = query.data;
+
+  const sceneNumberOf = new Map(
+    (report?.scenes ?? []).map((scene) => [scene.scene_id, scene.scene_number] as const),
+  );
+  const clips = (clipsQuery.data?.runs ?? []).filter(
+    (run) => run.status === "completed" && (run.video_url || run.images.length > 0),
+  );
 
   const summary = report
     ? SEVERITY_ORDER.filter((severity) => report.counts[severity] > 0)
@@ -109,6 +128,41 @@ export function ContinuityPanel({ filmId, sessionId }: { filmId: string; session
                   </span>
                 );
               })}
+            </div>
+          )}
+
+          {clips.length > 0 && (
+            <div className="mt-5 border-t border-border/60 pt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Generated clips — history, never canon
+              </p>
+              <ul className="mt-2 space-y-1">
+                {clips.map((clip) => {
+                  const number = clip.scene_id ? sceneNumberOf.get(clip.scene_id) : undefined;
+                  return (
+                    <li key={clip.id} className="text-xs text-muted-foreground">
+                      {number ? `Scene ${String(number).padStart(2, "0")}` : "Unlinked shot"} ·{" "}
+                      {clip.model_label} ·{" "}
+                      {clip.video_url ? (
+                        <a
+                          href={clip.video_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary underline underline-offset-2"
+                        >
+                          open clip
+                        </a>
+                      ) : (
+                        `${clip.images.length} image(s)`
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                These are outputs, not truth. Nothing here changes a character, a location or a
+                wardrobe state in the canon above.
+              </p>
             </div>
           )}
 
