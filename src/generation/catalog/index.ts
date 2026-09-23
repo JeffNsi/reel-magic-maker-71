@@ -55,3 +55,32 @@ export function supportsVertical(entry: ModelEntry): boolean {
   if (!ratio || ratio.type !== "enum") return true;
   return ratio.values.includes("9:16");
 }
+
+const ROLE_NOUN: Record<string, string> = {
+  start: "start frame",
+  end: "end frame",
+  reference: "reference image",
+  video: "source clip",
+  audio: "audio track",
+};
+
+/**
+ * What media this model actually accepts, straight from its declared role caps.
+ * Used wherever a model is offered, so the cap is visible before the press.
+ */
+export function rolesSummary(entry: ModelEntry): string {
+  const parts = Object.entries(entry.roles)
+    .filter(([, cap]) => Boolean(cap))
+    .map(([role, cap]) => {
+      const noun = ROLE_NOUN[role] ?? role;
+      return `${cap} ${noun}${(cap as number) > 1 ? "s" : ""}`;
+    });
+  return parts.length === 0
+    ? "Text only — it reads no images or clips."
+    : `Takes up to ${parts.join(", ")}.`;
+}
+
+/** How many settings this model exposes, for a one-line summary. */
+export function settingCount(entry: ModelEntry): number {
+  return Object.keys(entry.settings).length;
+}

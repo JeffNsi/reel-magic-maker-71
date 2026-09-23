@@ -61,6 +61,7 @@ export function KeyLamp({
   });
 
   const hasKey = held.data?.held ?? false;
+  const fromProject = held.data?.source === "project";
   const lamp = busy
     ? "bg-primary animate-pulse"
     : hasKey
@@ -76,7 +77,15 @@ export function KeyLamp({
       >
         <span className={`h-2 w-2 rounded-full ${lamp}`} aria-hidden />
         <span>
-          {busy ? "Run in flight" : hasKey ? "Key held" : held.isLoading ? "Checking…" : "No key"}
+          {busy
+            ? "Run in flight"
+            : fromProject
+              ? "Project key"
+              : hasKey
+                ? "Key held"
+                : held.isLoading
+                  ? "Checking…"
+                  : "No key"}
         </span>
       </button>
 
@@ -102,13 +111,19 @@ export function KeyLamp({
             <p className="text-xs text-muted-foreground">
               The key has two parts joined by a colon.
             </p>
+            {fromProject && (
+              <p className="text-xs text-muted-foreground">
+                A key is already configured on the project, so generation works everywhere without
+                pasting anything. A key you paste here is used instead, for this browser only.
+              </p>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:justify-between">
             <Button
               type="button"
               variant="ghost"
-              disabled={!hasKey || removing.isPending}
+              disabled={!hasKey || fromProject || removing.isPending}
               onClick={() => removing.mutate()}
             >
               {removing.isPending ? "Removing…" : "Remove key"}

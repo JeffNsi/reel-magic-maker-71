@@ -8,13 +8,22 @@ import type { ModelEntry, PlatformFlavor } from "./catalog/types";
 import {
   availablePlatforms,
   baseUrlFor,
+  creatorKeySource,
+  effectiveCreatorKey,
   houseFalKey,
   keyAuthHeader,
   platformBaseUrl,
   platformConfig,
 } from "./platform-config.server";
 
-export { availablePlatforms, baseUrlFor, platformBaseUrl, platformConfig };
+export {
+  availablePlatforms,
+  baseUrlFor,
+  creatorKeySource,
+  effectiveCreatorKey,
+  platformBaseUrl,
+  platformConfig,
+};
 
 const MODEL_ID = /^[a-z0-9][a-z0-9._/-]*$/i;
 
@@ -60,7 +69,20 @@ export type PlatformStatus =
   | { state: "completed"; images: string[]; video: string | null }
   | { state: "failed"; reason: string };
 
-type RawSubmit = { request_id?: string; status_url?: string; cancel_url?: string; error?: string };
+type RawSubmit = {
+  request_id?: string;
+  status_url?: string;
+  cancel_url?: string;
+  error?: string;
+  /** fal.ai reports refusals here, including an exhausted balance. */
+  detail?: string;
+};
+
+/** An account that is out of money is not a bad key — say which it is. */
+function isBalanceRefusal(text: string): boolean {
+  const t = text.toLowerCase();
+  return t.includes("exhausted balance") || t.includes("top up") || t.includes("user is locked");
+}
 type RawStatus = {
   status?: string;
   queue_position?: number;
@@ -112,6 +134,14 @@ export function createPlatformClient(opts: {
           JSON.stringify({ model, error: raw?.error }),
         );
         if (res.status === 401 || res.status === 403) {
+          const detail = raw?.detail ?? raw?.error ?? "";
+          if (isBalanceRefusal(detail)) {
+            throw new PlatformError(
+              "platform",
+              "This generation account is out of balance, so the platform refused the run. Nothing was charged. Top the account up and press again.",
+              res.status,
+            );
+          }
           throw new PlatformError(
             "key",
             "The platform rejected this API key. Enter a valid key and try again.",
@@ -229,7 +259,8 @@ export function credentialsFor(
       `${entry.label} runs on a platform that has no address configured yet, so it cannot be reached. Pick a fal.ai model, or have the platform address configured.`,
     );
   }
-  const apiKey = creatorKey ?? (flavor === "fal" ? houseFalKey() : null);
+  const key = effectiveCreatorKey(creatorKey);
+  const apiKey = key ?? (flavor === "fal" ? houseFalKey() : null);
   if (!apiKey) {
     throw new PlatformError("key", "Add your platform API key to generate with this engine.");
   }
