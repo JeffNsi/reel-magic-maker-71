@@ -31,22 +31,12 @@ export const MAX_QUESTIONS = 8;
  * Confidence is about how well the director understands the creator's intended
  * direction — not video quality, not odds of success.
  */
-export const DIMENSIONS = [
-  "story",
-  "character",
-  "emotion",
-  "visual",
-  "generation",
-] as const;
+export const DIMENSIONS = ["story", "character", "emotion", "visual", "generation"] as const;
 
 export type Confidence = { dimension: string; score: number };
 
 /** Provenance of every remembered fact — the creative trace. */
-export type FactSource =
-  | "user_decision"
-  | "ai_assumption"
-  | "ai_discovery"
-  | "ai_recommendation";
+export type FactSource = "user_decision" | "ai_assumption" | "ai_discovery" | "ai_recommendation";
 
 const FACT_SOURCES: FactSource[] = [
   "user_decision",
@@ -221,6 +211,8 @@ export type Challenge = {
   improved_blueprint: string;
   /** Will this plan survive being turned into a five-second generated clip? */
   reality: RealityCheck | null;
+  /** Present when the AI check was unavailable and a deterministic safe result was returned. */
+  notice?: string | null;
 };
 
 /** A moment in the interview where an answer redirected the film. */
@@ -271,6 +263,7 @@ export type BlueprintReview = {
   message: string;
   affected: string[];
   updated_blueprint: string;
+  notice?: string | null;
 };
 
 type Turn = { question: string; answer: string; skipped: boolean };
@@ -470,7 +463,22 @@ export async function callGateway<T = AiReply>(user: string, system = SYSTEM): P
 class MalformedReplyError extends Error {}
 
 /** The AI could not be reached (no key, no credits, rate limited, outage). */
-class GatewayUnavailableError extends Error {}
+class GatewayUnavailableError extends Error {
+  override name = "GatewayUnavailableError";
+}
+
+/** Error subclasses can lose their prototype across server boundaries or hot reloads. */
+function isGatewayUnavailable(error: unknown): error is Error {
+  if (error instanceof GatewayUnavailableError) return true;
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === "GatewayUnavailableError" ||
+    error.message.includes("out of AI credits") ||
+    error.message.includes("creative director isn't available") ||
+    error.message.includes("creative director is busy") ||
+    error.message.includes("creative director could not answer")
+  );
+}
 
 /**
  * Rescues the formatting slips the model actually makes, without touching what
@@ -478,9 +486,7 @@ class GatewayUnavailableError extends Error {}
  * trailing commas. Meaning is preserved exactly; only the syntax is repaired.
  */
 function repairJson(input: string) {
-  return input
-    .replace(/"\s*(?:->|→|=>)\s*"/g, " -> ")
-    .replace(/,(\s*[}\]])/g, "$1");
+  return input.replace(/"\s*(?:->|→|=>)\s*"/g, " -> ").replace(/,(\s*[}\]])/g, "$1");
 }
 
 async function callGatewayOnce<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
@@ -513,9 +519,9 @@ async function callGatewayOnce<T = AiReply>(user: string, system = SYSTEM): Prom
     throw new GatewayUnavailableError("The creative director could not answer. Please try again.");
   }
 
-  const body = (await res.json().catch(() => null)) as
-    | { choices?: { message?: { content?: string } }[] }
-    | null;
+  const body = (await res.json().catch(() => null)) as {
+    choices?: { message?: { content?: string } }[];
+  } | null;
   const raw = body?.choices?.[0]?.message?.content ?? "";
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
@@ -649,10 +655,7 @@ function cleanConflict(input: AiReply["conflict"]): DirectorConflict | null {
   return { message, options: list(input?.options, 3, 60) };
 }
 
-function cleanEvent(
-  input: AiReply["breakthrough_event"],
-  turns: Turn[],
-): BreakthroughEvent | null {
+function cleanEvent(input: AiReply["breakthrough_event"], turns: Turn[]): BreakthroughEvent | null {
   const last = turns[turns.length - 1];
   const answer = text(input?.answer, 400) || last?.answer || "";
   const next = text(input?.new_understanding, 300);
@@ -762,10 +765,7 @@ function cleanEvolution(
   };
 }
 
-function cleanRecommendation(
-  input: AiReply["recommendation"],
-  bible: FilmBible,
-): Recommendation {
+function cleanRecommendation(input: AiReply["recommendation"], bible: FilmBible): Recommendation {
   return {
     rationale:
       text(input?.rationale, 400) ||
@@ -842,10 +842,8 @@ async function rememberCreativeTruth(
   const userOwned = current?.source === "user_decision" && patch.source !== "user_decision";
 
   const next: CreativeTruth = {
-    emotional_core:
-      text(patch.emotional_core, 300) || current?.emotional_core || "",
-    what_must_survive:
-      text(patch.what_must_survive, 300) || current?.what_must_survive || "",
+    emotional_core: text(patch.emotional_core, 300) || current?.emotional_core || "",
+    what_must_survive: text(patch.what_must_survive, 300) || current?.what_must_survive || "",
     chosen_execution: userOwned
       ? current?.chosen_execution || text(patch.chosen_execution, 400)
       : text(patch.chosen_execution, 400) || current?.chosen_execution || "",
@@ -854,10 +852,7 @@ async function rememberCreativeTruth(
 
   if (!next.emotional_core && !next.what_must_survive && !next.chosen_execution) return;
 
-  await supabaseAdmin
-    .from("director_sessions")
-    .update({ creative_truth: next })
-    .eq("id", row.id);
+  await supabaseAdmin.from("director_sessions").update({ creative_truth: next }).eq("id", row.id);
 }
 
 function readModel(value: unknown): FilmModel | null {
@@ -877,7 +872,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
   try {
     reply = await think(row, turns, mode);
   } catch (error) {
-    if (!(error instanceof GatewayUnavailableError)) throw error;
+    if (!isGatewayUnavailable(error)) throw error;
     /** Template mode: no AI, but the creator still gets a complete package. */
     notice = `${error.message} Template mode: a basic film package was built without AI. / Mallläge: ett enkelt filmpaket byggdes utan AI.`;
     reply = {} as AiReply;
@@ -897,8 +892,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
    * A contradiction is never resolved silently: while one is open the interview
    * keeps going so the creator can choose, unless they asked to finish now.
    */
-  const done =
-    mode === "finish" || (mode === "interview" && !question);
+  const done = mode === "finish" || (mode === "interview" && !question);
 
   /** Breakthrough history: appended as the interview finds them, never rewritten. */
   const events = readEvents(row.breakthroughs);
@@ -1112,17 +1106,28 @@ export const reviewBlueprint = createServerFn({ method: "POST" })
     const model = readModel(row.film_model);
     const bible = (row.film_bible ?? null) as FilmBible | null;
 
-    const reply = await callGateway(
-      [
-        `ORIGINAL IDEA: ${row.idea}`,
-        `Film bible: ${JSON.stringify(bible)}`,
-        `Your film model (memory, including impact_chain): ${JSON.stringify(model)}`,
-        `The blueprint you delivered: ${row.blueprint ?? ""}`,
-        `The creator has rewritten the blueprint to: ${data.blueprint}`,
-        "",
-        "Treat the creator's rewrite as a user_decision. Using the impact chain, work out which parts of the film this change pulls with it (for example emotional arc, final beat, music, dialogue, pacing, visual tone). Set done to true. In \"understanding\" write one short sentence naming what changed. Put the affected parts in film_bible.open_questions, one short label each. Update the film bible, the recommendation and the evolution report so everything is consistent with the rewrite, and return the consistent version of the creator's blueprint in \"blueprint\" — keep their wording and intent, only reconcile what contradicts it.",
-      ].join("\n"),
-    );
+    let reply: AiReply;
+    try {
+      reply = await callGateway(
+        [
+          `ORIGINAL IDEA: ${row.idea}`,
+          `Film bible: ${JSON.stringify(bible)}`,
+          `Your film model (memory, including impact_chain): ${JSON.stringify(model)}`,
+          `The blueprint you delivered: ${row.blueprint ?? ""}`,
+          `The creator has rewritten the blueprint to: ${data.blueprint}`,
+          "",
+          'Treat the creator\'s rewrite as a user_decision. Using the impact chain, work out which parts of the film this change pulls with it (for example emotional arc, final beat, music, dialogue, pacing, visual tone). Set done to true. In "understanding" write one short sentence naming what changed. Put the affected parts in film_bible.open_questions, one short label each. Update the film bible, the recommendation and the evolution report so everything is consistent with the rewrite, and return the consistent version of the creator\'s blueprint in "blueprint" — keep their wording and intent, only reconcile what contradicts it.',
+        ].join("\n"),
+      );
+    } catch (error) {
+      if (!isGatewayUnavailable(error)) throw error;
+      return {
+        message: "The optional impact review was skipped; your edit remains unchanged.",
+        affected: [],
+        updated_blueprint: data.blueprint,
+        notice: `${error.message} Your edit remains available. / Din ändring finns kvar.`,
+      };
+    }
 
     const bibleNext = cleanBible(reply.film_bible, row.idea, model);
     return {
@@ -1323,6 +1328,18 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
   };
 }
 
+/**
+ * Keep the finished film usable when the optional AI stress test is unavailable.
+ * This is deliberately neutral: without an AI response it invents no criticism,
+ * changes no creative truth and leaves the creator's approved blueprint intact.
+ */
+export function buildTemplateChallenge(currentBlueprint: string, reason: string): Challenge {
+  return {
+    ...cleanChallenge({}, currentBlueprint),
+    notice: `${reason} The film remains ready and the optional review was skipped. / Filmen är fortfarande klar och den valfria granskningen hoppades över.`,
+  };
+}
+
 function challengeBrief(row: SessionRow) {
   const lines = [
     `ORIGINAL IDEA: ${row.idea}`,
@@ -1365,13 +1382,16 @@ export const challengeFilm = createServerFn({ method: "POST" })
     if (!row.film_bible) throw new Error("There is no finished film to challenge yet.");
     if (row.challenge && typeof row.challenge === "object") return row.challenge as Challenge;
 
-    const reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    let reply: ChallengeReply;
+    try {
+      reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    } catch (error) {
+      if (!isGatewayUnavailable(error)) throw error;
+      return buildTemplateChallenge(row.blueprint ?? "", error.message);
+    }
     const challenge = cleanChallenge(reply, row.blueprint ?? "");
 
-    await supabaseAdmin
-      .from("director_sessions")
-      .update({ challenge })
-      .eq("id", row.id);
+    await supabaseAdmin.from("director_sessions").update({ challenge }).eq("id", row.id);
 
     /**
      * The emotional core and the winning execution get a permanent home here,
@@ -1467,8 +1487,7 @@ export const keepMyVersion = createServerFn({ method: "POST" })
     await rememberCreativeTruth(row, {
       emotional_core: challenge?.reality?.execution?.emotional_core ?? "",
       what_must_survive: challenge?.reality?.execution?.intention ?? "",
-      chosen_execution:
-        challenge?.reality?.execution?.risky_execution || row.blueprint || "",
+      chosen_execution: challenge?.reality?.execution?.risky_execution || row.blueprint || "",
       source: "user_decision",
     });
 

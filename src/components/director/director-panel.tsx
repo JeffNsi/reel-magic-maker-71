@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2, X } from "lucide-react";
 
 import {
   answerDirector,
@@ -33,7 +33,6 @@ const VERDICT_LABELS: Record<Challenge["verdict"], string> = {
   recommendation: "I have one recommendation",
   revision: "I found a creative problem",
 };
-
 
 /**
  * The adaptive interview. One question at a time, always re-derived from
@@ -111,15 +110,13 @@ export function DirectorPanel({
   });
 
   const finishMutation = useMutation({
-    mutationFn: () =>
-      finish({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    mutationFn: () => finish({ data: { director_session_id: state!.id, session_id: sessionId } }),
     onSuccess: apply,
     onError: fail,
   });
 
   const reopenMutation = useMutation({
-    mutationFn: () =>
-      reopen({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    mutationFn: () => reopen({ data: { director_session_id: state!.id, session_id: sessionId } }),
     onSuccess: apply,
     onError: fail,
   });
@@ -134,7 +131,10 @@ export function DirectorPanel({
           blueprint: blueprint.trim(),
         },
       }),
-    onSuccess: (result) => setReview(result),
+    onSuccess: (result) => {
+      setReview(result);
+      if (result.notice) setError(result.notice);
+    },
     onError: fail,
   });
 
@@ -145,7 +145,10 @@ export function DirectorPanel({
   const challengeMutation = useMutation({
     mutationFn: () =>
       stressTest({ data: { director_session_id: state!.id, session_id: sessionId } }),
-    onSuccess: (result) => setChallenge(result),
+    onSuccess: (result) => {
+      setChallenge(result);
+      if (result.notice) setError(result.notice);
+    },
     onError: fail,
   });
 
@@ -272,11 +275,32 @@ export function DirectorPanel({
         )}
 
         {error && (
-          <div className="rounded-2xl border border-primary/40 bg-primary/5 p-4">
-            <p className="text-sm text-foreground">{error}</p>
+          <div className="relative rounded-2xl border border-primary/40 bg-primary/5 p-4 pr-12">
+            <p role="alert" className="text-sm text-foreground">
+              {error}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setError(null)}
+              aria-label="Dismiss warning"
+              className="absolute right-2 top-2 size-8"
+            >
+              <X className="size-4" />
+            </Button>
             <Button
               variant="outline"
-              onClick={() => (state ? finishMutation.mutate() : startMutation.mutate())}
+              onClick={() => {
+                setError(null);
+                if (challenge?.notice) {
+                  challenged.current = null;
+                  challengeMutation.mutate();
+                  return;
+                }
+                if (state) finishMutation.mutate();
+                else startMutation.mutate();
+              }}
               className="mt-3 h-10 rounded-xl text-[10px] uppercase tracking-[0.2em]"
             >
               Try again
@@ -298,9 +322,7 @@ export function DirectorPanel({
             <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
               I noticed a story conflict
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {state.conflict.message}
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">{state.conflict.message}</p>
           </div>
         )}
 
@@ -650,9 +672,7 @@ export function DirectorPanel({
                 <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
                   <ShieldCheck className="size-3" /> {VERDICT_LABELS[challenge.verdict]}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground">
-                  {challenge.headline}
-                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground">{challenge.headline}</p>
 
                 {challenge.weakness && (
                   <div className="mt-4">
@@ -717,8 +737,7 @@ export function DirectorPanel({
                     </p>
                     {challenge.reality.five_second_risk.alternative && (
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        A stronger way to keep it:{" "}
-                        {challenge.reality.five_second_risk.alternative}
+                        A stronger way to keep it: {challenge.reality.five_second_risk.alternative}
                       </p>
                     )}
                     {challenge.reality.execution?.emotional_core && (
@@ -823,7 +842,6 @@ export function DirectorPanel({
                 )}
               </div>
             )}
-
 
             <div className="space-y-3">
               <Button
