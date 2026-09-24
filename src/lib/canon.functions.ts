@@ -1027,3 +1027,158 @@ export const getSceneReferencePlans = createServerFn({ method: "POST" })
       };
     });
   });
+
+/* ------------------------------------------- owner uploads + reference usage */
+
+const uploadRequest = ref.extend({
+  subject_type: z.enum(["character", "environment", "style"]),
+  subject_canonical_id: z.string().trim().min(1).max(120),
+  kind: z.string().trim().min(1).max(60),
+  content_type: z.enum(["image/png", "image/jpeg", "image/webp"]),
+  /** Base64 of the image bytes; capped at roughly 6 MB of image data. */
+  data_base64: z.string().min(16).max(8_500_000),
+});
+
+const UPLOAD_MARK = "UPLOADED_BY_OWNER";
+
+/**
+ * Store the owner's own image as a NEW version of one reference angle.
+ * No AI, no credits. Older versions stay as history; nothing regenerates.
+ */
+export const uploadCanonReference = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => uploadRequest.parse(data))
+  .handler(async ({ data }): Promise<CanonAssetResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertOwner(data.film_id, data.session_id);
+
+    const table =
+      data.subject_type === "character"
+        ? "film_canon_characters"
+        : data.subject_type === "environment"
+          ? "film_canon_environments"
+          : null;
+    if (table) {
+      const { data: row } = await supabaseAdmin
+        .from(table)
+        .select("id")
+        .eq("story_id", data.film_id)
+        .eq("canonical_id", data.subject_canonical_id)
+        .maybeSingle();
+      if (!row) throw new Error("That subject is not part of this film's canon.");
+    }
+
+    const { data: prior } = await supabaseAdmin
+      .from("film_canon_assets")
+      .select("version")
+      .eq("story_id", data.film_id)
+      .eq("subject_type", data.subject_type)
+      .eq("subject_canonical_id", data.subject_canonical_id)
+      .eq("kind", data.kind);
+    const version = Math.max(0, ...(prior ?? []).map((r) => r.version)) + 1;
+
+    const ext = data.content_type.split("/")[1];
+    const path = `${data.film_id}/${data.subject_canonical_id}/${data.kind}-v${version}-upload.${ext}`;
+    const bytes = Uint8Array.from(atob(data.data_base64), (c) => c.charCodeAt(0));
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(ASSET_BUCKET)
+      .upload(path, bytes, { contentType: data.content_type, upsert: false });
+    if (uploadError) throw new Error("The image could not be saved. / Bilden kunde inte sparas.");
+
+    const { error } = await supabaseAdmin.from("film_canon_assets").insert({
+      story_id: data.film_id,
+      subject_type: data.subject_type,
+      subject_canonical_id: data.subject_canonical_id,
+      kind: data.kind,
+      storage_path: path,
+      prompt: UPLOAD_MARK,
+      version,
+    });
+    if (error) throw new Error(error.message);
+
+    const { data: link } = await supabaseAdmin.storage
+      .from(ASSET_BUCKET)
+      .createSignedUrl(path, ASSET_URL_TTL);
+    return {
+      subject_canonical_id: data.subject_canonical_id,
+      kind: data.kind,
+      version,
+      storage_path: path,
+      url: link?.signedUrl ?? null,
+    };
+  });
+
+export type ReferenceUsageItem = {
+  subject_type: string;
+  subject_canonical_id: string;
+  kind: string;
+  version: number;
+  source: "uploaded" | "generated";
+  url: string | null;
+  /** True when this is the newest version of its angle (the one scenes use). */
+  current: boolean;
+  used_in: number[];
+};
+
+/** Every reference image and the scenes the resolver would send it with. Pure read. */
+export const getReferenceUsage = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => ref.parse(data))
+  .handler(async ({ data }): Promise<ReferenceUsageItem[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertOwner(data.film_id, data.session_id);
+    const canon = await loadResolverCanon(data.film_id, data.session_id);
+
+    const usedIn = new Map<string, Set<number>>();
+    for (const scene of canon.scenes) {
+      const refs = resolveSceneReferences(canon, scene.scene_number);
+      const images = [
+        ...(refs?.characters ?? []).flatMap((c) => c.images),
+        ...(refs?.environment?.images ?? []),
+        ...(refs?.style ?? []),
+      ];
+      for (const image of images) {
+        const set = usedIn.get(image.storage_path) ?? new Set<number>();
+        set.add(scene.scene_number);
+        usedIn.set(image.storage_path, set);
+      }
+    }
+
+    const { data: rows } = await supabaseAdmin
+      .from("film_canon_assets")
+      .select("subject_type, subject_canonical_id, kind, version, storage_path, prompt")
+      .eq("story_id", data.film_id);
+    const list = rows ?? [];
+    const latest = new Map<string, number>();
+    for (const row of list) {
+      const key = `${row.subject_type}|${row.subject_canonical_id}|${row.kind}`;
+      latest.set(key, Math.max(latest.get(key) ?? 0, row.version));
+    }
+    const signed = new Map<string, string>();
+    if (list.length) {
+      const { data: links } = await supabaseAdmin.storage
+        .from(ASSET_BUCKET)
+        .createSignedUrls(
+          list.map((r) => r.storage_path),
+          ASSET_URL_TTL,
+        );
+      for (const link of links ?? []) if (link.path && link.signedUrl) signed.set(link.path, link.signedUrl);
+    }
+
+    return list
+      .map((row) => ({
+        subject_type: row.subject_type,
+        subject_canonical_id: row.subject_canonical_id,
+        kind: row.kind,
+        version: row.version,
+        source: (row.prompt === UPLOAD_MARK ? "uploaded" : "generated") as "uploaded" | "generated",
+        url: signed.get(row.storage_path) ?? null,
+        current:
+          latest.get(`${row.subject_type}|${row.subject_canonical_id}|${row.kind}`) === row.version,
+        used_in: [...(usedIn.get(row.storage_path) ?? [])].sort((a, b) => a - b),
+      }))
+      .sort(
+        (a, b) =>
+          a.subject_canonical_id.localeCompare(b.subject_canonical_id) ||
+          a.kind.localeCompare(b.kind) ||
+          b.version - a.version,
+      );
+  });
