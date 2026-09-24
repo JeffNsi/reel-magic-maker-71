@@ -15,5 +15,6 @@ describe("director challenge fallback", () => {
     expect(challenge.weakness).toBeNull();
     expect(challenge.generation_risk).toBeNull();
     expect(challenge.notice).toContain("out of AI credits");
+    expect(challenge.notice).toContain("Filmen är fortfarande klar");
   });
 });

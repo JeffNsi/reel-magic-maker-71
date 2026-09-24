@@ -131,7 +131,10 @@ export function DirectorPanel({
           blueprint: blueprint.trim(),
         },
       }),
-    onSuccess: (result) => setReview(result),
+    onSuccess: (result) => {
+      setReview(result);
+      if (result.notice) setError(result.notice);
+    },
     onError: fail,
   });
 

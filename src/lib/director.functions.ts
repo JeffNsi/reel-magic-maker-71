@@ -263,6 +263,7 @@ export type BlueprintReview = {
   message: string;
   affected: string[];
   updated_blueprint: string;
+  notice?: string | null;
 };
 
 type Turn = { question: string; answer: string; skipped: boolean };
@@ -462,7 +463,22 @@ export async function callGateway<T = AiReply>(user: string, system = SYSTEM): P
 class MalformedReplyError extends Error {}
 
 /** The AI could not be reached (no key, no credits, rate limited, outage). */
-class GatewayUnavailableError extends Error {}
+class GatewayUnavailableError extends Error {
+  override name = "GatewayUnavailableError";
+}
+
+/** Error subclasses can lose their prototype across server boundaries or hot reloads. */
+function isGatewayUnavailable(error: unknown): error is Error {
+  if (error instanceof GatewayUnavailableError) return true;
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === "GatewayUnavailableError" ||
+    error.message.includes("out of AI credits") ||
+    error.message.includes("creative director isn't available") ||
+    error.message.includes("creative director is busy") ||
+    error.message.includes("creative director could not answer")
+  );
+}
 
 /**
  * Rescues the formatting slips the model actually makes, without touching what
@@ -856,7 +872,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
   try {
     reply = await think(row, turns, mode);
   } catch (error) {
-    if (!(error instanceof GatewayUnavailableError)) throw error;
+    if (!isGatewayUnavailable(error)) throw error;
     /** Template mode: no AI, but the creator still gets a complete package. */
     notice = `${error.message} Template mode: a basic film package was built without AI. / Mallläge: ett enkelt filmpaket byggdes utan AI.`;
     reply = {} as AiReply;
@@ -1090,17 +1106,28 @@ export const reviewBlueprint = createServerFn({ method: "POST" })
     const model = readModel(row.film_model);
     const bible = (row.film_bible ?? null) as FilmBible | null;
 
-    const reply = await callGateway(
-      [
-        `ORIGINAL IDEA: ${row.idea}`,
-        `Film bible: ${JSON.stringify(bible)}`,
-        `Your film model (memory, including impact_chain): ${JSON.stringify(model)}`,
-        `The blueprint you delivered: ${row.blueprint ?? ""}`,
-        `The creator has rewritten the blueprint to: ${data.blueprint}`,
-        "",
-        'Treat the creator\'s rewrite as a user_decision. Using the impact chain, work out which parts of the film this change pulls with it (for example emotional arc, final beat, music, dialogue, pacing, visual tone). Set done to true. In "understanding" write one short sentence naming what changed. Put the affected parts in film_bible.open_questions, one short label each. Update the film bible, the recommendation and the evolution report so everything is consistent with the rewrite, and return the consistent version of the creator\'s blueprint in "blueprint" — keep their wording and intent, only reconcile what contradicts it.',
-      ].join("\n"),
-    );
+    let reply: AiReply;
+    try {
+      reply = await callGateway(
+        [
+          `ORIGINAL IDEA: ${row.idea}`,
+          `Film bible: ${JSON.stringify(bible)}`,
+          `Your film model (memory, including impact_chain): ${JSON.stringify(model)}`,
+          `The blueprint you delivered: ${row.blueprint ?? ""}`,
+          `The creator has rewritten the blueprint to: ${data.blueprint}`,
+          "",
+          'Treat the creator\'s rewrite as a user_decision. Using the impact chain, work out which parts of the film this change pulls with it (for example emotional arc, final beat, music, dialogue, pacing, visual tone). Set done to true. In "understanding" write one short sentence naming what changed. Put the affected parts in film_bible.open_questions, one short label each. Update the film bible, the recommendation and the evolution report so everything is consistent with the rewrite, and return the consistent version of the creator\'s blueprint in "blueprint" — keep their wording and intent, only reconcile what contradicts it.',
+        ].join("\n"),
+      );
+    } catch (error) {
+      if (!isGatewayUnavailable(error)) throw error;
+      return {
+        message: "The optional impact review was skipped; your edit remains unchanged.",
+        affected: [],
+        updated_blueprint: data.blueprint,
+        notice: `${error.message} Your edit remains available. / Din ändring finns kvar.`,
+      };
+    }
 
     const bibleNext = cleanBible(reply.film_bible, row.idea, model);
     return {
@@ -1359,7 +1386,7 @@ export const challengeFilm = createServerFn({ method: "POST" })
     try {
       reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
     } catch (error) {
-      if (!(error instanceof GatewayUnavailableError)) throw error;
+      if (!isGatewayUnavailable(error)) throw error;
       return buildTemplateChallenge(row.blueprint ?? "", error.message);
     }
     const challenge = cleanChallenge(reply, row.blueprint ?? "");
