@@ -221,6 +221,8 @@ export type Challenge = {
   improved_blueprint: string;
   /** Will this plan survive being turned into a five-second generated clip? */
   reality: RealityCheck | null;
+  /** Present when the AI check was unavailable and a deterministic safe result was returned. */
+  notice?: string | null;
 };
 
 /** A moment in the interview where an answer redirected the film. */
@@ -1323,6 +1325,18 @@ function cleanChallenge(reply: ChallengeReply, currentBlueprint: string): Challe
   };
 }
 
+/**
+ * Keep the finished film usable when the optional AI stress test is unavailable.
+ * This is deliberately neutral: without an AI response it invents no criticism,
+ * changes no creative truth and leaves the creator's approved blueprint intact.
+ */
+export function buildTemplateChallenge(currentBlueprint: string, reason: string): Challenge {
+  return {
+    ...cleanChallenge({}, currentBlueprint),
+    notice: `${reason} The film remains ready and the optional review was skipped. / Filmen är fortfarande klar och den valfria granskningen hoppades över.`,
+  };
+}
+
 function challengeBrief(row: SessionRow) {
   const lines = [
     `ORIGINAL IDEA: ${row.idea}`,
@@ -1365,7 +1379,13 @@ export const challengeFilm = createServerFn({ method: "POST" })
     if (!row.film_bible) throw new Error("There is no finished film to challenge yet.");
     if (row.challenge && typeof row.challenge === "object") return row.challenge as Challenge;
 
-    const reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    let reply: ChallengeReply;
+    try {
+      reply = await callGateway<ChallengeReply>(challengeBrief(row), CHALLENGE_SYSTEM);
+    } catch (error) {
+      if (!(error instanceof GatewayUnavailableError)) throw error;
+      return buildTemplateChallenge(row.blueprint ?? "", error.message);
+    }
     const challenge = cleanChallenge(reply, row.blueprint ?? "");
 
     await supabaseAdmin

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wand2, X } from "lucide-react";
 
 import {
   answerDirector,
@@ -145,7 +145,10 @@ export function DirectorPanel({
   const challengeMutation = useMutation({
     mutationFn: () =>
       stressTest({ data: { director_session_id: state!.id, session_id: sessionId } }),
-    onSuccess: (result) => setChallenge(result),
+    onSuccess: (result) => {
+      setChallenge(result);
+      if (result.notice) setError(result.notice);
+    },
     onError: fail,
   });
 
@@ -272,11 +275,30 @@ export function DirectorPanel({
         )}
 
         {error && (
-          <div className="rounded-2xl border border-primary/40 bg-primary/5 p-4">
-            <p className="text-sm text-foreground">{error}</p>
+          <div className="relative rounded-2xl border border-primary/40 bg-primary/5 p-4 pr-12">
+            <p role="alert" className="text-sm text-foreground">{error}</p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setError(null)}
+              aria-label="Dismiss warning"
+              className="absolute right-2 top-2 size-8"
+            >
+              <X className="size-4" />
+            </Button>
             <Button
               variant="outline"
-              onClick={() => (state ? finishMutation.mutate() : startMutation.mutate())}
+              onClick={() => {
+                setError(null);
+                if (challenge?.notice) {
+                  challenged.current = null;
+                  challengeMutation.mutate();
+                  return;
+                }
+                if (state) finishMutation.mutate();
+                else startMutation.mutate();
+              }}
               className="mt-3 h-10 rounded-xl text-[10px] uppercase tracking-[0.2em]"
             >
               Try again
