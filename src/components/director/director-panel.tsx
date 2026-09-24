@@ -34,7 +34,6 @@ const VERDICT_LABELS: Record<Challenge["verdict"], string> = {
   revision: "I found a creative problem",
 };
 
-
 /**
  * The adaptive interview. One question at a time, always re-derived from
  * everything the creator has said, ending in a film bible and a blueprint.
@@ -111,15 +110,13 @@ export function DirectorPanel({
   });
 
   const finishMutation = useMutation({
-    mutationFn: () =>
-      finish({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    mutationFn: () => finish({ data: { director_session_id: state!.id, session_id: sessionId } }),
     onSuccess: apply,
     onError: fail,
   });
 
   const reopenMutation = useMutation({
-    mutationFn: () =>
-      reopen({ data: { director_session_id: state!.id, session_id: sessionId } }),
+    mutationFn: () => reopen({ data: { director_session_id: state!.id, session_id: sessionId } }),
     onSuccess: apply,
     onError: fail,
   });
@@ -276,7 +273,9 @@ export function DirectorPanel({
 
         {error && (
           <div className="relative rounded-2xl border border-primary/40 bg-primary/5 p-4 pr-12">
-            <p role="alert" className="text-sm text-foreground">{error}</p>
+            <p role="alert" className="text-sm text-foreground">
+              {error}
+            </p>
             <Button
               type="button"
               variant="ghost"
@@ -320,9 +319,7 @@ export function DirectorPanel({
             <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
               I noticed a story conflict
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {state.conflict.message}
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">{state.conflict.message}</p>
           </div>
         )}
 
@@ -672,9 +669,7 @@ export function DirectorPanel({
                 <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
                   <ShieldCheck className="size-3" /> {VERDICT_LABELS[challenge.verdict]}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground">
-                  {challenge.headline}
-                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground">{challenge.headline}</p>
 
                 {challenge.weakness && (
                   <div className="mt-4">
@@ -739,8 +734,7 @@ export function DirectorPanel({
                     </p>
                     {challenge.reality.five_second_risk.alternative && (
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        A stronger way to keep it:{" "}
-                        {challenge.reality.five_second_risk.alternative}
+                        A stronger way to keep it: {challenge.reality.five_second_risk.alternative}
                       </p>
                     )}
                     {challenge.reality.execution?.emotional_core && (
@@ -845,7 +839,6 @@ export function DirectorPanel({
                 )}
               </div>
             )}
-
 
             <div className="space-y-3">
               <Button
