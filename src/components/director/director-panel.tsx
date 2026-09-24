@@ -79,7 +79,7 @@ export function DirectorPanel({
   const apply = (next: DirectorState) => {
     setState(next);
     setAnswer("");
-    setError(null);
+    setError(next.notice ?? null);
     setEditing(false);
     setReview(null);
     setChallenge(null);

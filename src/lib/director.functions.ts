@@ -262,6 +262,8 @@ export type DirectorState = {
   film_bible: FilmBible | null;
   blueprint: string | null;
   challenge: Challenge | null;
+  /** Set when the AI was unavailable and a template package was produced instead. */
+  notice?: string | null;
 };
 
 /** What a blueprint edit would ripple into. */
@@ -467,6 +469,9 @@ export async function callGateway<T = AiReply>(user: string, system = SYSTEM): P
 
 class MalformedReplyError extends Error {}
 
+/** The AI could not be reached (no key, no credits, rate limited, outage). */
+class GatewayUnavailableError extends Error {}
+
 /**
  * Rescues the formatting slips the model actually makes, without touching what
  * it said: chain arrows written between separate strings ("a" -> "b"), and
@@ -480,7 +485,7 @@ function repairJson(input: string) {
 
 async function callGatewayOnce<T = AiReply>(user: string, system = SYSTEM): Promise<T> {
   const key = process.env["LOVABLE_API_KEY"];
-  if (!key) throw new Error("The creative director isn't available right now.");
+  if (!key) throw new GatewayUnavailableError("The creative director isn't available right now.");
 
   const res = await fetch(AI_GATEWAY, {
     method: "POST",
@@ -498,12 +503,14 @@ async function callGatewayOnce<T = AiReply>(user: string, system = SYSTEM): Prom
   if (!res.ok) {
     console.error("director gateway failed", res.status, await res.text().catch(() => ""));
     if (res.status === 402) {
-      throw new Error("This project is out of AI credits. Top them up to keep directing.");
+      throw new GatewayUnavailableError(
+        "This project is out of AI credits. Top them up to keep directing.",
+      );
     }
     if (res.status === 429) {
-      throw new Error("The creative director is busy. Try again in a moment.");
+      throw new GatewayUnavailableError("The creative director is busy. Try again in a moment.");
     }
-    throw new Error("The creative director could not answer. Please try again.");
+    throw new GatewayUnavailableError("The creative director could not answer. Please try again.");
   }
 
   const body = (await res.json().catch(() => null)) as
@@ -865,7 +872,17 @@ function readEvents(value: unknown): BreakthroughEvent[] {
 async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<DirectorState> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const reply = await think(row, turns, mode);
+  let reply: AiReply;
+  let notice: string | null = null;
+  try {
+    reply = await think(row, turns, mode);
+  } catch (error) {
+    if (!(error instanceof GatewayUnavailableError)) throw error;
+    /** Template mode: no AI, but the creator still gets a complete package. */
+    notice = `${error.message} Template mode: a basic film package was built without AI. / Mallläge: ett enkelt filmpaket byggdes utan AI.`;
+    reply = {} as AiReply;
+    mode = "finish";
+  }
   const confidence = cleanConfidence(reply.confidence);
   const understanding = text(reply.understanding, 500);
   const filmModel = cleanModel(reply.film_model, readModel(row.film_model));
@@ -946,6 +963,7 @@ async function advance(row: SessionRow, turns: Turn[], mode: Mode): Promise<Dire
     film_bible: bible,
     blueprint,
     challenge: null,
+    notice,
   };
 }
 
