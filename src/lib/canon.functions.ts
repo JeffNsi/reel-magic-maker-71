@@ -730,6 +730,8 @@ export type CanonAssetResult = {
   version: number;
   storage_path: string;
   url: string | null;
+  /** Set when the image could not be made; existing images and canon are untouched. */
+  error?: string;
 };
 
 const CHARACTER_ANGLE: Record<string, string> = {
@@ -823,7 +825,21 @@ export const generateCanonAsset = createServerFn({ method: "POST" })
     }
 
     const { generateReferenceImage } = await import("@/lib/canon-assets.server");
-    const bytes = await generateReferenceImage(prompt);
+    let bytes: Uint8Array;
+    try {
+      bytes = await generateReferenceImage(prompt);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "The reference image could not be generated.";
+      return {
+        subject_canonical_id: data.subject_canonical_id,
+        kind: data.kind,
+        version: data.version,
+        storage_path: "",
+        url: null,
+        error: `${message} Nothing was charged; existing images are untouched. / Ingenting debiterades; befintliga bilder är orörda.`,
+      };
+    }
 
     const path = `${data.film_id}/${data.subject_canonical_id}/${data.kind}-v${data.version}.png`;
     const { error: uploadError } = await supabaseAdmin.storage

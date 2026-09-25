@@ -830,7 +830,7 @@ function ReferencePack({
     try {
       for (const kind of kinds) {
         setBusy(kind);
-        await generate({
+        const result = await generate({
           data: {
             film_id: filmId,
             session_id: sessionId,
@@ -840,6 +840,11 @@ function ReferencePack({
             version,
           },
         });
+        if (result.error) {
+          toast.error(result.error, { duration: Infinity, closeButton: true });
+          onDone();
+          return;
+        }
       }
       toast.success(`${label} reference pack saved as version ${version}.`);
       onDone();
