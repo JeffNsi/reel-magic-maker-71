@@ -30,7 +30,8 @@ function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(new Error("The file could not be read. / Filen kunde inte läsas."));
+    reader.onerror = () =>
+      reject(new Error("The file could not be read. / Filen kunde inte läsas."));
     reader.readAsDataURL(file);
   });
 }
@@ -105,7 +106,9 @@ export function ReferenceLibrary({
     onSuccess: (res) => {
       setWarning(null);
       setFile(null);
-      toast.success(`Saved as ${res.kind} v${res.version}. / Sparad som ${res.kind} v${res.version}.`);
+      toast.success(
+        `Saved as ${res.kind} v${res.version}. / Sparad som ${res.kind} v${res.version}.`,
+      );
       queryClient.invalidateQueries({ queryKey: ["reference-usage", filmId] });
       onChanged();
     },
@@ -118,10 +121,10 @@ export function ReferenceLibrary({
     <section className="rounded-2xl border border-border bg-card p-5">
       <h2 className="font-serif text-xl italic">Reference panel / Referenspanel</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload your own image for any angle. It costs nothing, becomes a new version, and the
-        newest version of each angle is what scenes use. / Ladda upp en egen bild för valfri vinkel.
-        Det kostar inget, blir en ny version, och den senaste versionen av varje vinkel är den
-        scenerna använder.
+        Upload your own image for any angle. It costs nothing, becomes a new version, and the newest
+        version of each angle is what scenes use. / Ladda upp en egen bild för valfri vinkel. Det
+        kostar inget, blir en ny version, och den senaste versionen av varje vinkel är den scenerna
+        använder.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr]">

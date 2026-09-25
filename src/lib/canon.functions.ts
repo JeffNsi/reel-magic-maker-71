@@ -1154,13 +1154,12 @@ export const getReferenceUsage = createServerFn({ method: "POST" })
     }
     const signed = new Map<string, string>();
     if (list.length) {
-      const { data: links } = await supabaseAdmin.storage
-        .from(ASSET_BUCKET)
-        .createSignedUrls(
-          list.map((r) => r.storage_path),
-          ASSET_URL_TTL,
-        );
-      for (const link of links ?? []) if (link.path && link.signedUrl) signed.set(link.path, link.signedUrl);
+      const { data: links } = await supabaseAdmin.storage.from(ASSET_BUCKET).createSignedUrls(
+        list.map((r) => r.storage_path),
+        ASSET_URL_TTL,
+      );
+      for (const link of links ?? [])
+        if (link.path && link.signedUrl) signed.set(link.path, link.signedUrl);
     }
 
     return list
