@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSessionId } from "@/lib/session";
+import { ReferenceLibrary } from "@/components/film/reference-library";
+import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { getContinuityReport } from "@/lib/continuity.functions";
 import {
   getCanon,
@@ -121,6 +123,7 @@ function ContinuityCenter() {
           <TabsList className="flex w-full flex-wrap justify-start">
             <TabsTrigger value="characters">Characters</TabsTrigger>
             <TabsTrigger value="world">World</TabsTrigger>
+            <TabsTrigger value="references">References</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="conflicts">Conflicts</TabsTrigger>
           </TabsList>
@@ -153,6 +156,16 @@ function ContinuityCenter() {
             <StylePack filmId={filmId} sessionId={sessionId} canon={canon} onDone={refresh} />
             <WardrobeList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
             <PropList filmId={filmId} sessionId={sessionId} canon={canon} onSaved={refresh} />
+          </TabsContent>
+
+          <TabsContent value="references" className="mt-6 space-y-5">
+            <ReferenceLibrary
+              filmId={filmId}
+              sessionId={sessionId}
+              canon={canon}
+              onChanged={refresh}
+            />
+            <FalBalanceCard />
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-6">
@@ -817,7 +830,7 @@ function ReferencePack({
     try {
       for (const kind of kinds) {
         setBusy(kind);
-        await generate({
+        const result = await generate({
           data: {
             film_id: filmId,
             session_id: sessionId,
@@ -827,6 +840,11 @@ function ReferencePack({
             version,
           },
         });
+        if (result.error) {
+          toast.error(result.error, { duration: Infinity, closeButton: true });
+          onDone();
+          return;
+        }
       }
       toast.success(`${label} reference pack saved as version ${version}.`);
       onDone();

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { AssetPicker } from "@/components/engine/asset-picker";
 import { KeyLamp } from "@/components/engine/key-lamp";
+import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { RunGrid } from "@/components/engine/run-grid";
 import { SettingsRail } from "@/components/engine/settings-rail";
 import { Badge } from "@/components/ui/badge";
@@ -187,6 +188,10 @@ function EnginePage() {
         </div>
         <KeyLamp busy={open.length > 0} open={keyOpen} onOpenChange={setKeyOpen} />
       </header>
+
+      <div className="mt-6 max-w-md">
+        <FalBalanceCard />
+      </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="space-y-4">
