@@ -68,11 +68,13 @@ export type RunRow = {
   error_message: string | null;
   error_category: string | null;
   favourite: boolean;
+  /** Owner-chosen "borrowed reference" for later scenes. Never canon; reversible. */
+  borrowed_reference: boolean;
   created_at: string;
 };
 
 const RUN_COLUMNS =
-  "scene_id, id, batch_id, batch_index, surface, model, model_label, prompt, settings, media, aspect_ratio, status, queue_position, images, video_url, error_message, error_category, favourite, deadline_at, created_at";
+  "scene_id, id, batch_id, batch_index, surface, model, model_label, prompt, settings, media, aspect_ratio, status, queue_position, images, video_url, error_message, error_category, favourite, borrowed_reference, deadline_at, created_at";
 
 function asRun(row: Record<string, unknown>): RunRow {
   return {
@@ -94,6 +96,7 @@ function asRun(row: Record<string, unknown>): RunRow {
     error_message: (row["error_message"] as string | null) ?? null,
     error_category: (row["error_category"] as string | null) ?? null,
     favourite: Boolean(row["favourite"]),
+    borrowed_reference: Boolean(row["borrowed_reference"]),
     created_at: String(row["created_at"]),
   };
 }
@@ -365,6 +368,26 @@ export const setRunFavourite = createServerFn({ method: "POST" })
       .update({ favourite: data.favourite })
       .eq("id", data.run_id);
     return { favourite: data.favourite };
+  });
+
+/**
+ * Mark (or unmark) a finished clip as a borrowed reference for later scenes.
+ * This is a label on the history row only: it never writes a canon table, never
+ * charges anything and can be undone at any time.
+ */
+export const setRunBorrowed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ run_id: z.string().uuid(), borrowed: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("generation_runs")
+      .update({ borrowed_reference: data.borrowed })
+      .eq("id", data.run_id)
+      .eq("status", "completed");
+    if (error) throw new Error("The clip could not be updated. Nothing changed.");
+    return { borrowed: data.borrowed };
   });
 
 /* ---------------------------------------------------------------------------
