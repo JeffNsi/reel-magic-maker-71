@@ -17,7 +17,12 @@ import {
 import { MODELS, getModel, platformOf } from "@/generation/catalog";
 import { formatNotesFor } from "@/lib/director-plane";
 import { platformKeyStatus } from "@/lib/generation-key.functions";
-import { listRuns, pollRuns, setRunBorrowed, setRunFavourite } from "@/lib/generation-run.functions";
+import {
+  listRuns,
+  pollRuns,
+  setRunBorrowed,
+  setRunFavourite,
+} from "@/lib/generation-run.functions";
 import { renderScenePlane, type ScenePlaneView } from "@/lib/scene-plane.functions";
 
 /**
@@ -222,8 +227,8 @@ export function SceneEngine({
             ))}
           </ul>
           <p className="mt-1">
-            Reuse them without re-running. They are not sent to the model, which only takes text
-            and canonical packs. / Återanvänd utan ny körning. De skickas inte till modellen.
+            Reuse them without re-running. They are not sent to the model, which only takes text and
+            canonical packs. / Återanvänd utan ny körning. De skickas inte till modellen.
           </p>
         </div>
       )}
