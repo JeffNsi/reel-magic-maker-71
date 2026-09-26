@@ -697,6 +697,7 @@ export type Database = {
           aspect_ratio: string
           batch_id: string
           batch_index: number
+          borrowed_reference: boolean
           created_at: string
           deadline_at: string
           error_category: string | null
@@ -723,6 +724,7 @@ export type Database = {
           aspect_ratio?: string
           batch_id: string
           batch_index?: number
+          borrowed_reference?: boolean
           created_at?: string
           deadline_at?: string
           error_category?: string | null
@@ -749,6 +751,7 @@ export type Database = {
           aspect_ratio?: string
           batch_id?: string
           batch_index?: number
+          borrowed_reference?: boolean
           created_at?: string
           deadline_at?: string
           error_category?: string | null

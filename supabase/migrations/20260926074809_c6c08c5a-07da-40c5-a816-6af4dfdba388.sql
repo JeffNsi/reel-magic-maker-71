@@ -1,0 +1,1 @@
+ALTER TABLE public.generation_runs ADD COLUMN IF NOT EXISTS borrowed_reference boolean NOT NULL DEFAULT false;
