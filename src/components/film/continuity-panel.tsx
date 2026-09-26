@@ -143,6 +143,7 @@ export function ContinuityPanel({ filmId, sessionId }: { filmId: string; session
                     <li key={clip.id} className="text-xs text-muted-foreground">
                       {number ? `Scene ${String(number).padStart(2, "0")}` : "Unlinked shot"} ·{" "}
                       {clip.model_label} ·{" "}
+                      {clip.borrowed_reference ? "borrowed reference / lånad referens · " : ""}
                       {clip.video_url ? (
                         <a
                           href={clip.video_url}

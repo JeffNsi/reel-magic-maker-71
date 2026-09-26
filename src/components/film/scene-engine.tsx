@@ -17,7 +17,7 @@ import {
 import { MODELS, getModel, platformOf } from "@/generation/catalog";
 import { formatNotesFor } from "@/lib/director-plane";
 import { platformKeyStatus } from "@/lib/generation-key.functions";
-import { listRuns, pollRuns, setRunFavourite } from "@/lib/generation-run.functions";
+import { listRuns, pollRuns, setRunBorrowed, setRunFavourite } from "@/lib/generation-run.functions";
 import { renderScenePlane, type ScenePlaneView } from "@/lib/scene-plane.functions";
 
 /**
@@ -73,6 +73,23 @@ export function SceneEngine({
     queryFn: () => list({ data: { limit: 12, scene_id: plan?.scene_id ?? "" } }),
   });
 
+  /* Clips the owner marked as borrowed references on OTHER scenes of this film.
+   * They are reused by opening them — nothing is re-run, nothing is charged, and
+   * they are never sent to the model as canonical truth. */
+  const filmRuns = useQuery({
+    queryKey: ["film-clips", filmId],
+    enabled: !!plan?.scene_id,
+    retry: false,
+    queryFn: () => list({ data: { story_id: filmId, limit: 60 } }),
+  });
+  const borrowed = (filmRuns.data?.runs ?? []).filter(
+    (run) =>
+      run.borrowed_reference &&
+      run.status === "completed" &&
+      run.scene_id !== plan?.scene_id &&
+      (run.video_url || run.images.length > 0),
+  );
+
   const openRuns = (runs.data?.runs ?? []).filter(
     (run) => run.status === "queued" || run.status === "processing",
   );
@@ -115,7 +132,33 @@ export function SceneEngine({
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const borrow = useServerFn(setRunBorrowed);
+  const toggleBorrow = useMutation({
+    mutationFn: (run: { id: string; borrowed_reference: boolean }) =>
+      borrow({ data: { run_id: run.id, borrowed: !run.borrowed_reference } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["scene-runs", plan?.scene_id] });
+      await queryClient.invalidateQueries({ queryKey: ["film-clips", filmId] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   if (!plan) return null;
+
+  /* Budget in seconds, not money: fal.ai prices are not held in this app, so the
+   * panel shows what a press produces and what this scene has already used. */
+  const durationSetting = settings["duration"];
+  const secondsPerRun =
+    typeof durationSetting === "number"
+      ? durationSetting
+      : typeof durationSetting === "string" && Number.isFinite(Number(durationSetting))
+        ? Number(durationSetting)
+        : plan.format.duration;
+  const sceneRuns = runs.data?.runs ?? [];
+  const completedRuns = sceneRuns.filter((run) => run.status === "completed").length;
+  const finishedClips = sceneRuns.filter(
+    (run) => run.status === "completed" && (run.video_url || run.images.length > 0),
+  );
 
   const notes = entry ? formatNotesFor(entry) : plan.format.notes;
   const blocked = !plan.gate.allowed;
@@ -137,6 +180,53 @@ export function SceneEngine({
             ? "Running on the key you pasted in this browser — no credits."
             : "No platform key held yet, so only the house account's models can be pressed."}
       </p>
+
+      <div className="mt-3 rounded-lg border border-border/60 p-2 text-xs leading-relaxed text-muted-foreground">
+        <p className="font-semibold text-foreground">Budget / Budget</p>
+        <p>
+          {secondsPerRun
+            ? `One press = 1 run × ${secondsPerRun}s of video. / Ett tryck = 1 körning × ${secondsPerRun} s video.`
+            : "This model does not declare a length. / Modellen anger ingen längd."}
+        </p>
+        <p>
+          {`This scene so far: ${sceneRuns.length} run(s), ${completedRuns} finished${
+            secondsPerRun ? ` ≈ ${completedRuns * secondsPerRun}s` : ""
+          }. / Scenen hittills: ${sceneRuns.length} körning(ar), ${completedRuns} klara${
+            secondsPerRun ? ` ≈ ${completedRuns * secondsPerRun} s` : ""
+          }.`}
+        </p>
+        <p>
+          fal.ai charges by its own price list; check the model's page there. / fal.ai debiterar
+          enligt sin egen prislista — se modellens sida där.
+        </p>
+      </div>
+
+      {borrowed.length > 0 && (
+        <div className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="font-semibold text-foreground">
+            Borrowed references from other scenes — not canon / Lånade referenser — inte kanon
+          </p>
+          <ul className="mt-1 space-y-1">
+            {borrowed.map((run) => (
+              <li key={run.id}>
+                {run.model_label} ·{" "}
+                <a
+                  href={run.video_url ?? run.images[0]}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline underline-offset-2"
+                >
+                  open / öppna
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1">
+            Reuse them without re-running. They are not sent to the model, which only takes text
+            and canonical packs. / Återanvänd utan ny körning. De skickas inte till modellen.
+          </p>
+        </div>
+      )}
 
       {plan.references.length > 0 && (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
@@ -249,6 +339,25 @@ export function SceneEngine({
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             This scene's runs — history, never canon
           </p>
+          {finishedClips.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {finishedClips.map((run) => (
+                <li key={run.id} className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">{run.model_label}</span>
+                  <Button
+                    size="sm"
+                    variant={run.borrowed_reference ? "secondary" : "outline"}
+                    disabled={toggleBorrow.isPending}
+                    onClick={() => toggleBorrow.mutate(run)}
+                  >
+                    {run.borrowed_reference
+                      ? "Borrowed reference — undo / Lånad referens — ångra"
+                      : "Use as borrowed reference / Använd som lånad referens"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-2">
             <RunGrid
               runs={runs.data?.runs ?? []}
