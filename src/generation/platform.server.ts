@@ -195,10 +195,13 @@ export function createPlatformClient(opts: {
     async status(requestId: string, modelPath?: string): Promise<PlatformStatus> {
       const id = encodeURIComponent(requestId);
       let statusUrl = `${base}/requests/${id}/status`;
+      /* fal serves status and results under the app id (owner/app) only —
+       * the full model subpath answers 405. */
+      const appPath = modelPath ? modelPath.split("/").slice(0, 2).join("/") : "";
       if (flavor === "fal") {
         if (!modelPath) return { state: "processing", queue_position: null };
         assertModel(modelPath);
-        statusUrl = `${base}/${modelPath}/requests/${id}/status`;
+        statusUrl = `${base}/${appPath}/requests/${id}/status`;
       }
 
       const res = await fetch(statusUrl, { headers });
@@ -214,7 +217,7 @@ export function createPlatformClient(opts: {
       if (state === "completed" || state === "succeeded") {
         if (flavor === "fal" && modelPath) {
           /* fal keeps the finished media behind the result endpoint. */
-          const done = await fetch(`${base}/${modelPath}/requests/${id}`, { headers });
+          const done = await fetch(`${base}/${appPath}/requests/${id}`, { headers });
           const body = (await done.json().catch(() => null)) as RawStatus | null;
           if (!done.ok) return { state: "failed", reason: reason(body ?? {}) };
           return {
