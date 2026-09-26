@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Clapperboard, Loader2, SlidersHorizontal } from "lucide-react";
 
+import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { RunGrid } from "@/components/engine/run-grid";
 import { SettingsRail } from "@/components/engine/settings-rail";
+import { budgetView, readBudget, readRate, writeBudget, writeRate } from "@/lib/fal-prices";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -148,6 +150,15 @@ export function SceneEngine({
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const [rate, setRate] = useState<number | null>(null);
+  const [budget, setBudget] = useState<number | null>(null);
+  useEffect(() => {
+    setRate(readRate(chosenId));
+  }, [chosenId]);
+  useEffect(() => {
+    if (plan?.scene_id) setBudget(readBudget(plan.scene_id));
+  }, [plan?.scene_id]);
+
   if (!plan) return null;
 
   /* Budget in seconds, not money: fal.ai prices are not held in this app, so the
@@ -167,6 +178,12 @@ export function SceneEngine({
 
   const notes = entry ? formatNotesFor(entry) : plan.format.notes;
   const blocked = !plan.gate.allowed;
+  const money = budgetView(
+    rate,
+    secondsPerRun || null,
+    completedRuns * (secondsPerRun || 0),
+    budget,
+  );
 
   return (
     <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3">
@@ -200,10 +217,58 @@ export function SceneEngine({
             secondsPerRun ? ` ≈ ${completedRuns * secondsPerRun} s` : ""
           }.`}
         </p>
-        <p>
-          fal.ai charges by its own price list; check the model's page there. / fal.ai debiterar
-          enligt sin egen prislista — se modellens sida där.
+        <p className="text-foreground">
+          {money.perRun !== null
+            ? `≈ $${money.perRun.toFixed(2)} per press · ≈ $${(money.spent ?? 0).toFixed(2)} used on this scene / per tryck · använt i scenen`
+            : "No price known for this model — enter one below. / Inget pris känt — fyll i nedan."}
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1">
+            USD/s
+            <input
+              type="number"
+              min={0}
+              step={0.001}
+              aria-label="fal.ai price per second"
+              className="w-20 rounded border border-border bg-background px-1 py-0.5 text-foreground"
+              value={rate ?? ""}
+              onChange={(e) => {
+                const v = e.target.value === "" ? null : Number(e.target.value);
+                setRate(v);
+                writeRate(chosenId, v);
+              }}
+            />
+          </label>
+          <label className="flex items-center gap-1">
+            Scene budget / Scenbudget $
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              aria-label="Scene budget in USD"
+              className="w-20 rounded border border-border bg-background px-1 py-0.5 text-foreground"
+              value={budget ?? ""}
+              onChange={(e) => {
+                const v = e.target.value === "" ? null : Number(e.target.value);
+                setBudget(v);
+                writeBudget(plan.scene_id, v);
+              }}
+            />
+          </label>
+        </div>
+        {money.over && (
+          <p className="mt-2 rounded border border-amber-400/50 p-2 text-amber-400">
+            The next press would pass this scene's budget. You can still press. / Nästa tryck går
+            över scenens budget. Du kan fortfarande trycka.
+          </p>
+        )}
+        <p className="mt-1">
+          Estimate only — fal.ai charges by its own price list. / Endast uppskattning — fal.ai
+          debiterar enligt sin egen prislista.
+        </p>
+        <div className="mt-3">
+          <FalBalanceCard />
+        </div>
       </div>
 
       {borrowed.length > 0 && (
