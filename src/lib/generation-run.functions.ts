@@ -272,13 +272,15 @@ export const pollRuns = createServerFn({ method: "POST" })
         const requestId = record["request_id"] as string | null;
         const deadline = new Date(String(record["deadline_at"] ?? "")).getTime();
 
-        if (Number.isFinite(deadline) && Date.now() > deadline) {
+        /* fal.ai video runs regularly take longer than ten minutes, so the
+         * stored deadline gets a 20-minute grace before giving up. */
+        if (Number.isFinite(deadline) && Date.now() > deadline + 20 * 60_000) {
           const { data: done } = await context.supabase
             .from("generation_runs")
             .update({
               status: "failed",
               error_message:
-                "The platform did not finish this run within ten minutes. Nothing was delivered — retry when you like.",
+                "The platform did not finish this run within thirty minutes. Nothing was delivered — retry when you like.",
               error_category: "timeout",
             })
             .eq("id", record["id"] as string)
