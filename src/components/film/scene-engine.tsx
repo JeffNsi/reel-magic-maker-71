@@ -366,7 +366,7 @@ export function SceneEngine({
         <Button
           size="sm"
           variant="outline"
-          disabled={blocked || generate.isPending || !entry}
+          disabled={blocked || generate.isPending || !entry || balanceEmpty}
           onClick={() => generate.mutate()}
         >
           {generate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
