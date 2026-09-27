@@ -7,6 +7,7 @@ import { Clapperboard, Loader2, SlidersHorizontal } from "lucide-react";
 import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { RunGrid } from "@/components/engine/run-grid";
 import { SettingsRail } from "@/components/engine/settings-rail";
+import { getFalBalance } from "@/lib/fal-balance.functions";
 import { budgetView, readBudget, readRate, writeBudget, writeRate } from "@/lib/fal-prices";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ export function SceneEngine({
   const poll = useServerFn(pollRuns);
   const favourite = useServerFn(setRunFavourite);
   const keyStatus = useServerFn(platformKeyStatus);
+  const readBalance = useServerFn(getFalBalance);
 
   /* Which generation accounts are reachable: the creator's own pasted key, and
    * the house fal.ai account. Models on neither are listed but not pressable. */
@@ -63,6 +65,17 @@ export function SceneEngine({
   });
   const platforms = availability.data?.platforms ?? [];
   const keySource = availability.data?.source ?? null;
+
+  /* Shares its cache with FalBalanceCard. A confirmed empty house account locks
+   * the press — the card already says "generation is locked", so the button
+   * must agree instead of letting fal.ai refuse after the fact. */
+  const balance = useQuery({
+    queryKey: ["fal-balance"],
+    queryFn: () => readBalance(),
+    retry: false,
+  });
+  const balanceEmpty =
+    balance.data?.status === "ok" && balance.data.balance <= 0 && keySource !== "browser";
 
   const [open, setOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
@@ -178,12 +191,19 @@ export function SceneEngine({
 
   const notes = entry ? formatNotesFor(entry) : plan.format.notes;
   const blocked = !plan.gate.allowed;
-  const money = budgetView(
-    rate,
-    secondsPerRun || null,
-    completedRuns * (secondsPerRun || 0),
+  /* History is priced with the Director's own choice, not the Advanced rail's
+   * current selection — otherwise switching model or duration would rewrite
+   * what this scene has already used and flicker the budget warning. */
+  const history = budgetView(
+    readRate(plan.model.id),
+    plan.format.duration || null,
+    completedRuns * (plan.format.duration || 0),
     budget,
   );
+  const money = {
+    ...history,
+    perRun: rate !== null && secondsPerRun ? rate * secondsPerRun : null,
+  };
 
   return (
     <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3">
@@ -328,6 +348,13 @@ export function SceneEngine({
         </ul>
       )}
 
+      {balanceEmpty && (
+        <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
+          The fal.ai account is empty, so the press is locked until you top up. Nothing was charged.
+          / fal.ai-kontot är tomt, så trycket är låst tills du fyller på. Ingenting debiterades.
+        </p>
+      )}
+
       {blocked && (
         <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
           {plan.gate.reason} Missing: {plan.gate.missing.join(", ")}.
@@ -346,7 +373,7 @@ export function SceneEngine({
         <Button
           size="sm"
           variant="outline"
-          disabled={blocked || generate.isPending || !entry}
+          disabled={blocked || generate.isPending || !entry || balanceEmpty}
           onClick={() => generate.mutate()}
         >
           {generate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
