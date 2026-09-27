@@ -7,6 +7,7 @@ import { Clapperboard, Loader2, SlidersHorizontal } from "lucide-react";
 import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { RunGrid } from "@/components/engine/run-grid";
 import { SettingsRail } from "@/components/engine/settings-rail";
+import { getFalBalance } from "@/lib/fal-balance.functions";
 import { budgetView, readBudget, readRate, writeBudget, writeRate } from "@/lib/fal-prices";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +64,17 @@ export function SceneEngine({
   });
   const platforms = availability.data?.platforms ?? [];
   const keySource = availability.data?.source ?? null;
+
+  /* Shares its cache with FalBalanceCard. A confirmed empty house account locks
+   * the press — the card already says "generation is locked", so the button
+   * must agree instead of letting fal.ai refuse after the fact. */
+  const balance = useQuery({
+    queryKey: ["fal-balance"],
+    queryFn: () => useServerFn(getFalBalance)(),
+    retry: false,
+  });
+  const balanceEmpty =
+    balance.data?.status === "ok" && balance.data.balance <= 0 && keySource !== "browser";
 
   const [open, setOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
