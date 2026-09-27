@@ -191,12 +191,19 @@ export function SceneEngine({
 
   const notes = entry ? formatNotesFor(entry) : plan.format.notes;
   const blocked = !plan.gate.allowed;
-  const money = budgetView(
-    rate,
-    secondsPerRun || null,
-    completedRuns * (secondsPerRun || 0),
+  /* History is priced with the Director's own choice, not the Advanced rail's
+   * current selection — otherwise switching model or duration would rewrite
+   * what this scene has already used and flicker the budget warning. */
+  const history = budgetView(
+    readRate(plan.model.id),
+    plan.format.duration || null,
+    completedRuns * (plan.format.duration || 0),
     budget,
   );
+  const money = {
+    ...history,
+    perRun: rate !== null && secondsPerRun ? rate * secondsPerRun : null,
+  };
 
   return (
     <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3">
