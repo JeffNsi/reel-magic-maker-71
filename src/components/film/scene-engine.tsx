@@ -348,6 +348,14 @@ export function SceneEngine({
         </ul>
       )}
 
+      {balanceEmpty && (
+        <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
+          The fal.ai account is empty, so the press is locked until you top up. Nothing was
+          charged. / fal.ai-kontot är tomt, så trycket är låst tills du fyller på. Ingenting
+          debiterades.
+        </p>
+      )}
+
       {blocked && (
         <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
           {plan.gate.reason} Missing: {plan.gate.missing.join(", ")}.
