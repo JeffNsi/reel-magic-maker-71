@@ -54,6 +54,7 @@ export function SceneEngine({
   const poll = useServerFn(pollRuns);
   const favourite = useServerFn(setRunFavourite);
   const keyStatus = useServerFn(platformKeyStatus);
+  const readBalance = useServerFn(getFalBalance);
 
   /* Which generation accounts are reachable: the creator's own pasted key, and
    * the house fal.ai account. Models on neither are listed but not pressable. */
@@ -70,7 +71,7 @@ export function SceneEngine({
    * must agree instead of letting fal.ai refuse after the fact. */
   const balance = useQuery({
     queryKey: ["fal-balance"],
-    queryFn: () => useServerFn(getFalBalance)(),
+    queryFn: () => readBalance(),
     retry: false,
   });
   const balanceEmpty =
