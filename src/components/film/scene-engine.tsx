@@ -68,14 +68,21 @@ export function SceneEngine({
 
   /* Shares its cache with FalBalanceCard. A confirmed empty house account locks
    * the press — the card already says "generation is locked", so the button
-   * must agree instead of letting fal.ai refuse after the fact. */
+   * must agree instead of letting fal.ai refuse after the fact. The lock only
+   * applies when the house key is the one actually charged: a creator key,
+   * whether pasted in this browser or stored on the project, bills that
+   * account instead, and its balance is not readable here. Until the key
+   * status has answered, nothing is locked — no flash on page load. */
   const balance = useQuery({
     queryKey: ["fal-balance"],
     queryFn: () => readBalance(),
     retry: false,
   });
   const balanceEmpty =
-    balance.data?.status === "ok" && balance.data.balance <= 0 && keySource !== "browser";
+    balance.data?.status === "ok" &&
+    balance.data.balance <= 0 &&
+    availability.data != null &&
+    keySource === null;
 
   const [open, setOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
@@ -200,9 +207,16 @@ export function SceneEngine({
     completedRuns * (plan.format.duration || 0),
     budget,
   );
+  /* The warning must judge the press the button would actually make — the
+   * Advanced rail's model and duration — not the Director's original choice. */
+  const perRun = rate !== null && secondsPerRun ? rate * secondsPerRun : null;
   const money = {
     ...history,
-    perRun: rate !== null && secondsPerRun ? rate * secondsPerRun : null,
+    perRun,
+    over:
+      budget !== null && perRun !== null && history.spent !== null
+        ? history.spent + perRun > budget
+        : false,
   };
 
   return (
