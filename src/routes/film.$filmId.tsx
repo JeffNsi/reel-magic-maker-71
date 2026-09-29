@@ -1,3 +1,4 @@
+import { sceneCredits } from "@/lib/fal-prices";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -391,6 +392,13 @@ function FilmPage() {
           </p>
         </section>
 
+        <CreditDashboard
+          scenes={film.scenes}
+          pressCostFor={(id) =>
+            (enginePlansQuery.data ?? []).find((p) => p.scene_id === id)?.ezy_credits ?? SHOT_COST
+          }
+        />
+
         <ContinuityPanel filmId={filmId} sessionId={sessionId} />
 
         <Link
@@ -608,5 +616,63 @@ function SceneCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/** Per-scene credit dashboard: budget, spent, remaining. Advisory, never blocks. */
+function CreditDashboard({
+  scenes,
+  pressCostFor,
+}: {
+  scenes: FilmScene[];
+  pressCostFor: (sceneId: string) => number;
+}) {
+  const rows = scenes.map((s) => ({ scene: s, ...sceneCredits(s, pressCostFor(s.id)) }));
+  const total = rows.reduce((n, r) => n + r.spent, 0);
+  return (
+    <section
+      className="mt-6 rounded-2xl border border-border/70 bg-card p-5"
+      aria-label="Credit dashboard"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+        Credits per scene / Krediter per scen
+      </p>
+      <p className="mt-2 text-sm text-foreground">
+        {`Spent across all scenes: ${total} credits / Använt i alla scener: ${total} krediter`}
+      </p>
+      <ul className="mt-3 space-y-2">
+        {rows.map((r) => {
+          const pct = r.budget > 0 ? Math.min(100, (r.spent / r.budget) * 100) : 0;
+          return (
+            <li key={r.scene_id} className="text-xs">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span className="text-foreground">
+                  {String(r.scene.scene_number).padStart(2, "0")} · {r.scene.title}
+                </span>
+                <span className="text-muted-foreground">
+                  {`${r.spent} / ${r.budget} · ${r.remaining} left / kvar`}
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded bg-muted">
+                <div
+                  className={r.approaching ? "h-full bg-primary" : "h-full bg-muted-foreground"}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              {r.approaching && (
+                <p className="mt-1 text-primary">
+                  Near its cap — one more Ezy render would pass it. You can still render. / Nära
+                  taket — en Ezy-rendering till går över. Du kan fortfarande rendera.
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Renders on the model's own platform (fal.ai) spend no app credits; their dollar estimate
+        lives in each scene's engine panel. / Körningar hos fal.ai kostar inga appkrediter.
+      </p>
+    </section>
   );
 }

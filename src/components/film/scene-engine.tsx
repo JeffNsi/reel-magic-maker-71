@@ -8,7 +8,15 @@ import { FalBalanceCard } from "@/components/engine/fal-balance";
 import { RunGrid } from "@/components/engine/run-grid";
 import { SettingsRail } from "@/components/engine/settings-rail";
 import { getFalBalance } from "@/lib/fal-balance.functions";
-import { budgetView, readBudget, readRate, writeBudget, writeRate } from "@/lib/fal-prices";
+import {
+  budgetView,
+  readBudget,
+  readModelBudget,
+  readRate,
+  writeBudget,
+  writeModelBudget,
+  writeRate,
+} from "@/lib/fal-prices";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -172,8 +180,10 @@ export function SceneEngine({
 
   const [rate, setRate] = useState<number | null>(null);
   const [budget, setBudget] = useState<number | null>(null);
+  const [modelBudget, setModelBudget] = useState<number | null>(null);
   useEffect(() => {
     setRate(readRate(chosenId));
+    setModelBudget(readModelBudget(chosenId));
   }, [chosenId]);
   useEffect(() => {
     if (plan?.scene_id) setBudget(readBudget(plan.scene_id));
@@ -218,6 +228,15 @@ export function SceneEngine({
         ? history.spent + perRun > budget
         : false,
   };
+  /* Per-model cap: only this scene's finished runs on the chosen model count. */
+  const modelSeconds = sceneRuns
+    .filter((run) => run.status === "completed" && run.model === chosenId)
+    .reduce((sum) => sum + (secondsPerRun || 0), 0);
+  const modelSpent = rate !== null ? rate * modelSeconds : null;
+  const modelOver =
+    modelBudget !== null && modelSpent !== null && perRun !== null
+      ? modelSpent + perRun > modelBudget
+      : false;
 
   return (
     <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3">
@@ -289,11 +308,40 @@ export function SceneEngine({
               }}
             />
           </label>
+          <label className="flex items-center gap-1">
+            Model budget / Modellbudget $
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              aria-label="Model budget in USD"
+              className="w-20 rounded border border-border bg-background px-1 py-0.5 text-foreground"
+              value={modelBudget ?? ""}
+              onChange={(e) => {
+                const v = e.target.value === "" ? null : Number(e.target.value);
+                setModelBudget(v);
+                writeModelBudget(chosenId, v);
+              }}
+            />
+          </label>
         </div>
+        {modelSpent !== null && (
+          <p className="mt-1">
+            {`${entry?.label ?? chosenId}: ≈ $${modelSpent.toFixed(2)} used in this scene${
+              modelBudget !== null ? ` of $${modelBudget.toFixed(2)}` : ""
+            } / använt i scenen${modelBudget !== null ? ` av $${modelBudget.toFixed(2)}` : ""}`}
+          </p>
+        )}
         {money.over && (
           <p className="mt-2 rounded border border-amber-400/50 p-2 text-amber-400">
             The next press would pass this scene's budget. You can still press. / Nästa tryck går
             över scenens budget. Du kan fortfarande trycka.
+          </p>
+        )}
+        {modelOver && (
+          <p className="mt-2 rounded border border-amber-400/50 p-2 text-amber-400">
+            The next press would pass this model's budget. You can still press. / Nästa tryck går
+            över modellens budget. Du kan fortfarande trycka.
           </p>
         )}
         <p className="mt-1">

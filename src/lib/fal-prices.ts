@@ -48,3 +48,36 @@ export function budgetView(
   const over = budget !== null && perRun !== null && spent !== null && spent + perRun > budget;
   return { perRun, spent, budget, over };
 }
+
+const MODEL_BUDGET_KEY = "storyreel_model_budget:";
+export const readModelBudget = (modelId: string) => read(MODEL_BUDGET_KEY + modelId);
+export const writeModelBudget = (modelId: string, v: number | null) =>
+  write(MODEL_BUDGET_KEY + modelId, v);
+
+export type SceneCreditRow = {
+  scene_id: string;
+  budget: number;
+  spent: number;
+  remaining: number;
+  /** One more Ezy press would reach or pass the cap. Advisory only. */
+  approaching: boolean;
+};
+
+/**
+ * Pure: app credits a scene has spent. A scene holds one Ezy render at a time;
+ * a failed render is not counted. Platform runs on fal.ai spend no app credits.
+ */
+export function sceneCredits(
+  scene: { id: string; credit_cost: number; generation_id: string | null; status: string },
+  pressCost: number,
+): SceneCreditRow {
+  const spent = scene.generation_id && scene.status !== "failed" ? pressCost : 0;
+  const remaining = scene.credit_cost - spent;
+  return {
+    scene_id: scene.id,
+    budget: scene.credit_cost,
+    spent,
+    remaining,
+    approaching: spent + pressCost > scene.credit_cost,
+  };
+}
