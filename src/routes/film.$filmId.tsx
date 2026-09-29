@@ -391,6 +391,13 @@ function FilmPage() {
           </p>
         </section>
 
+        <CreditDashboard
+          scenes={film.scenes}
+          pressCostFor={(id) =>
+            (enginePlansQuery.data ?? []).find((p) => p.scene_id === id)?.ezy_credits ?? SHOT_COST
+          }
+        />
+
         <ContinuityPanel filmId={filmId} sessionId={sessionId} />
 
         <Link

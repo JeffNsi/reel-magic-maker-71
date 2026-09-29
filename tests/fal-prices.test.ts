@@ -20,11 +20,17 @@ describe("budgetView", () => {
 import { sceneCredits } from "@/lib/fal-prices";
 describe("sceneCredits", () => {
   it("counts a live render and flags the cap", () => {
-    const r = sceneCredits({ id: "s", credit_cost: 140, generation_id: "g", status: "completed" }, 70);
+    const r = sceneCredits(
+      { id: "s", credit_cost: 140, generation_id: "g", status: "completed" },
+      70,
+    );
     expect(r).toMatchObject({ spent: 70, remaining: 70, approaching: false });
     const f = sceneCredits({ id: "s", credit_cost: 70, generation_id: "g", status: "failed" }, 70);
     expect(f).toMatchObject({ spent: 0, approaching: false });
-    const a = sceneCredits({ id: "s", credit_cost: 70, generation_id: "g", status: "completed" }, 70);
+    const a = sceneCredits(
+      { id: "s", credit_cost: 70, generation_id: "g", status: "completed" },
+      70,
+    );
     expect(a.approaching).toBe(true);
   });
 });
