@@ -228,10 +228,20 @@ export function SceneEngine({
         ? history.spent + perRun > budget
         : false,
   };
-  /* Per-model cap: only this scene's finished runs on the chosen model count. */
-  const modelSeconds = sceneRuns
+  /* Per-model cap: the budget is stored once per model for the whole app, so
+   * the spend compared against it must cover every finished run on that model
+   * across the film — not just this scene. Each run is priced with its own
+   * recorded duration, never the Advanced rail's current selection, so moving
+   * the duration slider cannot rewrite money already spent. */
+  const runSeconds = (run: { settings: Record<string, unknown> }): number => {
+    const d = run.settings["duration"];
+    if (typeof d === "number" && Number.isFinite(d)) return d;
+    if (typeof d === "string" && Number.isFinite(Number(d))) return Number(d);
+    return plan.format.duration || 0;
+  };
+  const modelSeconds = (filmRuns.data?.runs ?? sceneRuns)
     .filter((run) => run.status === "completed" && run.model === chosenId)
-    .reduce((sum) => sum + (secondsPerRun || 0), 0);
+    .reduce((sum, run) => sum + runSeconds(run), 0);
   const modelSpent = rate !== null ? rate * modelSeconds : null;
   const modelOver =
     modelBudget !== null && modelSpent !== null && perRun !== null
