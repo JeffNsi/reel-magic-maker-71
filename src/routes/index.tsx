@@ -34,12 +34,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Turn an idea into a cinematic short with an AI Creative Director that helps develop the story, discover creative possibilities, test scenes and direct the final generation.",
+          "Develop your idea into a cinematic short with Shortizereel's AI Creative Director. One film costs 70 credits. Finished clips can also be purchased separately for 29 kr.",
       },
       { property: "og:title", content: "Shortizereel — AI Creative Director for Short Films" },
       {
         property: "og:description",
-        content: "You bring the idea. Your AI Director finds the film inside it.",
+        content: "Shortizereel: you bring the idea. Your AI Director finds the film inside it.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://reel-magic-maker-71.lovable.app/" },
