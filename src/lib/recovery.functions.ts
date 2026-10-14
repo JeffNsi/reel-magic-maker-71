@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { callGateway } from "@/lib/director.functions";
-import { assertFilmOwner, getFilm, renderScene, type FilmView } from "@/lib/film.functions";
+import { assertFilmOwner, getFilm, renderSceneCore, type FilmView } from "@/lib/film.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   candidateSchema,
@@ -140,11 +140,12 @@ export async function planRecovery(
 }
 
 /** Find another way to film a scene the video model refused, and render it once. */
-export const recoverScene = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => input.parse(data))
-  .handler(async ({ data, context }): Promise<RecoveryResult> => {
-    await assertFilmOwner(data.film_id, data.session_id, context.userId);
+export async function recoverSceneCore(
+  data: z.infer<typeof input>,
+  userId: string,
+): Promise<RecoveryResult> {
+  {
+    await assertFilmOwner(data.film_id, data.session_id, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const film = await getFilm({ data: { film_id: data.film_id, session_id: data.session_id } });
@@ -273,8 +274,9 @@ export const recoverScene = createServerFn({ method: "POST" })
 
     await noteEvolution(film.director_session_id, record);
 
-    const rendered = await renderScene({
-      data: {
+    const rendered = await renderSceneCore({
+      user_id: userId,
+      ...{
         film_id: data.film_id,
         scene_id: data.scene_id,
         session_id: data.session_id,
@@ -294,14 +296,22 @@ export const recoverScene = createServerFn({ method: "POST" })
       record,
       film: rendered.film,
     };
-  });
+  }
+}
+
+export const recoverScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => input.parse(data))
+  .handler(({ data, context }) => recoverSceneCore(data, context.userId));
 
 /** Approve a recovery that changes the story, then render it once. */
 export const approveRecovery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     input.omit({ simulate: true, failure_message: true }).parse(data),
   )
-  .handler(async ({ data }): Promise<{ film: FilmView; generation_id: string }> => {
+  .handler(async ({ data, context }): Promise<{ film: FilmView; generation_id: string }> => {
+    await assertFilmOwner(data.film_id, data.session_id, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const film = await getFilm({ data: { film_id: data.film_id, session_id: data.session_id } });
@@ -328,8 +338,9 @@ export const approveRecovery = createServerFn({ method: "POST" })
 
     await noteEvolution(film.director_session_id, record);
 
-    const rendered = await renderScene({
-      data: {
+    const rendered = await renderSceneCore({
+      user_id: context.userId,
+      ...{
         film_id: data.film_id,
         scene_id: data.scene_id,
         session_id: data.session_id,

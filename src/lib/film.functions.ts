@@ -20,6 +20,7 @@ import {
 } from "@/lib/reference-resolver";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  LEGACY_FILM_MESSAGE,
   NOT_OWNER_MESSAGE,
   QUOTA_MESSAGE,
   ownershipDecision,
@@ -361,7 +362,7 @@ export const buildFilm = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => buildInput.parse(data))
   .handler(({ data, context }) => buildFilmCore(data, context.userId));
 
-/** Throws unless the signed-in user owns this film; claims legacy owner-less films. */
+/** Throws unless this user owns the film. Owner-less legacy films are read-only. */
 export async function assertFilmOwner(film_id: string, session_id: string, userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row } = await supabaseAdmin
@@ -371,15 +372,9 @@ export async function assertFilmOwner(film_id: string, session_id: string, userI
     .eq("session_id", session_id)
     .maybeSingle();
   if (!row) throw new Error("That film could not be found.");
-  const decision = ownershipDecision((row.user_id as string | null) ?? null, userId);
-  if (decision === "deny") throw new Error(NOT_OWNER_MESSAGE);
-  if (decision === "claim") {
-    await supabaseAdmin
-      .from("stories")
-      .update({ user_id: userId })
-      .eq("id", film_id)
-      .is("user_id", null);
-  }
+  const owner = (row.user_id as string | null) ?? null;
+  if (!owner) throw new Error(LEGACY_FILM_MESSAGE);
+  if (ownershipDecision(owner, userId) === "deny") throw new Error(NOT_OWNER_MESSAGE);
 }
 
 export async function buildFilmCore(
@@ -698,11 +693,11 @@ const renderInput = sceneRef.extend({
 });
 
 /** Render one scene into a real clip, with the film's look and cast locked in. */
-export const renderScene = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => renderInput.parse(data))
-  .handler(async ({ data, context: auth }): Promise<{ generation_id: string; film: FilmView }> => {
-    await assertFilmOwner(data.film_id, data.session_id, auth.userId);
+export async function renderSceneCore(
+  data: z.infer<typeof renderInput> & { user_id: string },
+): Promise<{ generation_id: string; film: FilmView }> {
+  {
+    await assertFilmOwner(data.film_id, data.session_id, data.user_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { startGeneration } = await import("@/lib/storyreel-core.server");
 
@@ -787,7 +782,14 @@ export const renderScene = createServerFn({ method: "POST" })
       .eq("id", scene.id);
 
     return { generation_id: generationId, film: await loadFilm(data.film_id, data.session_id) };
-  });
+  }
+}
+
+/** Signed-in entry point; the core re-checks ownership from the stored owner. */
+export const renderScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => renderInput.parse(data))
+  .handler(({ data, context }) => renderSceneCore({ ...data, user_id: context.userId }));
 
 /** Save this film to the watchlist, or take it off again. */
 export const toggleWatchlist = createServerFn({ method: "POST" })

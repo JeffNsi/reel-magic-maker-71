@@ -7,7 +7,7 @@ import {
   finishDirector,
   startDirector,
 } from "@/lib/director.functions";
-import { buildFilmCore, getFilm, renderScene } from "@/lib/film.functions";
+import { buildFilmCore, getFilm, renderSceneCore } from "@/lib/film.functions";
 import { checkStatus } from "@/lib/storyreel.functions";
 import {
   buildGenerationRequest,
@@ -52,6 +52,18 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
           new Response(JSON.stringify(value), {
             headers: { "Content-Type": "application/json" },
           });
+
+        /** The stored owner of a film; audit renders act as that owner, never as a session. */
+        const ownerOf = async (film_id: string) => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data } = await supabaseAdmin
+            .from("stories")
+            .select("user_id")
+            .eq("id", film_id)
+            .maybeSingle();
+          if (!data?.user_id) throw new Error("This film has no owner, so it cannot be rendered.");
+          return data.user_id as string;
+        };
 
         if (input.action === "status") {
           const state = await checkStatus({
@@ -100,15 +112,17 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
 
         /** Real recovery on a real failed scene (one generation). */
         if (input.action === "recover") {
-          const { recoverScene } = await import("@/lib/recovery.functions");
-          const out = await recoverScene({
-            data: {
+          const { recoverSceneCore } = await import("@/lib/recovery.functions");
+          const out = await recoverSceneCore(
+            {
               film_id: input.film_id!,
               scene_id: input.scene_id!,
               session_id: input.session_id,
+              simulate: false,
               failure_message: input.failure_message,
             },
-          });
+            await ownerOf(input.film_id!),
+          );
           return json({
             outcome: out.outcome,
             failure_category: out.failure_category,
@@ -118,14 +132,13 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
         }
 
         if (input.action === "render") {
-          const out = await renderScene({
-            data: {
-              film_id: input.film_id!,
-              scene_id: input.scene_id!,
-              session_id: input.session_id,
-              engine: "lovable",
-              audio: false,
-            },
+          const out = await renderSceneCore({
+            film_id: input.film_id!,
+            scene_id: input.scene_id!,
+            session_id: input.session_id,
+            engine: "lovable",
+            audio: false,
+            user_id: await ownerOf(input.film_id!),
           });
           return json({ generation_id: out.generation_id });
         }
@@ -187,7 +200,7 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
             scene_number: scene.scene_number,
             title: scene.title,
             complexity: scene.complexity,
-            
+
             truth,
             request: preview,
             fidelity: checkFidelity(truth, preview),

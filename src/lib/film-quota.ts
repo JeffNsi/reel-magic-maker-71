@@ -7,15 +7,14 @@ export const DAILY_FILM_LIMIT = 3;
 
 export type FilmStatus = "queued" | "generating" | "ready" | "failed";
 
-export type OwnershipDecision = "allow" | "claim" | "deny";
+export type OwnershipDecision = "allow" | "deny";
 
 /**
- * A film with an owner is only usable by that owner. A legacy film without an
- * owner is claimed by the signed-in user who reached it with its browser session.
+ * Only the stored owner may change or render a film. A legacy film without an
+ * owner is read-only: there is no claim by browser session.
  */
 export function ownershipDecision(ownerId: string | null, userId: string): OwnershipDecision {
-  if (!ownerId) return "claim";
-  return ownerId === userId ? "allow" : "deny";
+  return ownerId && ownerId === userId ? "allow" : "deny";
 }
 
 /**
@@ -40,3 +39,5 @@ export const QUOTA_MESSAGE =
   "You have created 3 films today — the daily limit. Try again tomorrow. / Du har skapat 3 filmer i dag — dagsgränsen. Försök igen i morgon.";
 export const NOT_OWNER_MESSAGE =
   "This film belongs to another account. / Den här filmen tillhör ett annat konto.";
+export const LEGACY_FILM_MESSAGE =
+  "This is an older film without an account — it can be viewed but not rendered. / Det här är en äldre film utan konto — den kan visas men inte renderas.";

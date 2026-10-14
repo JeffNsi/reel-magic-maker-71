@@ -47,10 +47,11 @@ describe("daily film limit", () => {
 });
 
 describe("ownership", () => {
-  it("owner allowed, stranger denied, legacy claimed", () => {
+  it("owner allowed, stranger denied, legacy owner-less film denied", () => {
     expect(ownershipDecision("a", "a")).toBe("allow");
     expect(ownershipDecision("a", "b")).toBe("deny");
-    expect(ownershipDecision(null, "b")).toBe("claim");
+    expect(ownershipDecision(null, "b")).toBe("deny");
+    expect(ownershipDecision("", "")).toBe("deny");
   });
 });
 
