@@ -1,19 +1,9 @@
 # Roadmap
 
-## Startsidan — Shortizereel
-- [x] Enhetligt engelskt namn, prisbudskap och tydliga motorförklaringar; ingen ändring av generering.
-- [x] Gemensam sektionsbredd, läsbart galleri, kontotext, kontrast och rörelseanpassning.
-- [x] 223 tester gröna; automatisk typkontroll och bygge OK; ändrade filer lint-rena; mobil/dator kontrollerade; textlista framtagen.
-- [x] Creator-planen säger nu "500 credits / month (7 films)"; siffran står på ett ställe i startsidans copy-modul.
-- [x] Galleriets beskrivningar är korta engelska loglines om filmens handling, inga kamerabegrepp, ingen avklippt text.
-- [ ] Projektets fullständiga lint har 1776 befintliga fel utanför ändrade filer; får inte åtgärdas inom startsidans avgränsning.
-
-## Klart
-- [x] SumUp-betalning testad med riktig nyckel — kortkassan monteras live (ej genomfört köp, skarpt läge)
-- [x] Riktig videogenerering verifierad end-to-end (~45 s via Lovable AI, spelbar i resultatvyn + galleriet visar "Real render")
-- [x] Pricing (Free/Creator/Studio) kopplad till riktig registrering — /auth?plan=... med planbanner, verifierad i webbläsaren
-- [x] Scenredigeraren som produktsida — Studio plan-block ($99/mån) + sign-up-knappar, verifierad
-- [x] Per-konto-sparade genereringar — My Shorts visar kontots filmer vid inloggning, annars webbläsarens
-
-## Blockerat
-- fal.ai (Kling) generation — slut på kredit hos fal.ai-kontot; ägaren måste fylla på
+- [x] Publish homepage (Creator copy + gallery loglines)
+- [ ] Custom domain for Shortizereel — blocked: owner buys/connects in Project Settings → Domains
+- [ ] Universe memory (per-user characters, locations, style, reference images reused in new films) — waiting on user's design answers
+- [ ] Creator gate for universe memory (payments touch, named by user) — after universe memory
+- [ ] Homepage Creator perks + FAQ — only after universe memory works
+- [ ] Full scene run end to end — blocked: fal.ai balance must be topped up by owner
+- [ ] fal.ai "login" — not possible (fal.ai offers no app sign-in); keep balance box + top-up button
