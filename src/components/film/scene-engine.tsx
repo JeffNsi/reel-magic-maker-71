@@ -136,6 +136,7 @@ export function SceneEngine({
     queryFn: async () => {
       await poll({});
       await queryClient.invalidateQueries({ queryKey: ["scene-runs", plan?.scene_id] });
+      await queryClient.invalidateQueries({ queryKey: ["film-clips", filmId] });
       return Date.now();
     },
   });
@@ -154,6 +155,7 @@ export function SceneEngine({
       }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["scene-runs", plan?.scene_id] });
+      await queryClient.invalidateQueries({ queryKey: ["film-clips", filmId] });
       for (const run of result.runs.filter((r) => r.status === "failed")) {
         toast.error(run.error_message ?? "The platform refused this run.");
       }
@@ -337,9 +339,9 @@ export function SceneEngine({
         </div>
         {modelSpent !== null && (
           <p className="mt-1">
-            {`${entry?.label ?? chosenId}: ≈ $${modelSpent.toFixed(2)} used in this scene${
+            {`${entry?.label ?? chosenId}: ≈ $${modelSpent.toFixed(2)} used across this film${
               modelBudget !== null ? ` of $${modelBudget.toFixed(2)}` : ""
-            } / använt i scenen${modelBudget !== null ? ` av $${modelBudget.toFixed(2)}` : ""}`}
+            } / använt i hela filmen${modelBudget !== null ? ` av $${modelBudget.toFixed(2)}` : ""}`}
           </p>
         )}
         {money.over && (
