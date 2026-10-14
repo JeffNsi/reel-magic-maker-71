@@ -146,6 +146,7 @@ export type Database = {
           status: string
           style: string
           understanding: string
+          universe_carry: Json | null
           updated_at: string
           user_id: string | null
         }
@@ -169,6 +170,7 @@ export type Database = {
           status?: string
           style?: string
           understanding?: string
+          universe_carry?: Json | null
           updated_at?: string
           user_id?: string | null
         }
@@ -192,6 +194,7 @@ export type Database = {
           status?: string
           style?: string
           understanding?: string
+          universe_carry?: Json | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1224,6 +1227,48 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      universe_versions: {
+        Row: {
+          conflicts: Json
+          created_at: string
+          film_id: string | null
+          film_title: string
+          fingerprint: string
+          id: string
+          note: string
+          snapshot: Json
+          status: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          conflicts?: Json
+          created_at?: string
+          film_id?: string | null
+          film_title?: string
+          fingerprint?: string
+          id?: string
+          note?: string
+          snapshot?: Json
+          status?: string
+          user_id: string
+          version: number
+        }
+        Update: {
+          conflicts?: Json
+          created_at?: string
+          film_id?: string | null
+          film_title?: string
+          fingerprint?: string
+          id?: string
+          note?: string
+          snapshot?: Json
+          status?: string
+          user_id?: string
+          version?: number
         }
         Relationships: []
       }

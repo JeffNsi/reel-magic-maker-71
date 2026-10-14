@@ -11,3 +11,5 @@
 
 - Homepage pricing copy is shared in the landing copy module and reads existing price constants, so presentation cannot drift from generation or clip purchase prices.
 - Homepage layout and contrast overrides are scoped to its wrapper; other routes retain their existing presentation.
+- Rolling universe lives in `src/lib/universe.ts` (pure merge/versioning) and `universe.functions.ts`; every change is a new `universe_versions` row, locked traits are never overwritten, contradictions become pending rows the creator resolves — so history is always recoverable and nothing changes silently.
+- Creator status is read server-side from the existing active monthly plan on the profile; no payment code is changed for gating — keeps checkout untouched.

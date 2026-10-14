@@ -45,6 +45,7 @@ export function DirectorPanel({
   generating,
   onGenerate,
   onCancel,
+  onSessionStarted,
 }: {
   sessionId: string;
   idea: string;
@@ -52,6 +53,8 @@ export function DirectorPanel({
   generating: boolean;
   onGenerate: (blueprint: string, directorSessionId: string) => void;
   onCancel: () => void;
+  /** Fires once with the new Director session id (used to attach a universe carry). */
+  onSessionStarted?: ((directorSessionId: string) => void) | undefined;
 }) {
   const [state, setState] = useState<DirectorState | null>(null);
   const [answer, setAnswer] = useState("");
@@ -91,7 +94,10 @@ export function DirectorPanel({
 
   const startMutation = useMutation({
     mutationFn: () => begin({ data: { idea, style, session_id: sessionId } }),
-    onSuccess: apply,
+    onSuccess: (next) => {
+      apply(next);
+      onSessionStarted?.(next.id);
+    },
     onError: fail,
   });
 
