@@ -130,6 +130,6 @@ export function showcaseLogline(idea: string, style: string, index: number) {
   return (
     showcaseSubject(idea)?.logline ??
     FALLBACK_LOGLINES[index % FALLBACK_LOGLINES.length] ??
-    FALLBACK_LOGLINES[0]
+    "A single moment, and everything after it is different."
   );
 }
