@@ -429,3 +429,65 @@ export function planRestore(
   if (!target) return null;
   return { version: nextVersion(history), snapshot: readSnapshot(target.snapshot) };
 }
+
+/* ------------------------------------------------------- carry into a film */
+
+export type UniverseCarry = Pick<UniverseSnapshot, "characters" | "locations" | "style">;
+
+export function readCarry(value: unknown): UniverseCarry | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Partial<UniverseCarry>;
+  return {
+    characters: Array.isArray(v.characters) ? v.characters : [],
+    locations: Array.isArray(v.locations) ? v.locations : [],
+    style: v.style ?? { name: "", reference_assets: [] },
+  };
+}
+
+type SeedCharacter = { canonical_id: string; name: string } & Partial<Record<LockedCharacterField, string>>;
+
+/**
+ * Seeding with a carry: a character the film shares with the universe gets the
+ * universe's locked traits (they are the truth); carried characters the new
+ * story does not mention yet are added. Returns which film id maps to which
+ * universe character, so reference images can follow.
+ */
+export function applyCarryToCharacters<T extends SeedCharacter>(
+  seed: T[],
+  carry: UniverseCarry | null,
+): { rows: (T | SeedCharacter)[]; links: { canonical_id: string; universe: UniverseCharacter }[] } {
+  if (!carry?.characters.length) return { rows: seed, links: [] };
+  const links: { canonical_id: string; universe: UniverseCharacter }[] = [];
+  const used = new Set<string>();
+  const rows: (T | SeedCharacter)[] = seed.map((row) => {
+    const match = carry.characters.find(
+      (c) => !used.has(c.canonical_id) && identityKey(c.locked.name) === identityKey(row.name),
+    );
+    if (!match) return row;
+    used.add(match.canonical_id);
+    links.push({ canonical_id: row.canonical_id, universe: match });
+    const next = { ...row };
+    for (const field of LOCKED_CHARACTER_FIELDS) {
+      if (field === "name") continue;
+      const v = clean(match.locked[field]);
+      if (v) (next as Record<string, unknown>)[field] = v;
+    }
+    return next;
+  });
+  const taken = new Set(rows.map((r) => r.canonical_id));
+  for (const c of carry.characters) {
+    if (used.has(c.canonical_id) || taken.has(c.canonical_id)) continue;
+    const row: SeedCharacter = { canonical_id: c.canonical_id, name: c.locked.name || c.canonical_id };
+    for (const field of LOCKED_CHARACTER_FIELDS) if (field !== "name") row[field] = c.locked[field];
+    rows.push(row);
+    links.push({ canonical_id: c.canonical_id, universe: c });
+  }
+  return { rows, links };
+}
+
+/** Carried characters the universe says are dead — the Director must ask before using them. */
+export function carryWarnings(carry: UniverseCarry | null): string[] {
+  return (carry?.characters ?? [])
+    .filter((c) => c.mutable.status === "dead" || c.mutable.status === "missing")
+    .map((c) => `${c.locked.name || c.canonical_id} is ${c.mutable.status} in your universe.`);
+}
