@@ -11,4 +11,4 @@
 - [ ] Film pipeline step 2 (14/scene atomic charge, startFilmRender, cron tick, stop auto-publish) — waiting for "kör steg 2"
 - [ ] Unpublish the 17 scene clips — waiting for owner's separate yes
 - [ ] Character portrait price — waiting for owner
-- [ ] Start screen: genre/style/audience/length metadata, sceneCount by length, style lock, kids safety gate, character approval status — waiting for owner answers (length/cost, kids rule)
+- [ ] Start screen: genre/style/audience/length metadata, sceneCount by length, style lock, kids safety gate, character approval status — answered (all 4 lengths, rules+AI kids check, text+image style lock); planned after step 7
