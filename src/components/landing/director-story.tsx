@@ -1,7 +1,6 @@
 import { CircleDot, Compass, Film, Lock, Shield, Sparkles } from "lucide-react";
 
-import { COIN_COST } from "@/lib/storyreel.functions";
-import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
+import { FILM_PRICE_COPY } from "./copy";
 import { Reveal } from "./reveal";
 
 /**
@@ -57,17 +56,13 @@ export function BeforeYouStart({ signedIn }: { signedIn: boolean }) {
     },
     {
       label: "Generation",
-      body: `Your film is generated only after you approve the direction. One film costs ${COIN_COST} credits.`,
+      body: FILM_PRICE_COPY,
     },
     {
       label: "Account",
       body: signedIn
         ? "You are signed in, so your films and sessions are saved to your account."
-        : "You can explore the Director without an account. Signing in is needed to save and generate your film.",
-    },
-    {
-      label: "Clips",
-      body: `A finished clip can be bought for ${CLIP_PRICE_SEK} kr and plays and downloads as soon as the payment is confirmed.`,
+        : "Create a free account to save your films and sessions.",
     },
   ];
 
@@ -116,14 +111,14 @@ export function NotPromptToVideo() {
           This isn&apos;t just prompt-to-video.
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          Most AI video tools start by asking what you want to generate. Reel Magic Maker starts one
+          Most AI video tools start by asking what you want to generate. Shortizereel starts one
           step earlier — it helps you discover what the film should actually be.
         </p>
       </Reveal>
       <ul className="mt-8 grid gap-3 sm:grid-cols-3">
         {CONCEPTS.map((concept, i) => (
           <Reveal as="li" key={concept.title} delay={i * 80}>
-            <div className="surface-cinema h-full rounded-2xl border border-border/60 p-6">
+            <div className="h-full rounded-lg border border-border bg-card p-6">
               <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
                 <concept.icon className="size-5" aria-hidden />
               </span>
@@ -202,7 +197,7 @@ export function CreativeIntelligence() {
   );
 }
 
-export const DIRECTOR_STEPS = [
+const DIRECTOR_STEPS = [
   {
     number: "01",
     title: "Understand",
@@ -270,7 +265,7 @@ export function StayInControl() {
   return (
     <section className="mt-24">
       <Reveal>
-        <div className="surface-cinema rounded-3xl border border-border/60 p-7 sm:p-10">
+        <div className="border-y border-border py-8 sm:py-10">
           <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
             <Lock className="size-5" aria-hidden />
           </span>
@@ -278,8 +273,8 @@ export function StayInControl() {
             The Director directs. You decide.
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground">
-            The AI can recommend. It can challenge. It can discover. But your decisions remain
-            yours — accept the direction, edit it, go back, or keep your original version.
+            The AI can recommend. It can challenge. It can discover. But your decisions remain yours
+            — accept the direction, edit it, go back, or keep your original version.
           </p>
         </div>
       </Reveal>

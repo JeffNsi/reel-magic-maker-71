@@ -3,13 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Play } from "lucide-react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { STYLES, listShowcase } from "@/lib/storyreel.functions";
+import { Button } from "@/components/ui/button";
+import { STYLE_THUMBS } from "./style-picker";
+import { showcaseTitle } from "./copy";
 import { Reveal } from "./reveal";
 
 type Example = {
@@ -85,12 +83,7 @@ function styleLabel(value: string) {
   return STYLES.find((s) => s.value === value)?.label ?? "Cinematic";
 }
 
-function titleFrom(idea: string) {
-  const words = idea.replace(/[.?!]+$/, "").split(/\s+/).slice(0, 5).join(" ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-/** "Made with STORYREEL" — real finished shorts, topped up with example concepts. */
+/** "Made with Shortizereel" — real finished shorts, topped up with example concepts. */
 export function Gallery() {
   const [open, setOpen] = useState<Example | null>(null);
   const fetchShowcase = useServerFn(listShowcase);
@@ -103,7 +96,7 @@ export function Gallery() {
 
   const realCards: Example[] = (real ?? []).map((short, i) => ({
     id: short.id,
-    title: titleFrom(short.idea),
+    title: showcaseTitle(short.idea, styleLabel(short.style), i),
     style: styleLabel(short.style),
     prompt: short.idea,
     tint: TINTS[i % TINTS.length] as string,
@@ -116,21 +109,22 @@ export function Gallery() {
     <section id="gallery" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">
-          Made with <span className="text-primary">STORYREEL</span>
+          Made with <span className="text-primary">Shortizereel</span>
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          Real shorts created from a single prompt.
+          Real shorts, developed with the Director.
         </p>
       </Reveal>
 
       <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {cards.map((example, i) => (
           <Reveal as="li" key={example.id} delay={i * 60}>
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => setOpen(example)}
               aria-label={`Open ${example.title} — ${example.style}`}
-              className="group w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_24px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="group block h-auto w-full whitespace-normal p-0 overflow-hidden rounded-lg border border-border bg-card text-left transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_24px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <div className="relative aspect-[9/16] w-full overflow-hidden bg-gradient-to-br from-background to-card">
                 {example.video ? (
@@ -145,8 +139,15 @@ export function Gallery() {
                     onMouseLeave={(e) => e.currentTarget.pause()}
                   />
                 ) : (
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t ${example.tint} to-transparent opacity-60`}
+                  <img
+                    src={
+                      STYLE_THUMBS[
+                        STYLES.find((style) => style.label === example.style)?.value ?? "cinematic"
+                      ]
+                    }
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 size-full object-cover"
                   />
                 )}
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -163,15 +164,18 @@ export function Gallery() {
                   </span>
                   {example.video && (
                     <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Real render
+                      Finished clip
                     </span>
                   )}
                 </div>
-                <h3 className="mt-2 text-base font-medium text-foreground">
+                <h3 className="mt-2 break-words text-base font-medium text-foreground">
                   {example.title}
                 </h3>
+                <p className="mt-2 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
+                  {example.prompt}
+                </p>
               </div>
-            </button>
+            </Button>
           </Reveal>
         ))}
       </ul>

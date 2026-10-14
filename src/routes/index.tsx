@@ -21,6 +21,7 @@ import {
   StayInControl,
 } from "@/components/landing/director-story";
 
+import { FILM_PRICE_COPY } from "@/components/landing/copy";
 import { Gallery } from "@/components/landing/gallery";
 import { DirectorPanel } from "@/components/director/director-panel";
 import { Button } from "@/components/ui/button";
@@ -29,16 +30,18 @@ import { Textarea } from "@/components/ui/textarea";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Reel Magic Maker — AI Creative Director for Short Films" },
+      { title: "Shortizereel — AI Creative Director for Short Films" },
+      { name: "author", content: "Shortizereel" },
+      { name: "apple-mobile-web-app-title", content: "Shortizereel" },
       {
         name: "description",
         content:
-          "Turn an idea into a cinematic short with an AI Creative Director that helps develop the story, discover creative possibilities, test scenes and direct the final generation.",
+          "Develop your idea into a cinematic short with Shortizereel's AI Creative Director. One film costs 70 credits. Finished clips can also be purchased separately for 29 kr.",
       },
-      { property: "og:title", content: "Reel Magic Maker — AI Creative Director for Short Films" },
+      { property: "og:title", content: "Shortizereel — AI Creative Director for Short Films" },
       {
         property: "og:description",
-        content: "You bring the idea. Your AI Director finds the film inside it.",
+        content: "Shortizereel: you bring the idea. Your AI Director finds the film inside it.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://reel-magic-maker-71.lovable.app/" },
@@ -59,7 +62,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Reel Magic Maker",
+          name: "Shortizereel",
           applicationCategory: "MultimediaApplication",
           operatingSystem: "Web",
           url: "https://reel-magic-maker-71.lovable.app/",
@@ -140,9 +143,9 @@ type Engine = "lovable" | "fal" | "live";
 
 /** The three film engines a creator can pick between. */
 const ENGINES: { id: Engine; label: string; note: string }[] = [
-  { id: "lovable", label: "Ezy", note: "Included credits" },
-  { id: "fal", label: "Strong", note: "Your own account" },
-  { id: "live", label: "Live", note: "Realtime engine" },
+  { id: "lovable", label: "EZY", note: "Easiest — uses your included credits" },
+  { id: "fal", label: "STRONG", note: "Kling video via the connected fal.ai account" },
+  { id: "live", label: "LIVE", note: "MiniMax Director video via the fal.ai queue" },
 ];
 
 /** Turns a backend failure into language a filmmaker can act on. */
@@ -291,7 +294,7 @@ function StoryReel() {
   };
 
   return (
-    <div id="top" className="min-h-screen bg-background selection:bg-primary/30">
+    <div id="top" className="shortizereel-home min-h-screen bg-background selection:bg-primary/30">
       <a
         href="#create"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
@@ -312,9 +315,9 @@ function StoryReel() {
                 <span className="text-primary">Your AI Director finds the film inside it.</span>
               </h1>
               <p className="mx-auto mt-4 max-w-lg text-balance text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
-                Give Reel Magic Maker an idea. Your AI Director asks what matters, discovers
-                what&apos;s missing, finds cinematic possibilities, and helps shape the strongest
-                version of your story before you generate it.
+                Give Shortizereel an idea. Your AI Director asks what matters, discovers what&apos;s
+                missing, finds cinematic possibilities, and helps shape the strongest version of
+                your story before you generate it.
               </p>
               <div className="mt-7 flex flex-col items-center gap-3">
                 <Button
@@ -357,7 +360,6 @@ function StoryReel() {
             />
 
             {phase === "create" && <BeforeYouStart signedIn={!!user} />}
-
           </>
         )}
 
@@ -371,7 +373,6 @@ function StoryReel() {
             onCancel={() => setPhase("create")}
           />
         )}
-
 
         {phase === "done" && videoUrl && (
           <ResultState
@@ -392,7 +393,7 @@ function StoryReel() {
       </main>
 
       {phase === "create" && (
-        <>
+        <div className="mx-auto w-full max-w-[1248px] px-4 pb-12 sm:px-6">
           <NotPromptToVideo />
           <DirectorSequence />
           <CreativeIntelligence />
@@ -402,7 +403,7 @@ function StoryReel() {
           <Pricing />
           <Faq />
           <SiteFooter />
-        </>
+        </div>
       )}
     </div>
   );
@@ -424,21 +425,21 @@ function Header({ signedIn }: { signedIn: boolean }) {
         scrolled ? "border-b border-border bg-background/85 backdrop-blur-xl" : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1248px] items-center justify-between px-4 sm:px-6">
         <Link
           to="/"
-          className="mr-4 shrink-0 text-sm font-semibold uppercase tracking-[0.2em] text-foreground transition-opacity hover:opacity-70 sm:tracking-[0.35em]"
+          className="mr-4 shrink-0 text-sm font-semibold uppercase tracking-[0.2em] text-foreground transition-opacity hover:opacity-70 "
         >
-          Story<span className="text-primary">reel</span>
+          Shortizereel
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-5 sm:gap-7">
+        <nav aria-label="Main" className="flex items-center gap-3 sm:gap-7">
           <a
             href="#create"
             onClick={(event) => {
               event.preventDefault();
               document.getElementById("create")?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+            className="text-xs font-medium uppercase tracking-normal text-muted-foreground transition-colors hover:text-foreground"
           >
             Create
           </a>
@@ -448,13 +449,13 @@ function Header({ signedIn }: { signedIn: boolean }) {
               event.preventDefault();
               document.getElementById("director")?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+            className="text-xs font-medium uppercase tracking-normal text-muted-foreground transition-colors hover:text-foreground"
           >
             Director
           </a>
           <Link
             to={signedIn ? "/history" : "/auth"}
-            className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+            className="text-xs font-medium uppercase tracking-normal text-muted-foreground transition-colors hover:text-foreground"
           >
             {signedIn ? "My shorts" : "Sign in"}
           </Link>
@@ -505,7 +506,7 @@ function CreateCard({
               >
                 Describe your story...
               </label>
-              <span className="shrink-0 text-[10px] tabular-nums tracking-widest text-muted-foreground/70">
+              <span className="shrink-0 text-[10px] tabular-nums tracking-widest text-muted-foreground">
                 {idea.length}/{MAX_IDEA}
               </span>
             </div>
@@ -516,12 +517,12 @@ function CreateCard({
               rows={5}
               maxLength={MAX_IDEA}
               placeholder={PLACEHOLDER}
-              className="min-h-[168px] resize-none rounded-2xl border-border/70 bg-background/40 p-4 text-base leading-relaxed placeholder:text-muted-foreground/60 focus-visible:border-primary/50"
+              className="min-h-[168px] resize-none rounded-2xl border-border/70 bg-background/40 p-4 text-base leading-relaxed placeholder:text-muted-foreground focus-visible:border-primary/50"
             />
           </div>
 
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               True stories — tap to try
             </p>
             <div className="flex flex-wrap gap-2">
@@ -542,20 +543,21 @@ function CreateCard({
           <StylePicker value={style} onChange={setStyle} only={V1_STYLES} />
 
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+            <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               Film engine
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {ENGINES.map((item) => {
                 const active = engine === item.id;
                 return (
-                  <button
+                  <Button
+                    variant="outline"
                     key={item.id}
                     type="button"
                     onClick={() => setEngine(item.id)}
                     disabled={busy}
                     aria-pressed={active}
-                    className={`rounded-2xl border px-3 py-2.5 text-left transition-colors disabled:opacity-50 ${
+                    className={`h-auto min-h-24 flex-col items-start whitespace-normal rounded-lg border px-3 py-3 text-left transition-colors disabled:opacity-50 ${
                       active
                         ? "border-primary/60 bg-primary/10"
                         : "border-border/70 bg-background/40 hover:border-primary/40"
@@ -568,10 +570,10 @@ function CreateCard({
                     >
                       {item.label}
                     </span>
-                    <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground/70">
+                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
                       {item.note}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -598,18 +600,17 @@ function CreateCard({
               type="button"
               onClick={onSubmitDirect}
               disabled={busy}
-              className="mt-3 w-full text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              className="mt-3 w-full text-center text-[10px] uppercase tracking-normal text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
               Skip the Director — generate now
             </button>
-            <p className="mt-2 text-center text-[10px] leading-relaxed text-muted-foreground/70">
+            <p className="mt-2 text-center text-[10px] leading-relaxed text-muted-foreground">
               Already know exactly what you want? Generate directly. Either way, nothing is
               generated and no credits are used until you choose to make the film.
             </p>
-            <p className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              Vertical 9:16 · 5 seconds · {COIN_COST} credits per film
+            <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
+              {FILM_PRICE_COPY}
             </p>
-
           </div>
         </div>
       )}
@@ -637,7 +638,7 @@ function WorkingState({ statusText }: { statusText: "queued" | "processing" }) {
       >
         <div className="h-full w-1/3 animate-[slide-in-right_1.4s_ease-in-out_infinite] rounded-full bg-primary" />
       </div>
-      <p className="mt-4 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
+      <p className="mt-4 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
         {statusText === "queued" ? "Queued" : "Processing"} · keep this page open
       </p>
     </div>
@@ -659,7 +660,7 @@ function ResultState({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [downloading, setDownloading] = useState(false);
-  const filename = `storyreel-${generationId ?? "short"}.mp4`;
+  const filename = `shortizereel-${generationId ?? "short"}.mp4`;
   const navigate = useNavigate();
   const build = useServerFn(buildFilm);
 
