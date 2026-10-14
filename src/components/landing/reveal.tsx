@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
- * Fades a section in the first time it scrolls into view.
+ * Moves a section gently into place without ever hiding its content.
  * Falls back to visible immediately when IntersectionObserver is unavailable.
  */
 export function Reveal({
@@ -21,7 +21,11 @@ export function Reveal({
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || typeof IntersectionObserver === "undefined") {
+    if (
+      !node ||
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       setVisible(true);
       return;
     }
@@ -34,7 +38,7 @@ export function Reveal({
           }
         }
       },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.05 },
+      { rootMargin: "0px 0px 80px 0px", threshold: 0 },
     );
     observer.observe(node);
     return () => observer.disconnect();

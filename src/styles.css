@@ -100,17 +100,10 @@
   --input: oklch(1 0 0 / 0.1);
   --ring: oklch(0.63 0.235 15 / 0.5);
   --glow: oklch(0.63 0.235 15 / 0.45);
-  --gradient-screen: radial-gradient(
-      110% 70% at 50% -15%,
-      oklch(0.34 0.12 15 / 0.32) 0%,
-      transparent 62%
-    ),
+  --gradient-screen:
+    radial-gradient(110% 70% at 50% -15%, oklch(0.34 0.12 15 / 0.32) 0%, transparent 62%),
     linear-gradient(180deg, oklch(0.12 0.01 285) 0%, oklch(0.09 0.006 285) 100%);
-  --gradient-gold: linear-gradient(
-    100deg,
-    oklch(0.66 0.235 12) 0%,
-    oklch(0.58 0.23 22) 100%
-  );
+  --gradient-gold: linear-gradient(100deg, oklch(0.66 0.235 12) 0%, oklch(0.58 0.23 22) 100%);
   --shadow-cinema: 0 28px 70px -24px oklch(0 0 0 / 0.85);
   --chart-1: oklch(0.63 0.235 15);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -128,18 +121,16 @@
 
   /* Jeje Inc Vibe palette: black velvet + purple/pink + gold */
   --dw-background: oklch(0.05 0.004 285);
-  --dw-card: oklch(0.10 0.006 285);
+  --dw-card: oklch(0.1 0.006 285);
   --dw-card-hover: oklch(0.14 0.007 285);
   --dw-border: oklch(1 0 0 / 0.06);
   --dw-foreground: oklch(0.98 0.003 285);
   --dw-muted: oklch(0.65 0.003 285);
-  --dw-primary: oklch(0.68 0.20 305);
+  --dw-primary: oklch(0.68 0.2 305);
   --dw-primary-2: oklch(0.65 0.24 350);
-  --dw-gold: oklch(0.80 0.17 85);
+  --dw-gold: oklch(0.8 0.17 85);
   --dw-gold-2: oklch(0.73 0.17 75);
 }
-
-
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
@@ -275,16 +266,11 @@
   color: oklch(0.05 0.004 285);
 }
 
-
-
-
 /* Scroll reveal for landing sections */
 .reveal {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(18px);
-  transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .reveal.is-visible {
   opacity: 1;
@@ -317,5 +303,22 @@ html {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Homepage-only contrast and typography; other screens keep their existing theme. */
+.shortizereel-home {
+  --muted-foreground: oklch(0.78 0.008 285);
+}
+.shortizereel-home * {
+  letter-spacing: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shortizereel-home *,
+  .shortizereel-home *::before,
+  .shortizereel-home *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

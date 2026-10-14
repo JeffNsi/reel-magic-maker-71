@@ -8,7 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { COIN_COST } from "@/lib/storyreel.functions";
+import { FILM_PRICE_COPY } from "./copy";
 import { Reveal } from "./reveal";
 
 const TIERS = [
@@ -17,7 +17,7 @@ const TIERS = [
     price: "$0",
     cadence: "per month",
     highlight: false,
-    features: ["3 renders", "5-second videos", "STORYREEL watermark"],
+    features: ["3 renders", "5-second videos", "Shortizereel watermark"],
     cta: "Start free",
     plan: "free" as const,
   },
@@ -26,7 +26,7 @@ const TIERS = [
     price: "$19",
     cadence: "per month",
     highlight: true,
-    features: ["Unlimited renders", "No watermark", "Priority render queue"],
+    features: ["Monthly credits included", "No watermark", "Priority render queue"],
     cta: "Go Creator",
     plan: "creator" as const,
   },
@@ -46,15 +46,13 @@ export function Pricing() {
     <section id="pricing" className="mt-24 scroll-mt-24">
       <Reveal>
         <h2 className="font-display text-3xl italic text-foreground sm:text-4xl">Pricing</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Start free. One film costs {COIN_COST} coins on paid plans.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">{FILM_PRICE_COPY}</p>
       </Reveal>
       <ul className="mt-8 grid gap-3 sm:grid-cols-3">
         {TIERS.map((tier, i) => (
           <Reveal as="li" key={tier.name} delay={i * 80}>
             <div
-              className={`relative flex h-full flex-col rounded-2xl border p-6 ${
+              className={`relative flex h-full flex-col rounded-lg border p-6 ${
                 tier.highlight
                   ? "border-primary bg-card shadow-[0_0_36px_var(--glow)]"
                   : "border-border bg-card/60"
@@ -87,12 +85,17 @@ export function Pricing() {
                     : ""
                 }`}
               >
-                <Link to="/auth" search={{ plan: tier.plan }}>{tier.cta}</Link>
+                <Link to="/auth" search={{ plan: tier.plan }}>
+                  {tier.cta}
+                </Link>
               </Button>
             </div>
           </Reveal>
         ))}
       </ul>
+      <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+        Plans are priced in USD. Individual clip purchases are priced in SEK.
+      </p>
     </section>
   );
 }
@@ -104,7 +107,7 @@ const FAQS = [
   },
   {
     q: "When are credits used?",
-    a: "Only when you approve the direction and choose to make the film. Talking with the Director costs no film credits.",
+    a: `Only when you approve the direction and choose to make the film. Talking with the Director costs no film credits. ${FILM_PRICE_COPY}`,
   },
   {
     q: "What if I close the browser?",
@@ -167,9 +170,7 @@ const FOOTER_LINKS = {
     { label: "Create", href: "#create" },
     { label: "How it works", href: "#how" },
   ],
-  Company: [
-    { label: "Contact", href: "mailto:hello@storyreel.app" },
-  ],
+  Company: [{ label: "Contact", href: "mailto:hello@storyreel.app" }],
   Legal: [
     { label: "Privacy", to: "/privacy" as const },
     { label: "Terms", to: "/terms" as const },
@@ -188,7 +189,7 @@ export function SiteFooter() {
     <footer className="mt-24 border-t border-border pt-12">
       <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <p className="font-display text-2xl italic text-primary">STORYREEL</p>
+          <p className="font-display text-2xl italic text-primary">Shortizereel</p>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             You bring the idea. Your AI Director finds the film inside it.
           </p>
@@ -198,11 +199,16 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Product</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">
+            Product
+          </h3>
           <ul className="mt-4 space-y-2 text-sm">
             {FOOTER_LINKS.Product.map((item) => (
               <li key={item.label}>
-                <a href={item.href} className="text-muted-foreground transition-colors hover:text-foreground">
+                <a
+                  href={item.href}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
                   {item.label}
                 </a>
               </li>
@@ -211,11 +217,16 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Company</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">
+            Company
+          </h3>
           <ul className="mt-4 space-y-2 text-sm">
             {FOOTER_LINKS.Company.map((item) => (
               <li key={item.label}>
-                <a href={item.href} className="text-muted-foreground transition-colors hover:text-foreground">
+                <a
+                  href={item.href}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
                   {item.label}
                 </a>
               </li>
@@ -228,7 +239,10 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm">
             {FOOTER_LINKS.Legal.map((item) => (
               <li key={item.label}>
-                <Link to={item.to} className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link
+                  to={item.to}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
                   {item.label}
                 </Link>
               </li>
@@ -238,9 +252,7 @@ export function SiteFooter() {
       </div>
 
       <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
-        <p className="text-xs text-muted-foreground">
-          © 2026 STORYREEL. All rights reserved.
-        </p>
+        <p className="text-xs text-muted-foreground">© 2026 Shortizereel. All rights reserved.</p>
         <ul className="flex items-center gap-4">
           {SOCIALS.map((social) => (
             <li key={social.label}>
