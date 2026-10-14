@@ -7,3 +7,8 @@
 - [ ] Homepage Creator perks + FAQ — after the Creator path is verified live
 - [ ] Custom domain — blocked: owner connects in Project Settings → Domains
 - [ ] Full scene run end to end — blocked: fal.ai balance must be topped up by owner
+- [x] Film pipeline step 1 + 1b (ownership, status, daily limit, renderScene core split)
+- [ ] Film pipeline step 2 (14/scene atomic charge, startFilmRender, cron tick, stop auto-publish) — waiting for "kör steg 2"
+- [ ] Unpublish the 17 scene clips — waiting for owner's separate yes
+- [ ] Character portrait price — waiting for owner
+- [ ] Start screen: genre/style/audience/length metadata, sceneCount by length, style lock, kids safety gate, character approval status — waiting for owner answers (length/cost, kids rule)
