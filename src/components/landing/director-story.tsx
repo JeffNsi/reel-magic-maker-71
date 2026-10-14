@@ -197,7 +197,7 @@ export function CreativeIntelligence() {
   );
 }
 
-export const DIRECTOR_STEPS = [
+const DIRECTOR_STEPS = [
   {
     number: "01",
     title: "Understand",
