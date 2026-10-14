@@ -31,6 +31,8 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Shortizereel — AI Creative Director for Short Films" },
+      { name: "author", content: "Shortizereel" },
+      { name: "apple-mobile-web-app-title", content: "Shortizereel" },
       {
         name: "description",
         content:

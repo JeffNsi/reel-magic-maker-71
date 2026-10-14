@@ -1,9 +1,11 @@
 # Roadmap
 
 ## Startsidan — Shortizereel
-- [ ] Enhetligt engelskt namn, prisbudskap och tydliga motorförklaringar; ingen ändring av generering.
-- [ ] Gemensam sektionsbredd, läsbart galleri, kontotext, kontrast och rörelseanpassning.
-- [ ] Tester, typkontroll, lint och visuell kontroll; exakt lista över ändrade texter.
+- [x] Enhetligt engelskt namn, prisbudskap och tydliga motorförklaringar; ingen ändring av generering.
+- [x] Gemensam sektionsbredd, läsbart galleri, kontotext, kontrast och rörelseanpassning.
+- [x] 223 tester gröna; automatisk typkontroll och bygge OK; ändrade filer lint-rena; mobil/dator kontrollerade; textlista framtagen.
+- [ ] Creator-planens månadsantal väntar på ägarens besked; visas tills vidare som Monthly credits included.
+- [ ] Projektets fullständiga lint har 1776 befintliga fel utanför ändrade filer; får inte åtgärdas inom startsidans avgränsning.
 
 ## Klart
 - [x] SumUp-betalning testad med riktig nyckel — kortkassan monteras live (ej genomfört köp, skarpt läge)
