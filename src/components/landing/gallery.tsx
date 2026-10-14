@@ -7,14 +7,17 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { STYLES, listShowcase } from "@/lib/storyreel.functions";
 import { Button } from "@/components/ui/button";
 import { STYLE_THUMBS } from "./style-picker";
-import { showcaseTitle } from "./copy";
+import { showcaseLogline, showcaseTitle } from "./copy";
 import { Reveal } from "./reveal";
 
 type Example = {
   id: string;
   title: string;
   style: string;
+  /** The raw idea, kept for the dialog's "Original prompt" panel. */
   prompt: string;
+  /** One line about the film itself — shown under the title on the card. */
+  logline: string;
   tint: string;
   video?: string;
 };
@@ -26,6 +29,7 @@ const EXAMPLES: Example[] = [
     style: "Cinematic",
     prompt:
       "A woman in a red coat runs through a rain-soaked station as the last train pulls away, neon reflections on wet stone.",
+    logline: "She runs for the last train and the life she left behind.",
     tint: "from-rose-500/20",
   },
   {
@@ -34,6 +38,7 @@ const EXAMPLES: Example[] = [
     style: "Anime",
     prompt:
       "A teenage hero stands on a rooftop at dusk, wind pulling at their scarf, city lights waking below.",
+    logline: "He takes the oath that will make the city afraid of him.",
     tint: "from-violet-500/20",
   },
   {
@@ -42,6 +47,7 @@ const EXAMPLES: Example[] = [
     style: "Noir",
     prompt:
       "A detective opens a locked drawer in a dark office, blinds cutting hard shadows across his face, smoke drifting.",
+    logline: "The case he closed years ago is waiting in his drawer.",
     tint: "from-neutral-500/20",
   },
   {
@@ -50,6 +56,7 @@ const EXAMPLES: Example[] = [
     style: "Documentary",
     prompt:
       "A fisherman hauls rope onto a small boat as dawn breaks over a quiet northern harbour, handheld camera.",
+    logline: "He fishes the same waters his father did, and says nothing.",
     tint: "from-amber-500/20",
   },
   {
@@ -58,6 +65,7 @@ const EXAMPLES: Example[] = [
     style: "Retro Film",
     prompt:
       "A vintage car crosses an empty desert highway in golden light, grain and light leaks across the frame.",
+    logline: "She drives west with a radio that only plays one voice.",
     tint: "from-orange-500/20",
   },
   {
@@ -66,6 +74,7 @@ const EXAMPLES: Example[] = [
     style: "Hyperreal",
     prompt:
       "Extreme close-up of an astronaut's visor reflecting a red desert planet, dust catching the light.",
+    logline: "The last human on Mars notices the dust moving on its own.",
     tint: "from-red-500/20",
   },
 ];
@@ -99,6 +108,7 @@ export function Gallery() {
     title: showcaseTitle(short.idea, styleLabel(short.style), i),
     style: styleLabel(short.style),
     prompt: short.idea,
+    logline: showcaseLogline(short.idea, styleLabel(short.style), i),
     tint: TINTS[i % TINTS.length] as string,
     video: short.video_url,
   }));
@@ -171,8 +181,8 @@ export function Gallery() {
                 <h3 className="mt-2 break-words text-base font-medium text-foreground">
                   {example.title}
                 </h3>
-                <p className="mt-2 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
-                  {example.prompt}
+                <p className="mt-2 break-words text-sm font-normal leading-relaxed text-muted-foreground">
+                  {example.logline}
                 </p>
               </div>
             </Button>

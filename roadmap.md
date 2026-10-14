@@ -4,7 +4,8 @@
 - [x] Enhetligt engelskt namn, prisbudskap och tydliga motorförklaringar; ingen ändring av generering.
 - [x] Gemensam sektionsbredd, läsbart galleri, kontotext, kontrast och rörelseanpassning.
 - [x] 223 tester gröna; automatisk typkontroll och bygge OK; ändrade filer lint-rena; mobil/dator kontrollerade; textlista framtagen.
-- [ ] Creator-planens månadsantal väntar på ägarens besked; visas tills vidare som Monthly credits included.
+- [x] Creator-planen säger nu "500 credits / month (7 films)"; siffran står på ett ställe i startsidans copy-modul.
+- [x] Galleriets beskrivningar är korta engelska loglines om filmens handling, inga kamerabegrepp, ingen avklippt text.
 - [ ] Projektets fullständiga lint har 1776 befintliga fel utanför ändrade filer; får inte åtgärdas inom startsidans avgränsning.
 
 ## Klart
