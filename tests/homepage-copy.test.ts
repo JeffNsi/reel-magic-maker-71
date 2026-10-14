@@ -73,14 +73,18 @@ describe("homepage presentation", () => {
     expect(
       showcaseLogline("Elin emerges from the granite archway into mist.", "Cinematic", 1),
     ).toBe("Elin walks into a fog that belongs to another century.");
+    expect(showcaseLogline("Julian holds a phone on the rooftop terrace.", "Cinematic", 2)).toBe(
+      "One tap on a rooftop could make him a different man.",
+    );
+    expect(showcaseLogline("Husband looks across the sunlit kitchen table.", "Cinematic", 3)).toBe(
+      "At breakfast, her husband smiles like a stranger she once loved.",
+    );
     expect(
-      showcaseLogline("Julian holds a phone on the rooftop terrace.", "Cinematic", 2),
-    ).toBe("One tap on a rooftop could make him a different man.");
-    expect(
-      showcaseLogline("Husband looks across the sunlit kitchen table.", "Cinematic", 3),
-    ).toBe("At breakfast, her husband smiles like a stranger she once loved.");
-    expect(
-      showcaseLogline("Astrid steps through the arch exit into a 1926 streetscape.", "Cinematic", 4),
+      showcaseLogline(
+        "Astrid steps through the arch exit into a 1926 streetscape.",
+        "Cinematic",
+        4,
+      ),
     ).toBe("Astrid follows a lantern into a street that no longer exists.");
 
     const raw = showcaseLogline(
