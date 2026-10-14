@@ -313,7 +313,9 @@ export async function startGeneration(opts: {
     const message = err instanceof Error ? err.message : "The video service could not start this.";
     await supabaseAdmin
       .from("generations")
-      .update({ status: "failed", error_message: message })
+      // The caller's withCharge refunds a rejected start; record that here so the
+      // cron tick never refunds the same charge twice.
+      .update({ status: "failed", error_message: message, refunded: true, coins_spent: 0 })
       .eq("id", row.id);
     throw new Error(message);
   }
