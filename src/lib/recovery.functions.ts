@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { callGateway } from "@/lib/director.functions";
-import { getFilm, renderScene, type FilmView } from "@/lib/film.functions";
+import { assertFilmOwner, getFilm, renderScene, type FilmView } from "@/lib/film.functions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   candidateSchema,
   diagnoseFailure,
@@ -140,8 +141,10 @@ export async function planRecovery(
 
 /** Find another way to film a scene the video model refused, and render it once. */
 export const recoverScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => input.parse(data))
-  .handler(async ({ data }): Promise<RecoveryResult> => {
+  .handler(async ({ data, context }): Promise<RecoveryResult> => {
+    await assertFilmOwner(data.film_id, data.session_id, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const film = await getFilm({ data: { film_id: data.film_id, session_id: data.session_id } });

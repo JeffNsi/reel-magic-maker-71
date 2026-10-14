@@ -699,8 +699,10 @@ const renderInput = sceneRef.extend({
 
 /** Render one scene into a real clip, with the film's look and cast locked in. */
 export const renderScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => renderInput.parse(data))
-  .handler(async ({ data }): Promise<{ generation_id: string; film: FilmView }> => {
+  .handler(async ({ data, context }): Promise<{ generation_id: string; film: FilmView }> => {
+    await assertFilmOwner(data.film_id, data.session_id, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { startGeneration } = await import("@/lib/storyreel-core.server");
 
