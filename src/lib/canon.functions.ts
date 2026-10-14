@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 import { affectedScenes, normalizeFilmState, type FilmState } from "@/lib/film-state";
 import { normalizeStoryState } from "@/lib/story-state";
@@ -833,10 +834,13 @@ function environmentPrompt(row: Record<string, unknown>, kind: string, style: st
  * and see progress. Nothing here renders a scene or touches generation.
  */
 export const generateCanonAsset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => assetRequest.parse(data))
-  .handler(async ({ data }): Promise<CanonAssetResult> => {
+  .handler(async ({ data, context }): Promise<CanonAssetResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertOwner(data.film_id, data.session_id);
+    const { assertFilmOwner } = await import("@/lib/film.functions");
+    await assertFilmOwner(data.film_id, data.session_id, context.userId);
 
     const state = await deriveState(data.film_id, data.session_id);
     const style = state.visual_style.style || "cinematic";

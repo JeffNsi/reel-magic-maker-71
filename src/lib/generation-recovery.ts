@@ -200,7 +200,11 @@ export function judgeCandidate(
 
   const parts: Record<string, number> = {
     emotional_core: candidate.preserves.emotional_core ? 10 : 0,
-    narrative_purpose: candidate.preserves.what_must_survive ? 10 : need(inv.what_must_survive) ? 0 : 7,
+    narrative_purpose: candidate.preserves.what_must_survive
+      ? 10
+      : need(inv.what_must_survive)
+        ? 0
+        : 7,
     reveal: candidate.preserves.reveal ? 10 : need(inv.reveal) ? 0 : 7,
     character_meaning: candidate.preserves.character_meaning ? 10 : need(inv.characters) ? 0 : 7,
     visual_clue: candidate.preserves.visual_clue ? 10 : 5,

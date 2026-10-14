@@ -388,8 +388,8 @@ function FilmPage() {
             </Button>
           </div>
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-            Every five-second shot costs {SHOT_COST} credits. Shots the director marks as complex
-            are budgeted for two takes, so the number you see is what to set aside.
+            Every five-second EZY shot costs {SHOT_COST} credits — exactly what is charged when it
+            renders. A start the video service rejects is refunded.
           </p>
         </section>
 

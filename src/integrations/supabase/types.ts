@@ -291,6 +291,7 @@ export type Database = {
           created_at: string
           drama_id: string
           episode_number: number
+          hidden: boolean
           id: string
           is_free: boolean
           source_generation_id: string | null
@@ -304,6 +305,7 @@ export type Database = {
           created_at?: string
           drama_id: string
           episode_number: number
+          hidden?: boolean
           id?: string
           is_free?: boolean
           source_generation_id?: string | null
@@ -317,6 +319,7 @@ export type Database = {
           created_at?: string
           drama_id?: string
           episode_number?: number
+          hidden?: boolean
           id?: string
           is_free?: boolean
           source_generation_id?: string | null
@@ -814,8 +817,12 @@ export type Database = {
       }
       generations: {
         Row: {
+          attempts: number
+          charged_bonus: number
+          charged_paid: number
           coins_spent: number
           created_at: string
+          deadline_at: string | null
           director_session_id: string | null
           episode_id: string | null
           error_message: string | null
@@ -826,6 +833,7 @@ export type Database = {
           narration: string | null
           prompt_final: string | null
           provider: string
+          refunded: boolean
           scene_number: number | null
           session_id: string
           status: string
@@ -837,8 +845,12 @@ export type Database = {
           voiceover_url: string | null
         }
         Insert: {
+          attempts?: number
+          charged_bonus?: number
+          charged_paid?: number
           coins_spent?: number
           created_at?: string
+          deadline_at?: string | null
           director_session_id?: string | null
           episode_id?: string | null
           error_message?: string | null
@@ -849,6 +861,7 @@ export type Database = {
           narration?: string | null
           prompt_final?: string | null
           provider?: string
+          refunded?: boolean
           scene_number?: number | null
           session_id: string
           status?: string
@@ -860,8 +873,12 @@ export type Database = {
           voiceover_url?: string | null
         }
         Update: {
+          attempts?: number
+          charged_bonus?: number
+          charged_paid?: number
           coins_spent?: number
           created_at?: string
+          deadline_at?: string | null
           director_session_id?: string | null
           episode_id?: string | null
           error_message?: string | null
@@ -872,6 +889,7 @@ export type Database = {
           narration?: string | null
           prompt_final?: string | null
           provider?: string
+          refunded?: boolean
           scene_number?: number | null
           session_id?: string
           status?: string
@@ -1338,7 +1356,18 @@ export type Database = {
     }
     Functions: {
       claim_film_slot: { Args: { _user: string }; Returns: boolean }
+      refund_coins: {
+        Args: { _bonus: number; _paid: number; _user: string }
+        Returns: undefined
+      }
       release_film_slot: { Args: { _user: string }; Returns: undefined }
+      spend_coins: {
+        Args: { _cost: number; _user: string }
+        Returns: {
+          bonus_spent: number
+          paid_spent: number
+        }[]
+      }
     }
     Enums: {
       team_role: "owner" | "editor" | "viewer"

@@ -26,6 +26,9 @@ import {
   ownershipDecision,
   shouldReleaseSlot,
 } from "@/lib/film-quota";
+import { EZY_SCENE_COST, sceneCostFor } from "@/lib/pricing";
+import { withCharge } from "@/lib/coin-charge";
+import { deadlineFrom } from "@/lib/scene-job";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -43,8 +46,8 @@ import {
 const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3.8-flash";
 
-/** Credits one five-second take costs — the same price as every other shot. */
-export const SHOT_COST = 70;
+/** Credits one five-second EZY take costs — read from the single price constant. */
+export const SHOT_COST = EZY_SCENE_COST;
 
 const styleValues = STYLES.map((s) => s.value) as unknown as [string, ...string[]];
 const STYLE_PREFIX: Record<string, string> = Object.fromEntries(
@@ -164,9 +167,9 @@ function verdictOf(raw: string | undefined): ClarityVerdict | null {
   return "clear";
 }
 
-/** Complex shots usually need a second take, so the budget says so up front. */
-function costFor(complexity: number | null) {
-  return complexity !== null && complexity >= 7 ? SHOT_COST * 2 : SHOT_COST;
+/** Every scene shows exactly what one render charges; complexity no longer changes the price. */
+function costFor(_complexity: number | null) {
+  return SHOT_COST;
 }
 
 async function askAi(system: string, user: string): Promise<unknown> {
@@ -602,8 +605,12 @@ export const getFilm = createServerFn({ method: "POST" })
 
 /** Review every scene for clarity and re-cost the shot list from what it finds. */
 export const reviewScenes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => ref.parse(data))
-  .handler(({ data }) => reviewScenesCore(data));
+  .handler(async ({ data, context }) => {
+    await assertFilmOwner(data.film_id, data.session_id, context.userId);
+    return reviewScenesCore(data);
+  });
 
 export async function reviewScenesCore(data: z.infer<typeof ref>): Promise<FilmView> {
   {
@@ -694,7 +701,7 @@ const renderInput = sceneRef.extend({
 
 /** Render one scene into a real clip, with the film's look and cast locked in. */
 export async function renderSceneCore(
-  data: z.infer<typeof renderInput> & { user_id: string },
+  data: z.infer<typeof renderInput> & { user_id: string; attempt?: number },
 ): Promise<{ generation_id: string; film: FilmView }> {
   {
     await assertFilmOwner(data.film_id, data.session_id, data.user_id);
@@ -763,18 +770,35 @@ export async function renderSceneCore(
       );
     }
 
-    const generationId = await startGeneration({
-      session_id: data.session_id,
-      idea: scene.idea.trim(),
-      style: film.style,
-      prompt,
-      audio: data.audio,
-      provider: data.engine,
-      story_id: film.id,
-      scene_number: scene.scene_number,
-      narration: scene.narration,
-      references: referenceImageUrls(references),
-    });
+    /**
+     * The one charged path for a film scene: EZY debits EZY_SCENE_COST atomically
+     * (bonus first) before the job is submitted, and the exact charge is refunded
+     * when the provider rejects the start. fal.ai engines bill the fal account.
+     */
+    const { dbCoins } = await import("@/lib/coins.server");
+    const { result: generationId } = await withCharge(
+      dbCoins,
+      data.user_id,
+      sceneCostFor(data.engine),
+      (charge) =>
+        startGeneration({
+          session_id: data.session_id,
+          idea: scene.idea.trim(),
+          style: film.style,
+          prompt,
+          audio: data.audio,
+          provider: data.engine,
+          story_id: film.id,
+          scene_number: scene.scene_number,
+          narration: scene.narration,
+          references: referenceImageUrls(references),
+          user_id: data.user_id,
+          charged_bonus: charge.bonus,
+          charged_paid: charge.paid,
+          attempts: data.attempt ?? 1,
+          deadline_at: deadlineFrom(new Date()),
+        }),
+    );
 
     await supabaseAdmin
       .from("story_scenes")

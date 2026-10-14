@@ -87,9 +87,7 @@ async function syncVipFromSubscription(subscription: any, env: StripeEnv) {
       stripe_customer_id: subscription.customer,
       product_id: item?.price?.product ?? "unknown",
       price_id:
-        item?.price?.lookup_key ||
-        item?.price?.metadata?.lovable_external_id ||
-        item?.price?.id,
+        item?.price?.lookup_key || item?.price?.metadata?.lovable_external_id || item?.price?.id,
       status: subscription.status,
       current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
       current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
@@ -147,10 +145,7 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       await syncVipFromSubscription(event.data.object, env);
       break;
     case "customer.subscription.deleted":
-      await syncVipFromSubscription(
-        { ...event.data.object, status: "canceled" },
-        env,
-      );
+      await syncVipFromSubscription({ ...event.data.object, status: "canceled" }, env);
       break;
     default:
       console.log("Unhandled event:", event.type);

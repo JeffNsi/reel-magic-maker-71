@@ -267,6 +267,12 @@ export async function startGeneration(opts: {
   narration?: string;
   /** Resolved reference images, in the resolver's order. Empty = text-only. */
   references?: string[];
+  /** Charging record, written with the row so the cron tick can refund exactly. */
+  user_id?: string;
+  charged_bonus?: number;
+  charged_paid?: number;
+  attempts?: number;
+  deadline_at?: string;
 }): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const provider: VideoProvider = opts.provider ?? "lovable";
@@ -283,6 +289,12 @@ export async function startGeneration(opts: {
       story_id: opts.story_id ?? null,
       scene_number: opts.scene_number ?? null,
       narration: opts.narration ?? null,
+      user_id: opts.user_id ?? null,
+      charged_bonus: opts.charged_bonus ?? 0,
+      charged_paid: opts.charged_paid ?? 0,
+      coins_spent: (opts.charged_bonus ?? 0) + (opts.charged_paid ?? 0),
+      attempts: opts.attempts ?? 1,
+      deadline_at: opts.deadline_at ?? null,
     })
     .select("id")
     .single();
@@ -301,7 +313,9 @@ export async function startGeneration(opts: {
     const message = err instanceof Error ? err.message : "The video service could not start this.";
     await supabaseAdmin
       .from("generations")
-      .update({ status: "failed", error_message: message })
+      // The caller's withCharge refunds a rejected start; record that here so the
+      // cron tick never refunds the same charge twice.
+      .update({ status: "failed", error_message: message, refunded: true, coins_spent: 0 })
       .eq("id", row.id);
     throw new Error(message);
   }

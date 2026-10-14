@@ -93,7 +93,6 @@ function sumupWebhookUrl(origin: string) {
   return `${base}/api/public/payments/sumup-webhook`;
 }
 
-
 async function sumupRequest(path: string, init: RequestInit) {
   const apiKey = process.env["SUMUP_API_KEY"];
   if (!apiKey) throw new Error("SUMUP_NOT_CONNECTED");
@@ -209,7 +208,6 @@ export const startClipPurchase = createServerFn({ method: "POST" })
           }),
         });
 
-
         await supabaseAdmin
           .from("clip_purchases")
           .update({ reference: `sumup:${checkout.id}` })
@@ -265,12 +263,17 @@ export const getClipDelivery = createServerFn({ method: "POST" })
       if (status !== "paid" && reference) {
         if (row.provider === "stripe" && reference.startsWith("stripe:")) {
           const stripe = createStripeClient(row.environment as StripeEnv);
-          const session = await stripe.checkout.sessions.retrieve(reference.slice("stripe:".length));
+          const session = await stripe.checkout.sessions.retrieve(
+            reference.slice("stripe:".length),
+          );
           if (session.payment_status === "paid") status = "paid";
         } else if (row.provider === "sumup" && reference.startsWith("sumup:")) {
-          const checkout = await sumupRequest(`/v0.1/checkouts/${reference.slice("sumup:".length)}`, {
-            method: "GET",
-          });
+          const checkout = await sumupRequest(
+            `/v0.1/checkouts/${reference.slice("sumup:".length)}`,
+            {
+              method: "GET",
+            },
+          );
           if (checkout.status === "PAID") status = "paid";
         }
         if (status === "paid") {

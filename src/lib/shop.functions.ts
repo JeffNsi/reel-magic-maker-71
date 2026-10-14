@@ -1,11 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  type StripeEnv,
-  createStripeClient,
-  getStripeErrorMessage,
-} from "@/lib/stripe.server";
+import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 
 export type ShopPack = "small" | "medium" | "large" | "vip";
 
@@ -101,58 +97,56 @@ async function fulfillPurchase(opts: {
 export const createShopCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => packInput.parse(data))
-  .handler(
-    async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
-      const pack = PACKS[data.pack];
-      const isVip = data.pack === "vip";
-      try {
-        const stripe = createStripeClient(data.environment as StripeEnv);
+  .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
+    const pack = PACKS[data.pack];
+    const isVip = data.pack === "vip";
+    try {
+      const stripe = createStripeClient(data.environment as StripeEnv);
 
-        const { data: authData } = await context.supabase.auth.getUser();
-        const email = authData.user?.email ?? undefined;
+      const { data: authData } = await context.supabase.auth.getUser();
+      const email = authData.user?.email ?? undefined;
 
-        // Resolve or create a Stripe Customer carrying userId metadata.
-        let customerId: string | undefined;
-        const found = await stripe.customers.search({
-          query: `metadata['userId']:'${context.userId}'`,
-          limit: 1,
+      // Resolve or create a Stripe Customer carrying userId metadata.
+      let customerId: string | undefined;
+      const found = await stripe.customers.search({
+        query: `metadata['userId']:'${context.userId}'`,
+        limit: 1,
+      });
+      if (found.data.length) {
+        customerId = found.data[0]!.id;
+      } else {
+        const created = await stripe.customers.create({
+          ...(email && { email }),
+          metadata: { userId: context.userId },
         });
-        if (found.data.length) {
-          customerId = found.data[0]!.id;
-        } else {
-          const created = await stripe.customers.create({
-            ...(email && { email }),
-            metadata: { userId: context.userId },
-          });
-          customerId = created.id;
-        }
-
-        const prices = await stripe.prices.list({ lookup_keys: [pack.priceId] });
-        if (!prices.data.length) throw new Error("Price not found");
-        const stripePrice = prices.data[0]!;
-
-        const session = await stripe.checkout.sessions.create({
-          line_items: [{ price: stripePrice.id, quantity: 1 }],
-          mode: isVip ? "subscription" : "payment",
-          ui_mode: "embedded_page",
-          return_url: data.returnUrl,
-          customer: customerId,
-          ...(!isVip && { payment_intent_data: { description: pack.name } }),
-          metadata: { userId: context.userId, pack: data.pack, managed_payments: "true" },
-          ...(isVip && {
-            subscription_data: { metadata: { userId: context.userId, pack: "vip" } },
-          }),
-          // Stripe handles tax compliance, fraud protection and disputes end
-          // to end for buyers in ~80 supported countries.
-          managed_payments: { enabled: true },
-        } as any);
-
-        return { clientSecret: session.client_secret ?? "" };
-      } catch (error) {
-        return { error: getStripeErrorMessage(error) };
+        customerId = created.id;
       }
-    },
-  );
+
+      const prices = await stripe.prices.list({ lookup_keys: [pack.priceId] });
+      if (!prices.data.length) throw new Error("Price not found");
+      const stripePrice = prices.data[0]!;
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        mode: isVip ? "subscription" : "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        ...(!isVip && { payment_intent_data: { description: pack.name } }),
+        metadata: { userId: context.userId, pack: data.pack, managed_payments: "true" },
+        ...(isVip && {
+          subscription_data: { metadata: { userId: context.userId, pack: "vip" } },
+        }),
+        // Stripe handles tax compliance, fraud protection and disputes end
+        // to end for buyers in ~80 supported countries.
+        managed_payments: { enabled: true },
+      } as any);
+
+      return { clientSecret: session.client_secret ?? "" };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
 
 // ---------- SumUp checkout (card widget) ----------
 
@@ -216,7 +210,9 @@ export const createSumUpCheckout = createServerFn({ method: "POST" })
 export const confirmSumUpCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ pack: z.enum(["small", "medium", "large", "vip"]), checkoutId: z.string() }).parse(data),
+    z
+      .object({ pack: z.enum(["small", "medium", "large", "vip"]), checkoutId: z.string() })
+      .parse(data),
   )
   .handler(async ({ data, context }): Promise<{ paid: boolean } | { error: string }> => {
     try {
@@ -249,7 +245,8 @@ export const getSumUpLink = createServerFn({ method: "POST" })
     const url = process.env[key];
     if (!url) {
       return {
-        error: "No SumUp payment link saved for this pack yet. Create it in the SumUp app and add it as a secret.",
+        error:
+          "No SumUp payment link saved for this pack yet. Create it in the SumUp app and add it as a secret.",
       };
     }
     return { url };
