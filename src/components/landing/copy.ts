@@ -24,6 +24,7 @@ export function showcaseTitle(idea: string, style: string, index: number) {
   const fallbackTitles = ["A Fleeting Moment", "Between Two Worlds", "Before Everything Changes"];
   return (
     subjects.find(([pattern]) => pattern.test(idea))?.[1] ??
-    fallbackTitles[index % fallbackTitles.length] ?? "A Fleeting Moment"
+    fallbackTitles[index % fallbackTitles.length] ??
+    "A Fleeting Moment"
   );
 }
