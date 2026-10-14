@@ -26,6 +26,7 @@ import { Gallery } from "@/components/landing/gallery";
 import { DirectorPanel } from "@/components/director/director-panel";
 import {
   CarryWarnings,
+  UniverseLocked,
   UniversePicker,
   useAttachCarry,
   useUniverse,
@@ -395,6 +396,11 @@ function StoryReel() {
         )}
         {phase === "director" && sessionId && universeGate === "ready" && (
           <CarryWarnings warnings={carryWarnings} />
+        )}
+        {phase === "director" && universe && !universe.creator && (
+          <div className="mx-auto mb-4 w-full max-w-2xl">
+            <UniverseLocked signedIn />
+          </div>
         )}
         {phase === "director" && sessionId && universeGate === "ready" && (
           <DirectorPanel
