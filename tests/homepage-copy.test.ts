@@ -11,9 +11,9 @@ describe("homepage presentation", () => {
   });
 
   it("gives showcase subjects short editorial titles instead of prompt fragments", () => {
-    expect(showcaseTitle("The Detective leans over the brushed steel surface", "Cinematic", 0)).toBe(
-      "The Quiet Investigation",
-    );
+    expect(
+      showcaseTitle("The Detective leans over the brushed steel surface", "Cinematic", 0),
+    ).toBe("The Quiet Investigation");
     expect(showcaseTitle("Elin emerges from the granite archway", "Cinematic", 1)).toBe(
       "Through the Archway",
     );
