@@ -1,5 +1,10 @@
 # Roadmap
 
+## Startsidan — Shortizereel
+- [ ] Enhetligt engelskt namn, prisbudskap och tydliga motorförklaringar; ingen ändring av generering.
+- [ ] Gemensam sektionsbredd, läsbart galleri, kontotext, kontrast och rörelseanpassning.
+- [ ] Tester, typkontroll, lint och visuell kontroll; exakt lista över ändrade texter.
+
 ## Klart
 - [x] SumUp-betalning testad med riktig nyckel — kortkassan monteras live (ej genomfört köp, skarpt läge)
 - [x] Riktig videogenerering verifierad end-to-end (~45 s via Lovable AI, spelbar i resultatvyn + galleriet visar "Real render")
