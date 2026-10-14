@@ -183,7 +183,12 @@ export function mergeUniverse(
       const status = incoming.end.status ?? "alive";
       characters.push({
         canonical_id: incoming.canonical_id,
-        locked: mergeLocked(LOCKED_CHARACTER_FIELDS, blankLocked(LOCKED_CHARACTER_FIELDS), incoming.locked, () => {}),
+        locked: mergeLocked(
+          LOCKED_CHARACTER_FIELDS,
+          blankLocked(LOCKED_CHARACTER_FIELDS),
+          incoming.locked,
+          () => {},
+        ),
         reference_assets: uniq(incoming.reference_assets ?? []),
         mutable: {
           status,
@@ -216,19 +221,24 @@ export function mergeUniverse(
       continue;
     }
 
-    current.locked = mergeLocked(LOCKED_CHARACTER_FIELDS, current.locked, incoming.locked, (field, had, got) =>
-      conflicts.push({
-        kind: "locked_mismatch",
-        subject_type: "character",
-        canonical_id: current.canonical_id,
-        name: displayName,
-        field,
-        universe_value: had,
-        film_value: got,
-      }),
+    current.locked = mergeLocked(
+      LOCKED_CHARACTER_FIELDS,
+      current.locked,
+      incoming.locked,
+      (field, had, got) =>
+        conflicts.push({
+          kind: "locked_mismatch",
+          subject_type: "character",
+          canonical_id: current.canonical_id,
+          name: displayName,
+          field,
+          universe_value: had,
+          film_value: got,
+        }),
     );
     // Reference images are locked: the universe keeps its own; new ones only fill an empty pack.
-    if (!current.reference_assets.length) current.reference_assets = uniq(incoming.reference_assets ?? []);
+    if (!current.reference_assets.length)
+      current.reference_assets = uniq(incoming.reference_assets ?? []);
 
     const end = incoming.end;
     const m = current.mutable;
@@ -260,9 +270,17 @@ export function mergeUniverse(
     if (index < 0) {
       locations.push({
         canonical_id: incoming.canonical_id,
-        locked: mergeLocked(LOCKED_LOCATION_FIELDS, blankLocked(LOCKED_LOCATION_FIELDS), incoming.locked, () => {}),
+        locked: mergeLocked(
+          LOCKED_LOCATION_FIELDS,
+          blankLocked(LOCKED_LOCATION_FIELDS),
+          incoming.locked,
+          () => {},
+        ),
         reference_assets: uniq(incoming.reference_assets ?? []),
-        mutable: { condition: clean(incoming.end.condition), notes: uniq(incoming.end.notes ?? []) },
+        mutable: {
+          condition: clean(incoming.end.condition),
+          notes: uniq(incoming.end.notes ?? []),
+        },
         first_film_id: outcome.film_id,
         last_film_id: outcome.film_id,
       });
@@ -271,18 +289,23 @@ export function mergeUniverse(
     }
     const current = locations[index]!;
     const displayName = current.locked.name || name || current.canonical_id;
-    current.locked = mergeLocked(LOCKED_LOCATION_FIELDS, current.locked, incoming.locked, (field, had, got) =>
-      conflicts.push({
-        kind: "locked_mismatch",
-        subject_type: "location",
-        canonical_id: current.canonical_id,
-        name: displayName,
-        field,
-        universe_value: had,
-        film_value: got,
-      }),
+    current.locked = mergeLocked(
+      LOCKED_LOCATION_FIELDS,
+      current.locked,
+      incoming.locked,
+      (field, had, got) =>
+        conflicts.push({
+          kind: "locked_mismatch",
+          subject_type: "location",
+          canonical_id: current.canonical_id,
+          name: displayName,
+          field,
+          universe_value: had,
+          film_value: got,
+        }),
     );
-    if (!current.reference_assets.length) current.reference_assets = uniq(incoming.reference_assets ?? []);
+    if (!current.reference_assets.length)
+      current.reference_assets = uniq(incoming.reference_assets ?? []);
     current.mutable = {
       condition: clean(incoming.end.condition) || current.mutable.condition,
       notes: uniq([...current.mutable.notes, ...(incoming.end.notes ?? [])]),
@@ -444,7 +467,9 @@ export function readCarry(value: unknown): UniverseCarry | null {
   };
 }
 
-type SeedCharacter = { canonical_id: string; name: string } & Partial<Record<LockedCharacterField, string>>;
+type SeedCharacter = { canonical_id: string; name: string } & Partial<
+  Record<LockedCharacterField, string>
+>;
 
 /**
  * Seeding with a carry: a character the film shares with the universe gets the
@@ -477,7 +502,10 @@ export function applyCarryToCharacters<T extends SeedCharacter>(
   const taken = new Set(rows.map((r) => r.canonical_id));
   for (const c of carry.characters) {
     if (used.has(c.canonical_id) || taken.has(c.canonical_id)) continue;
-    const row: SeedCharacter = { canonical_id: c.canonical_id, name: c.locked.name || c.canonical_id };
+    const row: SeedCharacter = {
+      canonical_id: c.canonical_id,
+      name: c.locked.name || c.canonical_id,
+    };
     for (const field of LOCKED_CHARACTER_FIELDS) if (field !== "name") row[field] = c.locked[field];
     rows.push(row);
     links.push({ canonical_id: c.canonical_id, universe: c });

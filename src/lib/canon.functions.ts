@@ -280,13 +280,13 @@ export const getCanon = createServerFn({ method: "POST" })
       link.universe.reference_assets.map((entry, i) => {
         const [kind, path] = entry.includes("::") ? entry.split("::") : [`carried-${i + 1}`, entry];
         return {
-        story_id,
-        subject_type: "character",
-        subject_canonical_id: link.canonical_id,
-        kind: kind || `carried-${i + 1}`,
-        storage_path: path ?? entry,
-        prompt: "Carried from your universe (locked reference)",
-        version: 1,
+          story_id,
+          subject_type: "character",
+          subject_canonical_id: link.canonical_id,
+          kind: kind || `carried-${i + 1}`,
+          storage_path: path ?? entry,
+          prompt: "Carried from your universe (locked reference)",
+          version: 1,
         };
       }),
     );

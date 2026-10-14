@@ -7,7 +7,11 @@ import { ArrowLeft, Lock, Unlock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniverseLocked, useSignedIn, useUniverse } from "@/components/universe/universe-ui";
 import { getSessionId } from "@/lib/session";
-import { resolveUniverseConflict, restoreUniverseVersion, type UniverseView } from "@/lib/universe.functions";
+import {
+  resolveUniverseConflict,
+  restoreUniverseVersion,
+  type UniverseView,
+} from "@/lib/universe.functions";
 
 export const Route = createFileRoute("/universe")({
   head: () => ({
@@ -21,7 +25,8 @@ export const Route = createFileRoute("/universe")({
       { property: "og:title", content: "Your universe — Shortizereel" },
       {
         property: "og:description",
-        content: "Characters, places and events that carry from film to film, with full version history.",
+        content:
+          "Characters, places and events that carry from film to film, with full version history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -41,7 +46,8 @@ function UniversePage() {
   const resolve = useServerFn(resolveUniverseConflict);
   const restore = useServerFn(restoreUniverseVersion);
   const done = (next: UniverseView) => qc.setQueryData(["universe"], next);
-  const fail = () => setWarning("That did not go through — nothing changed. / Det gick inte — inget ändrades.");
+  const fail = () =>
+    setWarning("That did not go through — nothing changed. / Det gick inte — inget ändrades.");
 
   const resolveM = useMutation({
     mutationFn: (v: { version: number; decision: "accept" | "reject" }) =>
@@ -57,15 +63,23 @@ function UniversePage() {
 
   return (
     <main className="mx-auto w-full max-w-[1248px] px-4 py-10 sm:px-6">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="size-4" /> Back
       </Link>
       <h1 className="mt-4 font-serif text-4xl italic text-foreground">Your universe</h1>
 
       {warning && (
-        <div role="alert" className="mt-4 flex justify-between rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm">
+        <div
+          role="alert"
+          className="mt-4 flex justify-between rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm"
+        >
           {warning}
-          <button type="button" aria-label="Dismiss" onClick={() => setWarning(null)}><X className="size-4" /></button>
+          <button type="button" aria-label="Dismiss" onClick={() => setWarning(null)}>
+            <X className="size-4" />
+          </button>
         </div>
       )}
 
@@ -75,11 +89,18 @@ function UniversePage() {
         ) : !user ? (
           <UniverseLocked signedIn={false} />
         ) : isError ? (
-          <p className="text-sm text-muted-foreground">Your universe could not be loaded right now. / Universumet kunde inte laddas just nu.</p>
+          <p className="text-sm text-muted-foreground">
+            Your universe could not be loaded right now. / Universumet kunde inte laddas just nu.
+          </p>
         ) : !data || !data.creator ? (
           <UniverseLocked signedIn />
         ) : (
-          <Universe data={data} busy={resolveM.isPending || restoreM.isPending} onResolve={resolveM.mutate} onRestore={restoreM.mutate} />
+          <Universe
+            data={data}
+            busy={resolveM.isPending || restoreM.isPending}
+            onResolve={resolveM.mutate}
+            onRestore={restoreM.mutate}
+          />
         )}
       </div>
     </main>
@@ -105,7 +126,9 @@ function Universe({
     <div className="space-y-8">
       {pending.map((p) => (
         <section key={p.version} className="rounded-2xl border border-primary/50 bg-primary/10 p-5">
-          <h2 className="font-medium text-foreground">Your Director has a question about “{p.film_title}”</h2>
+          <h2 className="font-medium text-foreground">
+            Your Director has a question about “{p.film_title}”
+          </h2>
           <ul className="mt-2 space-y-1 text-sm text-foreground">
             {p.conflicts.map((c, i) => (
               <li key={i}>
@@ -116,10 +139,19 @@ function Universe({
             ))}
           </ul>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button size="sm" disabled={busy} onClick={() => onResolve({ version: p.version, decision: "accept" })}>
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={() => onResolve({ version: p.version, decision: "accept" })}
+            >
               Yes, they return — update my universe
             </Button>
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => onResolve({ version: p.version, decision: "reject" })}>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => onResolve({ version: p.version, decision: "reject" })}
+            >
               No, leave my universe as it is
             </Button>
           </div>
@@ -138,9 +170,13 @@ function Universe({
             <article key={c.canonical_id} className="rounded-2xl border border-border bg-card p-5">
               <h3 className="font-medium text-foreground">
                 {c.locked.name || c.canonical_id}{" "}
-                <span className="text-xs text-muted-foreground">{c.canonical_id} · {c.mutable.status}</span>
+                <span className="text-xs text-muted-foreground">
+                  {c.canonical_id} · {c.mutable.status}
+                </span>
               </h3>
-              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-foreground"><Lock className="size-3" /> Locked</p>
+              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-foreground">
+                <Lock className="size-3" /> Locked
+              </p>
               <p className="text-xs text-muted-foreground">
                 {(["face", "hair", "skin", "body", "height", "build"] as const)
                   .filter((f) => c.locked[f])
@@ -149,13 +185,17 @@ function Universe({
                 {" · "}
                 {c.reference_assets.length} reference images
               </p>
-              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-foreground"><Unlock className="size-3" /> Now</p>
+              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-foreground">
+                <Unlock className="size-3" /> Now
+              </p>
               <p className="text-xs text-muted-foreground">
                 {[
                   c.mutable.wardrobe && `wearing ${c.mutable.wardrobe}`,
                   c.mutable.location && `at ${c.mutable.location}`,
                   c.mutable.injuries.length ? `injuries: ${c.mutable.injuries.join(", ")}` : "",
-                  c.mutable.relationships.length ? `relationships: ${c.mutable.relationships.join(", ")}` : "",
+                  c.mutable.relationships.length
+                    ? `relationships: ${c.mutable.relationships.join(", ")}`
+                    : "",
                   c.mutable.knowledge.length ? `knows: ${c.mutable.knowledge.join(", ")}` : "",
                 ]
                   .filter(Boolean)
@@ -172,7 +212,8 @@ function Universe({
           {snapshot.locations.map((l) => (
             <li key={l.canonical_id}>
               <span className="text-foreground">{l.locked.name || l.canonical_id}</span>
-              {l.mutable.condition && ` — ${l.mutable.condition}`} · {l.reference_assets.length} reference images
+              {l.mutable.condition && ` — ${l.mutable.condition}`} · {l.reference_assets.length}{" "}
+              reference images
             </li>
           ))}
           {!snapshot.locations.length && <li>Nothing yet.</li>}
@@ -196,12 +237,23 @@ function Universe({
         <h2 className="font-serif text-2xl italic text-foreground">History</h2>
         <ul className="mt-2 space-y-2">
           {versions.map((v) => (
-            <li key={v.version} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm">
+            <li
+              key={v.version}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm"
+            >
               <span className="text-foreground">
-                v{v.version} · {v.film_title || "—"} · <span className="text-muted-foreground">{v.note} ({v.status})</span>
+                v{v.version} · {v.film_title || "—"} ·{" "}
+                <span className="text-muted-foreground">
+                  {v.note} ({v.status})
+                </span>
               </span>
               {v.status === "applied" && v.version !== latestApplied && (
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => onRestore(v.version)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => onRestore(v.version)}
+                >
                   Go back to this version
                 </Button>
               )}

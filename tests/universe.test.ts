@@ -18,7 +18,12 @@ const film1: FilmOutcome = {
       canonical_id: "AMARA_01",
       locked: { name: "Amara", face: "oval, freckles", hair: "black braids" },
       reference_assets: ["a/front.png"],
-      end: { status: "alive", wardrobe: "red coat", location: "harbour", injuries: ["cut on cheek"] },
+      end: {
+        status: "alive",
+        wardrobe: "red coat",
+        location: "harbour",
+        injuries: ["cut on cheek"],
+      },
     },
     {
       canonical_id: "JULIAN_01",
@@ -76,7 +81,11 @@ describe("universe locked fields", () => {
     expect(amara.mutable.location).toBe("station");
     expect(amara.mutable.injuries).toEqual([]);
     expect(result.conflicts).toContainEqual(
-      expect.objectContaining({ kind: "locked_mismatch", field: "face", universe_value: "oval, freckles" }),
+      expect.objectContaining({
+        kind: "locked_mismatch",
+        field: "face",
+        universe_value: "oval, freckles",
+      }),
     );
   });
 
@@ -105,7 +114,13 @@ describe("universe locked fields", () => {
       film_id: "f2",
       film_title: "Two",
       characters: [],
-      locations: [{ canonical_id: "TOWER_01", locked: { name: "Clock Tower" }, end: { condition: "burned down" } }],
+      locations: [
+        {
+          canonical_id: "TOWER_01",
+          locked: { name: "Clock Tower" },
+          end: { condition: "burned down" },
+        },
+      ],
       events: [],
     }).next;
     expect(next.locations[0]!.mutable.condition).toBe("burned down");
@@ -133,7 +148,9 @@ describe("universe versioning", () => {
     const plan = planUniverseUpdate(history, {
       film_id: "f2",
       film_title: "Two",
-      characters: [{ canonical_id: "JULIAN_01", locked: { name: "Julian" }, end: { location: "cafe" } }],
+      characters: [
+        { canonical_id: "JULIAN_01", locked: { name: "Julian" }, end: { location: "cafe" } },
+      ],
       locations: [],
       events: [],
     });
@@ -153,7 +170,9 @@ describe("universe versioning", () => {
       {
         film_id: "f2",
         film_title: "Two",
-        characters: [{ canonical_id: "JULIAN_01", locked: { name: "Julian" }, end: { location: "cafe" } }],
+        characters: [
+          { canonical_id: "JULIAN_01", locked: { name: "Julian" }, end: { location: "cafe" } },
+        ],
         locations: [],
         events: [],
       },
@@ -168,7 +187,12 @@ describe("universe versioning", () => {
 
   it("restores an earlier version as a new version without deleting history", () => {
     let history = apply([], film1);
-    history = apply(history, { ...film1, film_id: "f2", characters: [], events: [{ scene_number: 1, description: "x" }] });
+    history = apply(history, {
+      ...film1,
+      film_id: "f2",
+      characters: [],
+      events: [{ scene_number: 1, description: "x" }],
+    });
     const restore = planRestore(history, 1)!;
     expect(restore.version).toBe(3);
     expect(restore.snapshot.timeline.map((e) => e.film_id)).toEqual(["f1"]);

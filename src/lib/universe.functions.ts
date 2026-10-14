@@ -59,7 +59,9 @@ async function loadHistory(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
     .from("universe_versions")
-    .select("version, status, film_id, film_title, note, fingerprint, snapshot, conflicts, created_at")
+    .select(
+      "version, status, film_id, film_title, note, fingerprint, snapshot, conflicts, created_at",
+    )
     .eq("user_id", userId)
     .order("version", { ascending: true });
   return (data ?? []).map((row) => ({
@@ -116,7 +118,10 @@ export const getUniverse = createServerFn({ method: "POST" })
   });
 
 /** The film's end state, read deterministically from its canon and StoryState. */
-async function filmOutcome(film_id: string, session_id: string): Promise<{
+async function filmOutcome(
+  film_id: string,
+  session_id: string,
+): Promise<{
   outcome: FilmOutcome;
   finished: boolean;
 }> {
@@ -141,7 +146,15 @@ async function filmOutcome(film_id: string, session_id: string): Promise<{
     ? canon.characters.map((c) => ({
         canonical_id: c.canonical_id,
         name: c.name,
-        locked: { name: c.name, face: c.face, hair: c.hair, skin: c.skin, body: c.body, height: c.height, build: c.build },
+        locked: {
+          name: c.name,
+          face: c.face,
+          hair: c.hair,
+          skin: c.skin,
+          body: c.body,
+          height: c.height,
+          build: c.build,
+        },
         reference_assets: c.reference_assets.map((a) => `${a.kind}::${a.storage_path}`),
       }))
     : story.characters.map((c) => ({
@@ -161,7 +174,8 @@ async function filmOutcome(film_id: string, session_id: string): Promise<{
     characters: characters.map((c) => {
       const state = story.character_states.find((s) => s.character_id === c.canonical_id);
       const events = state?.events ?? [];
-      const last = (aspect: string) => [...events].reverse().find((e) => e.aspect === aspect)?.value;
+      const last = (aspect: string) =>
+        [...events].reverse().find((e) => e.aspect === aspect)?.value;
       const physical = events.filter((e) => e.aspect === "physical").map((e) => e.value);
       const status = physical.map(statusFromText).filter(Boolean).pop() ?? undefined;
       return {
@@ -186,7 +200,9 @@ async function filmOutcome(film_id: string, session_id: string): Promise<{
       reference_assets: e.reference_assets.map((a) => `${a.kind}::${a.storage_path}`),
       end: {},
     })),
-    events: story.timeline.slice(-6).map((t) => ({ scene_number: t.scene_number, description: t.description })),
+    events: story.timeline
+      .slice(-6)
+      .map((t) => ({ scene_number: t.scene_number, description: t.description })),
   };
 
   const scenes = story.scenes;

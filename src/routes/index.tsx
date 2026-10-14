@@ -210,7 +210,8 @@ function StoryReel() {
     carryRef.current = { chars: [], locs: [] };
     setCarryWarnings([]);
     const hasUniverse =
-      !!universe?.creator && universe.snapshot.characters.length + universe.snapshot.locations.length > 0;
+      !!universe?.creator &&
+      universe.snapshot.characters.length + universe.snapshot.locations.length > 0;
     setUniverseGate(hasUniverse ? "pick" : "ready");
   }, [phase, universeLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 

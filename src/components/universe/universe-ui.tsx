@@ -39,8 +39,8 @@ export function UniverseLocked({ signedIn }: { signedIn: boolean }) {
         <Lock className="size-4 text-primary" aria-hidden /> Universe memory — Creator only
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        With Creator, your Director remembers your characters, places and style between films.
-        After every finished film the universe moves on — wardrobe, injuries, relationships, where
+        With Creator, your Director remembers your characters, places and style between films. After
+        every finished film the universe moves on — wardrobe, injuries, relationships, where
         everyone is — so the next film starts where the last one ended.
       </p>
       <Button asChild size="sm" className="mt-4">
@@ -60,7 +60,10 @@ export function UniverseLocked({ signedIn }: { signedIn: boolean }) {
 
 function Dismissible({ text, onClose }: { text: string; onClose: () => void }) {
   return (
-    <div role="alert" className="flex items-start justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm text-foreground">
+    <div
+      role="alert"
+      className="flex items-start justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm text-foreground"
+    >
       <span>{text}</span>
       <button type="button" aria-label="Dismiss" onClick={onClose}>
         <X className="size-4" />
@@ -118,7 +121,9 @@ export function UniversePicker({
                 {c.locked.name || c.canonical_id}
                 <span className="block text-xs text-muted-foreground">
                   {[
-                    c.mutable.status !== "alive" ? `${c.mutable.status} — the Director will ask before using them` : "",
+                    c.mutable.status !== "alive"
+                      ? `${c.mutable.status} — the Director will ask before using them`
+                      : "",
                     c.mutable.wardrobe && `wearing ${c.mutable.wardrobe}`,
                     c.mutable.location && `at ${c.mutable.location}`,
                     c.mutable.injuries.length ? `marked by ${c.mutable.injuries.join(", ")}` : "",
@@ -137,7 +142,10 @@ export function UniversePicker({
           <legend className="text-sm font-medium text-foreground">Places that follow</legend>
           <div className="mt-2 space-y-2">
             {snapshot.locations.map((l) => (
-              <label key={l.canonical_id} className="flex items-center gap-2 text-sm text-foreground">
+              <label
+                key={l.canonical_id}
+                className="flex items-center gap-2 text-sm text-foreground"
+              >
                 <input
                   type="checkbox"
                   checked={locs.includes(l.canonical_id)}
@@ -170,11 +178,18 @@ export function useAttachCarry(sessionId: string) {
     if (!chars.length && !locs.length) return [];
     try {
       const result = await attach({
-        data: { director_session_id: directorSessionId, session_id: sessionId, character_ids: chars, location_ids: locs },
+        data: {
+          director_session_id: directorSessionId,
+          session_id: sessionId,
+          character_ids: chars,
+          location_ids: locs,
+        },
       });
       return result.warnings;
     } catch {
-      return ["Your universe could not be attached to this film. / Universumet kunde inte kopplas till filmen."];
+      return [
+        "Your universe could not be attached to this film. / Universumet kunde inte kopplas till filmen.",
+      ];
     }
   };
 }
@@ -208,7 +223,10 @@ export function UniverseFilmCard({ filmId, sessionId }: { filmId: string; sessio
       setResult(r);
       void qc.invalidateQueries({ queryKey: ["universe"] });
     },
-    onError: () => setError("Your universe could not be updated right now. / Universumet kunde inte uppdateras just nu."),
+    onError: () =>
+      setError(
+        "Your universe could not be updated right now. / Universumet kunde inte uppdateras just nu.",
+      ),
   });
 
   useEffect(() => {
@@ -232,12 +250,21 @@ export function UniverseFilmCard({ filmId, sessionId }: { filmId: string; sessio
       <div className="flex items-center gap-2 text-sm font-medium text-foreground">
         <Globe2 className="size-4 text-primary" aria-hidden /> Your universe
       </div>
-      {error && <div className="mt-3"><Dismissible text={error} onClose={() => setError(null)} /></div>}
+      {error && (
+        <div className="mt-3">
+          <Dismissible text={error} onClose={() => setError(null)} />
+        </div>
+      )}
       <p className="mt-2 text-sm text-muted-foreground">
         {mutation.isPending ? "Checking…" : result ? label[result.status] : ""}
       </p>
       <div className="mt-3 flex flex-wrap gap-3">
-        <Button size="sm" variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate(false)}
+        >
           {mutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Update my universe from this film now
         </Button>
