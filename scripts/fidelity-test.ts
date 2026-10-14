@@ -202,7 +202,9 @@ for (const testCase of CASES) {
       console.log(
         `  scene ${scene.scene_number} | required: ${REQUIRED_TRUTH_FIELDS.map(
           (f) => `${f}=${truth[f] ? "yes" : "NO"}`,
-        ).join(" ")} | fidelity ${fidelity.ok ? "OK" : `FAIL ${JSON.stringify(fidelity)}`} | reached: ${reached.join(",")}`,
+        ).join(
+          " ",
+        )} | fidelity ${fidelity.ok ? "OK" : `FAIL ${JSON.stringify(fidelity)}`} | reached: ${reached.join(",")}`,
       );
       if (scene.scene_number === 1) {
         console.log(`  core: ${truth.emotional_core}`);
@@ -211,7 +213,9 @@ for (const testCase of CASES) {
         console.log(`  provenance: ${JSON.stringify(truth.provenance)}`);
       }
       if (truth.twist || truth.reveal) {
-        console.log(`  twist/reveal reaches request: ${request.includes(truth.reveal || truth.twist)}`);
+        console.log(
+          `  twist/reveal reaches request: ${request.includes(truth.reveal || truth.twist)}`,
+        );
       }
     }
   } catch (error) {

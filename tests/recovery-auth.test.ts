@@ -36,7 +36,11 @@ describe("render/recovery auth split", () => {
   });
 
   it("recoverScene reaches the render core without going through middleware", () => {
-    const core = block(recovery, "export async function recoverSceneCore", "export const recoverScene");
+    const core = block(
+      recovery,
+      "export async function recoverSceneCore",
+      "export const recoverScene",
+    );
     expect(core).toContain("assertFilmOwner(data.film_id, data.session_id, userId)");
     expect(core).toContain("renderSceneCore(");
     expect(core).not.toMatch(/\brenderScene\(/);
