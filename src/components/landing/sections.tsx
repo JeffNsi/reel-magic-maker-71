@@ -8,7 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { FILM_PRICE_COPY } from "./copy";
+import { CREATOR_PLAN_COPY, FILM_PRICE_COPY } from "./copy";
 import { Reveal } from "./reveal";
 
 const TIERS = [
@@ -26,7 +26,7 @@ const TIERS = [
     price: "$19",
     cadence: "per month",
     highlight: true,
-    features: ["Monthly credits included", "No watermark", "Priority render queue"],
+    features: [CREATOR_PLAN_COPY, "No watermark", "Priority render queue"],
     cta: "Go Creator",
     plan: "creator" as const,
   },
