@@ -277,15 +277,18 @@ export const getCanon = createServerFn({ method: "POST" })
     const seedChars = carried.rows.map((row) => ({ locks: {}, ...row, story_id }));
     if (seedChars.length) await supabaseAdmin.from("film_canon_characters").insert(seedChars);
     const carriedAssets = carried.links.flatMap((link) =>
-      link.universe.reference_assets.map((path, i) => ({
+      link.universe.reference_assets.map((entry, i) => {
+        const [kind, path] = entry.includes("::") ? entry.split("::") : [`carried-${i + 1}`, entry];
+        return {
         story_id,
         subject_type: "character",
         subject_canonical_id: link.canonical_id,
-        kind: path.split("/").pop()?.split(".")[0]?.replace(/-v\d+$/, "") || `carried-${i + 1}`,
-        storage_path: path,
+        kind: kind || `carried-${i + 1}`,
+        storage_path: path ?? entry,
         prompt: "Carried from your universe (locked reference)",
         version: 1,
-      })),
+        };
+      }),
     );
     if (carriedAssets.length) await supabaseAdmin.from("film_canon_assets").insert(carriedAssets);
 
