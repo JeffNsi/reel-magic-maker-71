@@ -666,6 +666,24 @@ export type Database = {
           },
         ]
       }
+      film_daily_quota: {
+        Row: {
+          count: number
+          day: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       film_watchlist: {
         Row: {
           created_at: string
@@ -975,10 +993,12 @@ export type Database = {
           setting: string
           share_slug: string | null
           shared_at: string | null
+          status: string
           style: string
           theme: string
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           blueprint?: string | null
@@ -991,10 +1011,12 @@ export type Database = {
           setting?: string
           share_slug?: string | null
           shared_at?: string | null
+          status?: string
           style?: string
           theme?: string
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           blueprint?: string | null
@@ -1007,10 +1029,12 @@ export type Database = {
           setting?: string
           share_slug?: string | null
           shared_at?: string | null
+          status?: string
           style?: string
           theme?: string
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1313,7 +1337,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_film_slot: { Args: { _user: string }; Returns: boolean }
+      release_film_slot: { Args: { _user: string }; Returns: undefined }
     }
     Enums: {
       team_role: "owner" | "editor" | "viewer"

@@ -18,6 +18,13 @@ import {
   resolveSceneReferences,
   type SceneReferences,
 } from "@/lib/reference-resolver";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  NOT_OWNER_MESSAGE,
+  QUOTA_MESSAGE,
+  ownershipDecision,
+  shouldReleaseSlot,
+} from "@/lib/film-quota";
 
 /**
  * FILM PAGE — a finished director session becomes a shot list.
@@ -350,21 +357,68 @@ const buildInput = z.object({
  * film. Re-running for the same director session returns the film that exists.
  */
 export const buildFilm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => buildInput.parse(data))
-  .handler(({ data }) => buildFilmCore(data));
+  .handler(({ data, context }) => buildFilmCore(data, context.userId));
 
-export async function buildFilmCore(data: z.infer<typeof buildInput>): Promise<FilmView> {
+/** Throws unless the signed-in user owns this film; claims legacy owner-less films. */
+export async function assertFilmOwner(film_id: string, session_id: string, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: row } = await supabaseAdmin
+    .from("stories")
+    .select("id, user_id")
+    .eq("id", film_id)
+    .eq("session_id", session_id)
+    .maybeSingle();
+  if (!row) throw new Error("That film could not be found.");
+  const decision = ownershipDecision((row.user_id as string | null) ?? null, userId);
+  if (decision === "deny") throw new Error(NOT_OWNER_MESSAGE);
+  if (decision === "claim") {
+    await supabaseAdmin
+      .from("stories")
+      .update({ user_id: userId })
+      .eq("id", film_id)
+      .is("user_id", null);
+  }
+}
+
+export async function buildFilmCore(
+  data: z.infer<typeof buildInput>,
+  userId?: string,
+): Promise<FilmView> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: existing } = await supabaseAdmin
+    .from("stories")
+    .select("id")
+    .eq("director_session_id", data.director_session_id)
+    .eq("session_id", data.session_id)
+    .maybeSingle();
+
+  if (existing) {
+    if (userId) await assertFilmOwner(existing.id as string, data.session_id, userId);
+    return loadFilm(existing.id as string, data.session_id);
+  }
+
+  if (userId) {
+    const { data: ok, error } = await supabaseAdmin.rpc("claim_film_slot", { _user: userId });
+    if (error) throw new Error("Could not check today's film limit. Please try again.");
+    if (!ok) throw new Error(QUOTA_MESSAGE);
+  }
+
+  try {
+    return await createFilm(data, userId);
+  } catch (err) {
+    if (userId && shouldReleaseSlot(err)) {
+      await supabaseAdmin.rpc("release_film_slot", { _user: userId });
+    }
+    throw err;
+  }
+}
+
+async function createFilm(data: z.infer<typeof buildInput>, userId?: string): Promise<FilmView> {
   {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: existing } = await supabaseAdmin
-      .from("stories")
-      .select("id")
-      .eq("director_session_id", data.director_session_id)
-      .eq("session_id", data.session_id)
-      .maybeSingle();
-
-    if (existing) return loadFilm(existing.id as string, data.session_id);
 
     const { data: session } = await supabaseAdmin
       .from("director_sessions")
@@ -402,6 +456,7 @@ export async function buildFilmCore(data: z.infer<typeof buildInput>): Promise<F
       .from("stories")
       .insert({
         session_id: data.session_id,
+        user_id: userId ?? null,
         theme: (session.idea as string).slice(0, 200),
         style,
         title: breakdown.title || "Untitled film",
@@ -644,8 +699,10 @@ const renderInput = sceneRef.extend({
 
 /** Render one scene into a real clip, with the film's look and cast locked in. */
 export const renderScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => renderInput.parse(data))
-  .handler(async ({ data }): Promise<{ generation_id: string; film: FilmView }> => {
+  .handler(async ({ data, context: auth }): Promise<{ generation_id: string; film: FilmView }> => {
+    await assertFilmOwner(data.film_id, data.session_id, auth.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { startGeneration } = await import("@/lib/storyreel-core.server");
 
