@@ -167,11 +167,16 @@ for (const testCase of CASES) {
   });
 
   try {
-    const film = await buildFilmCore({
-      director_session_id: testCase.id,
-      session_id: testCase.session,
-      style,
-    });
+    // Explicit owner: set FIDELITY_USER_ID to own (and quota-count) the test films;
+    // without it they are owner-less, read-only and never renderable.
+    const film = await buildFilmCore(
+      {
+        director_session_id: testCase.id,
+        session_id: testCase.session,
+        style,
+      },
+      process.env["FIDELITY_USER_ID"] || undefined,
+    );
 
     console.log(`\n=== ${testCase.key} — "${film.title}" (${film.scenes.length} scenes)`);
     for (const scene of film.scenes) {
@@ -197,7 +202,9 @@ for (const testCase of CASES) {
       console.log(
         `  scene ${scene.scene_number} | required: ${REQUIRED_TRUTH_FIELDS.map(
           (f) => `${f}=${truth[f] ? "yes" : "NO"}`,
-        ).join(" ")} | fidelity ${fidelity.ok ? "OK" : `FAIL ${JSON.stringify(fidelity)}`} | reached: ${reached.join(",")}`,
+        ).join(
+          " ",
+        )} | fidelity ${fidelity.ok ? "OK" : `FAIL ${JSON.stringify(fidelity)}`} | reached: ${reached.join(",")}`,
       );
       if (scene.scene_number === 1) {
         console.log(`  core: ${truth.emotional_core}`);
@@ -206,7 +213,9 @@ for (const testCase of CASES) {
         console.log(`  provenance: ${JSON.stringify(truth.provenance)}`);
       }
       if (truth.twist || truth.reveal) {
-        console.log(`  twist/reveal reaches request: ${request.includes(truth.reveal || truth.twist)}`);
+        console.log(
+          `  twist/reveal reaches request: ${request.includes(truth.reveal || truth.twist)}`,
+        );
       }
     }
   } catch (error) {
