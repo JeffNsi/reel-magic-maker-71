@@ -120,7 +120,6 @@ export type HistoryItem = {
   error_message: string | null;
 };
 
-
 /** Start a generation: charge coins, store it, submit it to fal.ai, remember the request id. */
 export const generateVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -196,7 +195,9 @@ export const checkStatus = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
-      .select("id, idea, status, provider, fal_request_id, video_url, error_message, created_at, episode_id, story_id")
+      .select(
+        "id, idea, status, provider, fal_request_id, video_url, error_message, created_at, episode_id, story_id",
+      )
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .single();
@@ -252,8 +253,7 @@ export const checkStatus = createServerFn({ method: "POST" })
     }
 
     const { providerProgress } = await import("@/lib/storyreel-core.server");
-    const provider =
-      row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
+    const provider = row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
 
     let progress;
     try {
@@ -315,10 +315,7 @@ export const checkStatus = createServerFn({ method: "POST" })
         .single();
 
       if (episode) {
-        await supabaseAdmin
-          .from("generations")
-          .update({ episode_id: episode.id })
-          .eq("id", row.id);
+        await supabaseAdmin.from("generations").update({ episode_id: episode.id }).eq("id", row.id);
       }
     }
 
@@ -349,23 +346,23 @@ async function toHistoryItems(
   return Promise.all(
     rows.map(async (row) => {
       let url: string | null = null;
-        if (row.status === "completed" && row.video_url) {
-          const { data: signed } = await supabaseAdmin.storage
-            .from(BUCKET)
-            .createSignedUrl(row.video_url, SIGNED_URL_TTL);
-          url = signed?.signedUrl ?? null;
-        }
-        return {
-          id: row.id,
-          idea: row.idea,
-          style: row.style,
-          status: (row.status ?? "queued") as HistoryItem["status"],
-          created_at: row.created_at,
-          video_url: url,
-          error_message: row.error_message,
-        };
-      }),
-    );
+      if (row.status === "completed" && row.video_url) {
+        const { data: signed } = await supabaseAdmin.storage
+          .from(BUCKET)
+          .createSignedUrl(row.video_url, SIGNED_URL_TTL);
+        url = signed?.signedUrl ?? null;
+      }
+      return {
+        id: row.id,
+        idea: row.idea,
+        style: row.style,
+        status: (row.status ?? "queued") as HistoryItem["status"],
+        created_at: row.created_at,
+        video_url: url,
+        error_message: row.error_message,
+      };
+    }),
+  );
 }
 
 const HISTORY_COLUMNS = "id, idea, style, status, created_at, video_url, error_message";
@@ -490,9 +487,9 @@ export const generateStory = createServerFn({ method: "POST" })
       );
     }
 
-    const body = (await res.json().catch(() => null)) as
-      | { choices?: { message?: { content?: string } }[] }
-      | null;
+    const body = (await res.json().catch(() => null)) as {
+      choices?: { message?: { content?: string } }[];
+    } | null;
     const idea = body?.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g, "");
     if (!idea) throw new Error("The story writer came back empty. Please try again.");
 

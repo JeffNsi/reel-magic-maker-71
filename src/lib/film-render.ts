@@ -8,7 +8,13 @@ import { filmReady, preflight, scenesToStart, type SceneJobState } from "@/lib/s
 export type FilmRenderOutcome =
   | { status: "ready"; started: string[]; skipped: string[] }
   | { status: "generating"; started: string[]; skipped: string[] }
-  | { status: "needs_credits"; started: string[]; skipped: string[]; cost: number; balance: number };
+  | {
+      status: "needs_credits";
+      started: string[];
+      skipped: string[];
+      cost: number;
+      balance: number;
+    };
 
 export async function orchestrateFilmRender(opts: {
   scenes: SceneJobState[];
@@ -26,7 +32,13 @@ export async function orchestrateFilmRender(opts: {
 
   const check = preflight(pending.length, opts.costPerScene, opts.balance);
   if (!check.ok) {
-    return { status: "needs_credits", started: [], skipped, cost: check.cost, balance: opts.balance };
+    return {
+      status: "needs_credits",
+      started: [],
+      skipped,
+      cost: check.cost,
+      balance: opts.balance,
+    };
   }
 
   const started: string[] = [];
@@ -36,7 +48,13 @@ export async function orchestrateFilmRender(opts: {
       started.push(id);
     } catch (err) {
       if (err instanceof NeedsCreditsError) {
-        return { status: "needs_credits", started, skipped, cost: check.cost, balance: opts.balance };
+        return {
+          status: "needs_credits",
+          started,
+          skipped,
+          cost: check.cost,
+          balance: opts.balance,
+        };
       }
       throw err;
     }

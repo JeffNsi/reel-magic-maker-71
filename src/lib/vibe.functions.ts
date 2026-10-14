@@ -68,7 +68,9 @@ export const claimDailyCheckin = createServerFn({ method: "POST" })
       : 1;
     const reward = REWARDS[newStreak - 1] ?? 20;
 
-    const { data, error } = await (await adminProfiles())
+    const { data, error } = await (
+      await adminProfiles()
+    )
       .update({
         last_checkin_date: todayStr,
         checkin_streak: newStreak,
@@ -86,7 +88,9 @@ export const watchAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Balance> => {
     const profile = await fetchProfile(context.supabase);
-    const { data, error } = await (await adminProfiles())
+    const { data, error } = await (
+      await adminProfiles()
+    )
       .update({ bonus_coins: profile.bonus_coins + 15 })
       .eq("id", profile.id)
       .select("paid_coins, bonus_coins")
@@ -119,8 +123,8 @@ export const unlockEpisode = createServerFn({ method: "POST" })
     const profile = await fetchProfile(context.supabase);
 
     const dramaVipOnly = Array.isArray(episode.dramas)
-      ? episode.dramas[0]?.is_vip_only ?? false
-      : episode.dramas?.is_vip_only ?? false;
+      ? (episode.dramas[0]?.is_vip_only ?? false)
+      : (episode.dramas?.is_vip_only ?? false);
 
     if (episode.is_free || isVipActive(profile)) {
       await context.supabase
@@ -149,7 +153,9 @@ export const unlockEpisode = createServerFn({ method: "POST" })
     }
 
     const [{ error: updateError }, { error: insertError }] = await Promise.all([
-      (await adminProfiles()).update({ paid_coins: newPaid, bonus_coins: newBonus }).eq("id", profile.id),
+      (await adminProfiles())
+        .update({ paid_coins: newPaid, bonus_coins: newBonus })
+        .eq("id", profile.id),
       context.supabase
         .from("user_unlocked_episodes")
         .insert({ episode_id: data.episode_id, user_id: context.userId }),
@@ -161,7 +167,6 @@ export const unlockEpisode = createServerFn({ method: "POST" })
 
 // Purchases go through the payment providers in shop.functions.ts — coins and
 // VIP are only credited after a confirmed payment (see the payments webhook).
-
 
 export const getMyList = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -189,7 +194,9 @@ export const toggleMyList = createServerFn({ method: "POST" })
       await context.supabase.from("my_list").delete().eq("drama_id", data.drama_id);
       return { saved: false };
     }
-    await context.supabase.from("my_list").insert({ drama_id: data.drama_id, user_id: context.userId });
+    await context.supabase
+      .from("my_list")
+      .insert({ drama_id: data.drama_id, user_id: context.userId });
     return { saved: true };
   });
 
@@ -225,10 +232,7 @@ type RawEpisodeRow = Omit<FeedEpisode, "video_url"> & {
   dramas: { title: string; cover_url: string } | { title: string; cover_url: string }[] | null;
 };
 
-async function resolveEpisodeUrl(
-  supabaseAdmin: any,
-  row: RawEpisodeRow,
-): Promise<string | null> {
+async function resolveEpisodeUrl(supabaseAdmin: any, row: RawEpisodeRow): Promise<string | null> {
   if (row.storage_path) {
     const { data: signed } = await supabaseAdmin.storage
       .from("videos")
@@ -304,7 +308,11 @@ export const getEpisodesForUser = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [profile, unlockedRows] = await Promise.all([
-      (await supabaseAdmin.from("profiles").select("is_vip, vip_until").eq("id", context.userId).single()) as {
+      (await supabaseAdmin
+        .from("profiles")
+        .select("is_vip, vip_until")
+        .eq("id", context.userId)
+        .single()) as {
         data: { is_vip: boolean; vip_until: string | null } | null;
       },
       (await supabaseAdmin

@@ -51,7 +51,10 @@ export type SceneJobState = {
 /** Scenes startFilmRender must still start: never one in flight or done. */
 export function scenesToStart(scenes: SceneJobState[]): string[] {
   return scenes
-    .filter((s) => s.status === "idle" || s.status === "failed" || (s.status === "completed" && !s.has_clip))
+    .filter(
+      (s) =>
+        s.status === "idle" || s.status === "failed" || (s.status === "completed" && !s.has_clip),
+    )
     .map((s) => s.scene_id);
 }
 

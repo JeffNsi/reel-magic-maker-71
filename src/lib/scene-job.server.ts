@@ -41,7 +41,8 @@ export async function runFilmTick(now = new Date()) {
     if (action === "poll") {
       if (!row.fal_request_id) continue;
       report.polled++;
-      const provider = row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
+      const provider =
+        row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
       const progress = await providerProgress(provider, row.fal_request_id).catch(() => null);
       if (!progress || progress.state === "queued" || progress.state === "processing") continue;
       if (progress.state === "completed") {
@@ -92,7 +93,10 @@ async function settleFailed(row: Row): Promise<boolean> {
 
   if (refund && row.user_id) {
     const { dbCoins } = await import("@/lib/coins.server");
-    await dbCoins.refund(row.user_id, { bonus: row.charged_bonus ?? 0, paid: row.charged_paid ?? 0 });
+    await dbCoins.refund(row.user_id, {
+      bonus: row.charged_bonus ?? 0,
+      paid: row.charged_paid ?? 0,
+    });
   }
   return true;
 }
@@ -137,9 +141,14 @@ async function refreshFilmStatus(story_id: string) {
     .from("story_scenes")
     .select("id, generation_id")
     .eq("story_id", story_id);
-  const ids = (scenes ?? []).map((s) => s.generation_id as string | null).filter((v): v is string => !!v);
+  const ids = (scenes ?? [])
+    .map((s) => s.generation_id as string | null)
+    .filter((v): v is string => !!v);
   const { data: gens } = ids.length
-    ? await supabaseAdmin.from("generations").select("id, status, video_url, attempts").in("id", ids)
+    ? await supabaseAdmin
+        .from("generations")
+        .select("id, status, video_url, attempts")
+        .in("id", ids)
     : { data: [] };
   const byId = new Map((gens ?? []).map((g) => [g.id as string, g]));
   const states = (scenes ?? []).map((s) => {

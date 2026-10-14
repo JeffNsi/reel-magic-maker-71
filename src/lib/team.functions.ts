@@ -58,7 +58,9 @@ type Admin = Awaited<ReturnType<typeof admin>>;
 
 async function myEmail(db: Admin, userId: string, claims: unknown): Promise<string | null> {
   const fromClaims =
-    claims && typeof claims === "object" && typeof (claims as { email?: unknown }).email === "string"
+    claims &&
+    typeof claims === "object" &&
+    typeof (claims as { email?: unknown }).email === "string"
       ? ((claims as { email: string }).email as string)
       : null;
   if (fromClaims) return fromClaims.toLowerCase();
@@ -134,7 +136,10 @@ export const getMyTeam = createServerFn({ method: "GET" })
         .order("created_at", { ascending: true }),
     ]);
 
-    const emails = await emailsFor(db, (members ?? []).map((m) => m.user_id));
+    const emails = await emailsFor(
+      db,
+      (members ?? []).map((m) => m.user_id),
+    );
 
     return {
       team: team ? { id: team.id, name: team.name, member_limit: team.member_limit } : null,
@@ -215,19 +220,17 @@ export const inviteMember = createServerFn({ method: "POST" })
       throw new Error(`This team is full (${limit} people, invites included).`);
     }
 
-    const { error } = await db
-      .from("team_invites")
-      .upsert(
-        {
-          team_id: mine.team_id,
-          email,
-          role: data.role,
-          status: "pending",
-          invited_by: context.userId,
-          accepted_at: null,
-        },
-        { onConflict: "team_id,email" },
-      );
+    const { error } = await db.from("team_invites").upsert(
+      {
+        team_id: mine.team_id,
+        email,
+        role: data.role,
+        status: "pending",
+        invited_by: context.userId,
+        accepted_at: null,
+      },
+      { onConflict: "team_id,email" },
+    );
     if (error) throw new Error("Could not send that invitation.");
 
     return { ok: true };
@@ -342,11 +345,7 @@ export const removeMember = createServerFn({ method: "POST" })
       throw new Error("The owner cannot leave their own team.");
     }
 
-    await db
-      .from("team_members")
-      .delete()
-      .eq("team_id", mine.team_id)
-      .eq("user_id", data.user_id);
+    await db.from("team_members").delete().eq("team_id", mine.team_id).eq("user_id", data.user_id);
     return { ok: true };
   });
 
@@ -391,7 +390,7 @@ export const listTeamShorts = createServerFn({ method: "GET" })
           status: row.status ?? "queued",
           created_at: row.created_at,
           video_url: url,
-          author_email: row.user_id ? emails[row.user_id] ?? null : null,
+          author_email: row.user_id ? (emails[row.user_id] ?? null) : null,
         };
       }),
     );

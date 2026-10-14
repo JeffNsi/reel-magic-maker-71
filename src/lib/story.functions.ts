@@ -99,9 +99,9 @@ async function askAi(key: string, system: string, user: string) {
     );
   }
 
-  const body = (await res.json().catch(() => null)) as
-    | { choices?: { message?: { content?: string } }[] }
-    | null;
+  const body = (await res.json().catch(() => null)) as {
+    choices?: { message?: { content?: string } }[];
+  } | null;
   const text = body?.choices?.[0]?.message?.content?.trim();
   if (!text) throw new Error("The story writer came back empty. Please try again.");
   try {
@@ -177,15 +177,17 @@ export const saveStory = createServerFn({ method: "POST" })
 
     if (error || !story) throw new Error("Could not save this story. Please try again.");
 
-    const scenes = (data.concept.scenes.length ? data.concept.scenes : [{ title: "Scene 1", prompt: "", narration: "" }]).map(
-      (scene, index) => ({
-        story_id: story.id,
-        scene_number: index + 1,
-        title: scene.title || `Scene ${index + 1}`,
-        idea: scene.prompt,
-        narration: scene.narration,
-      }),
-    );
+    const scenes = (
+      data.concept.scenes.length
+        ? data.concept.scenes
+        : [{ title: "Scene 1", prompt: "", narration: "" }]
+    ).map((scene, index) => ({
+      story_id: story.id,
+      scene_number: index + 1,
+      title: scene.title || `Scene ${index + 1}`,
+      idea: scene.prompt,
+      narration: scene.narration,
+    }));
 
     const { error: sceneError } = await supabaseAdmin.from("story_scenes").insert(scenes);
     if (sceneError) throw new Error("Could not save the scenes. Please try again.");
@@ -245,12 +247,12 @@ async function loadStory(story_id: string, session_id: string): Promise<StoryVie
     .filter((v): v is string => !!v);
 
   const generations = generationIds.length
-    ? (
+    ? ((
         await supabaseAdmin
           .from("generations")
           .select("id, status, video_url, voiceover_url, error_message")
           .in("id", generationIds)
-      ).data ?? []
+      ).data ?? [])
     : [];
 
   const byId = new Map(generations.map((g) => [g.id as string, g]));
@@ -267,7 +269,9 @@ async function loadStory(story_id: string, session_id: string): Promise<StoryVie
         generation_id: (scene.generation_id as string | null) ?? null,
         status: (generation?.status as SceneView["status"]) ?? "idle",
         video_url:
-          generation?.status === "completed" ? await signedUrl(generation.video_url as string) : null,
+          generation?.status === "completed"
+            ? await signedUrl(generation.video_url as string)
+            : null,
         voice_url: await signedUrl((generation?.voiceover_url as string | null) ?? null),
         error_message: (generation?.error_message as string | null) ?? null,
       };
@@ -370,7 +374,11 @@ export const deleteScene = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!story) throw new Error("That story could not be found.");
 
-    await supabaseAdmin.from("story_scenes").delete().eq("id", data.scene_id).eq("story_id", data.story_id);
+    await supabaseAdmin
+      .from("story_scenes")
+      .delete()
+      .eq("id", data.scene_id)
+      .eq("story_id", data.story_id);
     return loadStory(data.story_id, data.session_id);
   });
 
@@ -482,7 +490,9 @@ export const narrateGeneration = createServerFn({ method: "POST" })
       const { assertFilmOwner } = await import("@/lib/film.functions");
       await assertFilmOwner(row.story_id as string, data.session_id, context.userId);
     } else if (row.user_id !== context.userId) {
-      throw new Error("This clip belongs to another account. / Det här klippet tillhör ett annat konto.");
+      throw new Error(
+        "This clip belongs to another account. / Det här klippet tillhör ett annat konto.",
+      );
     }
 
     const res = await fetch(AI_SPEECH, {

@@ -176,7 +176,12 @@ export const runSelfTest = createServerFn({ method: "POST" })
               "out of AI credits — the director cannot answer until they are topped up",
             );
           else if (res.status === 429)
-            add("Engines", "Ezy / director brain", "warn", "rate limited right now, try again shortly");
+            add(
+              "Engines",
+              "Ezy / director brain",
+              "warn",
+              "rate limited right now, try again shortly",
+            );
           else add("Engines", "Ezy / director brain", "fail", `refused with status ${res.status}`);
         } catch (e) {
           add(
@@ -193,9 +198,8 @@ export const runSelfTest = createServerFn({ method: "POST" })
       const falKey = process.env["FAL_KEY"];
       if (falKey) {
         try {
-          const { FAL_QUEUE_BASE, FAL_MODEL_ID, falHeaders } = await import(
-            "@/lib/storyreel-core.server"
-          );
+          const { FAL_QUEUE_BASE, FAL_MODEL_ID, falHeaders } =
+            await import("@/lib/storyreel-core.server");
           const res = await withTimeout(
             fetch(
               `${FAL_QUEUE_BASE}/${FAL_MODEL_ID}/requests/00000000-0000-0000-0000-000000000000/status`,
@@ -209,7 +213,12 @@ export const runSelfTest = createServerFn({ method: "POST" })
           else if (res.status === 401 || res.status === 403)
             add("Engines", "Strong / fal.ai", "fail", "key rejected");
           else if (res.status === 402)
-            add("Engines", "Strong / fal.ai", "fail", "fal.ai balance exhausted — top up at fal.ai");
+            add(
+              "Engines",
+              "Strong / fal.ai",
+              "fail",
+              "fal.ai balance exhausted — top up at fal.ai",
+            );
           else add("Engines", "Strong / fal.ai", "warn", `answered with status ${res.status}`);
         } catch (e) {
           add("Engines", "Strong / fal.ai", "warn", e instanceof Error ? e.message : "unreachable");
@@ -222,7 +231,9 @@ export const runSelfTest = createServerFn({ method: "POST" })
     // --- Apple Pay verification file ----------------------------------------
     try {
       const res = await withTimeout(
-        fetch("https://reel-magic-maker-71.lovable.app/.well-known/apple-developer-merchantid-domain-association"),
+        fetch(
+          "https://reel-magic-maker-71.lovable.app/.well-known/apple-developer-merchantid-domain-association",
+        ),
         10000,
       );
       const text = res.ok ? await res.text() : "";
