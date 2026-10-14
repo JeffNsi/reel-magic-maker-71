@@ -8,6 +8,13 @@
       "when": 1792006493758,
       "tag": "0000_universe_memory",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792011592939,
+      "tag": "0001_stories_ownership_status",
+      "breakpoints": true
     }
   ]
 }
