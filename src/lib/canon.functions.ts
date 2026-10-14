@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { affectedScenes, normalizeFilmState, type FilmState } from "@/lib/film-state";
 import { normalizeStoryState } from "@/lib/story-state";
+import { applyCarryToCharacters, readCarry } from "@/lib/universe";
 import {
   resolveSceneReferences,
   type RefImage,
@@ -175,8 +176,31 @@ function readLocks(value: unknown): CanonLocks {
   return out;
 }
 
+/** The universe slice the creator chose to carry into this film, if any. */
+async function loadCarry(story_id: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: story } = await supabaseAdmin
+    .from("stories")
+    .select("director_session_id")
+    .eq("id", story_id)
+    .maybeSingle();
+  if (!story?.director_session_id) return null;
+  const { data: session } = await supabaseAdmin
+    .from("director_sessions")
+    .select("universe_carry")
+    .eq("id", story.director_session_id)
+    .maybeSingle();
+  return readCarry(session?.universe_carry ?? null);
+}
+
 /** The deterministic reading of the story as it stands — the seeding source. */
 async function deriveState(film_id: string, session_id: string): Promise<FilmState> {
+  const { story, film } = await deriveStory(film_id, session_id);
+  return normalizeFilmState({ story, film });
+}
+
+/** StoryState plus the film view — server-only, never returned to a client. */
+export async function deriveStory(film_id: string, session_id: string) {
   const { loadFilm } = await import("@/lib/film.functions");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -209,7 +233,7 @@ async function deriveState(film_id: string, session_id: string): Promise<FilmSta
     evolution: (session?.evolution ?? null) as Evolution | null,
   });
 
-  return normalizeFilmState({ story, film });
+  return { story, film };
 }
 
 /**
@@ -247,7 +271,23 @@ export const getCanon = createServerFn({ method: "POST" })
         body: c.body ?? "",
         locks: c.locks,
       }));
-    if (newChars.length) await supabaseAdmin.from("film_canon_characters").insert(newChars);
+    /* A film started from the creator's universe seeds its locked traits from it. */
+    const carry = !haveChar.size ? await loadCarry(story_id) : null;
+    const carried = applyCarryToCharacters(newChars, carry);
+    const seedChars = carried.rows.map((row) => ({ locks: {}, ...row, story_id }));
+    if (seedChars.length) await supabaseAdmin.from("film_canon_characters").insert(seedChars);
+    const carriedAssets = carried.links.flatMap((link) =>
+      link.universe.reference_assets.map((path, i) => ({
+        story_id,
+        subject_type: "character",
+        subject_canonical_id: link.canonical_id,
+        kind: path.split("/").pop()?.split(".")[0]?.replace(/-v\d+$/, "") || `carried-${i + 1}`,
+        storage_path: path,
+        prompt: "Carried from your universe (locked reference)",
+        version: 1,
+      })),
+    );
+    if (carriedAssets.length) await supabaseAdmin.from("film_canon_assets").insert(carriedAssets);
 
     const haveEnv = new Set((environments.data ?? []).map((row) => row.canonical_id));
     const newEnvs = state.environments
