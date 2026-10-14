@@ -363,3 +363,69 @@ export function readSnapshot(value: unknown): UniverseSnapshot {
     timeline: Array.isArray(v.timeline) ? v.timeline : [],
   };
 }
+
+/* ------------------------------------------------------------- versioning */
+
+export type UniverseVersionRow = {
+  version: number;
+  status: "applied" | "pending" | "rejected";
+  film_id: string | null;
+  fingerprint: string;
+  snapshot: UniverseSnapshot;
+};
+
+export type UpdatePlan =
+  | { kind: "skip"; reason: "already_recorded" }
+  | {
+      kind: "apply" | "pending";
+      version: number;
+      snapshot: UniverseSnapshot;
+      conflicts: UniverseConflict[];
+      fingerprint: string;
+    };
+
+/** Latest applied snapshot — the universe as it stands now. */
+export function currentSnapshot(history: UniverseVersionRow[]): UniverseSnapshot {
+  const applied = history
+    .filter((r) => r.status === "applied")
+    .sort((a, b) => b.version - a.version)[0];
+  return applied ? readSnapshot(applied.snapshot) : emptyUniverse();
+}
+
+export function nextVersion(history: UniverseVersionRow[]): number {
+  return history.reduce((max, r) => Math.max(max, r.version), 0) + 1;
+}
+
+/**
+ * Append-only: every update is a NEW row. A film already recorded with the same
+ * fingerprint is skipped. Conflicts produce a pending row that waits for the creator.
+ */
+export function planUniverseUpdate(
+  history: UniverseVersionRow[],
+  outcome: FilmOutcome,
+  options: { allowReturns?: string[]; force?: boolean } = {},
+): UpdatePlan {
+  const fingerprint = outcomeFingerprint(outcome);
+  if (!options.force && history.some((r) => r.fingerprint === fingerprint)) {
+    return { kind: "skip", reason: "already_recorded" };
+  }
+  const merged = mergeUniverse(currentSnapshot(history), outcome, options);
+  const blocking = merged.conflicts.filter((c) => c.kind === "dead_returns");
+  return {
+    kind: blocking.length ? "pending" : "apply",
+    version: nextVersion(history),
+    snapshot: merged.next,
+    conflicts: merged.conflicts,
+    fingerprint,
+  };
+}
+
+/** Going back never deletes: the old snapshot is re-applied as a new version. */
+export function planRestore(
+  history: UniverseVersionRow[],
+  version: number,
+): { version: number; snapshot: UniverseSnapshot } | null {
+  const target = history.find((r) => r.version === version && r.status === "applied");
+  if (!target) return null;
+  return { version: nextVersion(history), snapshot: readSnapshot(target.snapshot) };
+}
