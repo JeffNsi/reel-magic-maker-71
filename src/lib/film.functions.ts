@@ -701,8 +701,8 @@ const renderInput = sceneRef.extend({
 export const renderScene = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => renderInput.parse(data))
-  .handler(async ({ data, context }): Promise<{ generation_id: string; film: FilmView }> => {
-    await assertFilmOwner(data.film_id, data.session_id, context.userId);
+  .handler(async ({ data, context: auth }): Promise<{ generation_id: string; film: FilmView }> => {
+    await assertFilmOwner(data.film_id, data.session_id, auth.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { startGeneration } = await import("@/lib/storyreel-core.server");
 
