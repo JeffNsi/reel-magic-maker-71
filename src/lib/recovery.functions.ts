@@ -339,7 +339,7 @@ export const approveRecovery = createServerFn({ method: "POST" })
     await noteEvolution(film.director_session_id, record);
 
     const rendered = await renderSceneCore({
-      user_id: userId,
+      user_id: context.userId,
       ...{
         film_id: data.film_id,
         scene_id: data.scene_id,
