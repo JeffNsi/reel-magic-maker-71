@@ -18,6 +18,7 @@ import { Route as SelftestRouteImport } from './routes/selftest'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as VibeRouteImport } from './routes/vibe'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as CanonFilmIdRouteImport } from './routes/canon.$filmId'
@@ -75,6 +76,11 @@ const TeamRoute = TeamRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UniverseRoute = UniverseRouteImport.update({
+  id: '/universe',
+  path: '/universe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VibeRoute = VibeRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/universe': typeof UniverseRoute
   '/vibe': typeof VibeRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/canon/$filmId': typeof CanonFilmIdRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/universe': typeof UniverseRoute
   '/watchlist': typeof WatchlistRoute
   '/canon/$filmId': typeof CanonFilmIdRoute
   '/film/$filmId': typeof FilmFilmIdRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/studio': typeof StudioRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/universe': typeof UniverseRoute
   '/vibe': typeof VibeRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/canon/$filmId': typeof CanonFilmIdRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/team'
     | '/terms'
+    | '/universe'
     | '/vibe'
     | '/watchlist'
     | '/canon/$filmId'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/team'
     | '/terms'
+    | '/universe'
     | '/watchlist'
     | '/canon/$filmId'
     | '/film/$filmId'
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/team'
     | '/terms'
+    | '/universe'
     | '/vibe'
     | '/watchlist'
     | '/canon/$filmId'
@@ -302,6 +314,7 @@ export interface RootRouteChildren {
   StudioRoute: typeof StudioRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  UniverseRoute: typeof UniverseRoute
   VibeRoute: typeof VibeRouteWithChildren
   WatchlistRoute: typeof WatchlistRoute
   CanonFilmIdRoute: typeof CanonFilmIdRoute
@@ -375,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/universe': {
+      id: '/universe'
+      path: '/universe'
+      fullPath: '/universe'
+      preLoaderRoute: typeof UniverseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vibe': {
@@ -499,6 +519,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudioRoute: StudioRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  UniverseRoute: UniverseRoute,
   VibeRoute: VibeRouteWithChildren,
   WatchlistRoute: WatchlistRoute,
   CanonFilmIdRoute: CanonFilmIdRoute,

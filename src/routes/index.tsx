@@ -24,6 +24,12 @@ import {
 import { FILM_PRICE_COPY } from "@/components/landing/copy";
 import { Gallery } from "@/components/landing/gallery";
 import { DirectorPanel } from "@/components/director/director-panel";
+import {
+  CarryWarnings,
+  UniversePicker,
+  useAttachCarry,
+  useUniverse,
+} from "@/components/universe/universe-ui";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -191,6 +197,21 @@ function StoryReel() {
   });
 
   const coins = (profile?.paid_coins ?? 0) + (profile?.bonus_coins ?? 0);
+
+  /* Creator universe: pick what follows before the Director starts. */
+  const { data: universe, isLoading: universeLoading } = useUniverse(!!user);
+  const [universeGate, setUniverseGate] = useState<"pick" | "ready">("ready");
+  const carryRef = useRef<{ chars: string[]; locs: string[] }>({ chars: [], locs: [] });
+  const [carryWarnings, setCarryWarnings] = useState<string[]>([]);
+  const attachCarry = useAttachCarry(sessionId);
+  useEffect(() => {
+    if (phase !== "director") return;
+    carryRef.current = { chars: [], locs: [] };
+    setCarryWarnings([]);
+    const hasUniverse =
+      !!universe?.creator && universe.snapshot.characters.length + universe.snapshot.locations.length > 0;
+    setUniverseGate(hasUniverse ? "pick" : "ready");
+  }, [phase, universeLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generate = useMutation({
     mutationFn: (input: { prompt: string; directorSessionId?: string | undefined }) =>
@@ -363,8 +384,24 @@ function StoryReel() {
           </>
         )}
 
-        {phase === "director" && sessionId && (
+        {phase === "director" && sessionId && universeGate === "pick" && universe?.creator && (
+          <UniversePicker
+            universe={universe}
+            onReady={(chars, locs) => {
+              carryRef.current = { chars, locs };
+              setUniverseGate("ready");
+            }}
+          />
+        )}
+        {phase === "director" && sessionId && universeGate === "ready" && (
+          <CarryWarnings warnings={carryWarnings} />
+        )}
+        {phase === "director" && sessionId && universeGate === "ready" && (
           <DirectorPanel
+            onSessionStarted={(id) => {
+              const { chars, locs } = carryRef.current;
+              void attachCarry(id, chars, locs).then(setCarryWarnings);
+            }}
             sessionId={sessionId}
             idea={idea}
             style={style}
