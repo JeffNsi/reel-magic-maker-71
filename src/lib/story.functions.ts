@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { STYLES } from "@/lib/storyreel.functions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * STORYREEL story studio: theme -> multiple film concepts, a story bible
@@ -118,6 +119,7 @@ const packInput = z.object({
 
 /** Turn one theme into several complete short-film concepts with characters and scenes. */
 export const writeStoryPack = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => packInput.parse(data))
   .handler(async ({ data }): Promise<{ concepts: StoryConcept[] }> => {
     const { readAiKey } = await import("@/lib/storyreel-core.server");
@@ -380,49 +382,78 @@ const generateSceneInput = storyRef.extend({
 
 /** Build a consistency-locked prompt for one scene and send it to the video model. */
 export const generateScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => generateSceneInput.parse(data))
-  .handler(async ({ data }): Promise<{ generation_id: string; story: StoryView }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { startGeneration } = await import("@/lib/storyreel-core.server");
-
-    const story = await loadStory(data.story_id, data.session_id);
-    const scene = story.scenes.find((s) => s.id === data.scene_id);
-    if (!scene) throw new Error("That scene could not be found.");
-    if (!scene.idea.trim()) throw new Error("Write this scene before generating it.");
-
-    const cast = story.characters
-      .filter((c) => c.name || c.look)
-      .map((c) => `${c.name}: ${c.look}`)
-      .join(". ");
-
-    const prompt = [
-      STYLE_PREFIX[story.style] ?? STYLE_PREFIX["cinematic"],
-      cast ? `Recurring characters — ${cast}. ` : "",
-      story.setting ? `Same setting throughout — ${story.setting}. ` : "",
-      `Scene ${scene.scene_number}: ${scene.idea.trim()}`,
-    ]
-      .join("")
-      .slice(0, 1800);
-
-    const generationId = await startGeneration({
-      session_id: data.session_id,
-      idea: scene.idea.trim(),
-      style: story.style,
-      prompt,
-      audio: data.audio,
-      provider: data.engine,
-      story_id: story.id,
-      scene_number: scene.scene_number,
-      narration: scene.narration,
-    });
-
-    await supabaseAdmin
-      .from("story_scenes")
-      .update({ generation_id: generationId })
-      .eq("id", scene.id);
-
-    return { generation_id: generationId, story: await loadStory(data.story_id, data.session_id) };
+  .handler(async ({ data, context }): Promise<{ generation_id: string; story: StoryView }> => {
+    return generateSceneCore({ ...data, user_id: context.userId });
   });
+
+/**
+ * Studio scene render. Owner-only, and charged through the same path as a film
+ * scene: EZY debits EZY_SCENE_COST atomically and refunds a rejected start.
+ */
+export async function generateSceneCore(
+  data: z.infer<typeof generateSceneInput> & { user_id: string },
+): Promise<{ generation_id: string; story: StoryView }> {
+  const { assertFilmOwner } = await import("@/lib/film.functions");
+  await assertFilmOwner(data.story_id, data.session_id, data.user_id);
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { startGeneration } = await import("@/lib/storyreel-core.server");
+  const { dbCoins } = await import("@/lib/coins.server");
+  const { withCharge } = await import("@/lib/coin-charge");
+  const { sceneCostFor } = await import("@/lib/pricing");
+  const { deadlineFrom } = await import("@/lib/scene-job");
+
+  const story = await loadStory(data.story_id, data.session_id);
+  const scene = story.scenes.find((s) => s.id === data.scene_id);
+  if (!scene) throw new Error("That scene could not be found.");
+  if (!scene.idea.trim()) throw new Error("Write this scene before generating it.");
+
+  const cast = story.characters
+    .filter((c) => c.name || c.look)
+    .map((c) => `${c.name}: ${c.look}`)
+    .join(". ");
+
+  const prompt = [
+    STYLE_PREFIX[story.style] ?? STYLE_PREFIX["cinematic"],
+    cast ? `Recurring characters — ${cast}. ` : "",
+    story.setting ? `Same setting throughout — ${story.setting}. ` : "",
+    `Scene ${scene.scene_number}: ${scene.idea.trim()}`,
+  ]
+    .join("")
+    .slice(0, 1800);
+
+  const { result: generationId } = await withCharge(
+    dbCoins,
+    data.user_id,
+    sceneCostFor(data.engine),
+    (charge) =>
+      startGeneration({
+        session_id: data.session_id,
+        idea: scene.idea.trim(),
+        style: story.style,
+        prompt,
+        audio: data.audio,
+        provider: data.engine,
+        story_id: story.id,
+        scene_number: scene.scene_number,
+        narration: scene.narration,
+        user_id: data.user_id,
+        charged_bonus: charge.bonus,
+        charged_paid: charge.paid,
+        attempts: 1,
+        deadline_at: deadlineFrom(new Date()),
+      }),
+  );
+
+  await supabaseAdmin
+    .from("story_scenes")
+    .update({ generation_id: generationId })
+    .eq("id", scene.id);
+
+  return { generation_id: generationId, story: await loadStory(data.story_id, data.session_id) };
+}
 
 const narrateInput = z.object({
   session_id: z.string().uuid(),
@@ -434,18 +465,25 @@ const narrateInput = z.object({
 
 /** Record the voice-over for a finished clip and store it next to the video. */
 export const narrateGeneration = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => narrateInput.parse(data))
-  .handler(async ({ data }): Promise<{ voice_url: string }> => {
+  .handler(async ({ data, context }): Promise<{ voice_url: string }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { readAiKey, signedUrl, BUCKET } = await import("@/lib/storyreel-core.server");
 
     const { data: row } = await supabaseAdmin
       .from("generations")
-      .select("id")
+      .select("id, story_id, user_id")
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .maybeSingle();
     if (!row) throw new Error("That clip could not be found.");
+    if (row.story_id) {
+      const { assertFilmOwner } = await import("@/lib/film.functions");
+      await assertFilmOwner(row.story_id as string, data.session_id, context.userId);
+    } else if (row.user_id !== context.userId) {
+      throw new Error("This clip belongs to another account. / Det här klippet tillhör ett annat konto.");
+    }
 
     const res = await fetch(AI_SPEECH, {
       method: "POST",

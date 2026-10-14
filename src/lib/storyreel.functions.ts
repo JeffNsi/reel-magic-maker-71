@@ -2,9 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { STORYREEL_DRAMA_ID } from "@/lib/vibe.functions";
+import { SINGLE_SHORT_COST } from "@/lib/pricing";
+import { shouldAutoPublish } from "@/lib/scene-job";
 
 /** Coins burned by one generation. Coins are earned in Rewards or bought in the coin shop. */
-export const COIN_COST = 70;
+export const COIN_COST = SINGLE_SHORT_COST;
 
 /**
  * STORYREEL V1 — text-to-video via fal.ai (Kling 3.0).
@@ -129,36 +131,13 @@ export const generateVideo = createServerFn({ method: "POST" })
     const idea = data.idea.trim();
     const promptFinal = `${STYLE_PREFIX[data.style] ?? STYLE_PREFIX["cinematic"]}${idea}`;
 
-    const { data: profile } = await context.supabase
-      .from("profiles")
-      .select("paid_coins, bonus_coins")
-      .eq("id", context.userId)
-      .single();
-
-    if (!profile) throw new Error("Could not read your coin balance.");
-
-    const bonus = profile.bonus_coins ?? 0;
-    const paid = profile.paid_coins ?? 0;
-    if (bonus + paid < COIN_COST) {
-      throw new Error(
-        `Not enough coins — a film costs ${COIN_COST} coins and you have ${bonus + paid}.`,
-      );
+    /** Atomic debit (bonus first) — no read-then-write race. */
+    const { dbCoins } = await import("@/lib/coins.server");
+    const charge = await dbCoins.spend(context.userId, COIN_COST);
+    if (!charge) {
+      throw new Error(`Not enough coins — a film costs ${COIN_COST} coins.`);
     }
-
-    const spendBonus = Math.min(bonus, COIN_COST);
-    const spendPaid = COIN_COST - spendBonus;
-
-    const charge = async (sign: 1 | -1) => {
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          bonus_coins: bonus - sign * spendBonus,
-          paid_coins: paid - sign * spendPaid,
-        })
-        .eq("id", context.userId);
-    };
-
-    await charge(1);
+    const refund = () => dbCoins.refund(context.userId, charge);
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
@@ -166,6 +145,8 @@ export const generateVideo = createServerFn({ method: "POST" })
         session_id: data.session_id,
         user_id: context.userId,
         coins_spent: COIN_COST,
+        charged_bonus: charge.bonus,
+        charged_paid: charge.paid,
         idea,
         style: data.style,
         prompt_final: promptFinal,
@@ -177,7 +158,7 @@ export const generateVideo = createServerFn({ method: "POST" })
       .single();
 
     if (error || !row) {
-      await charge(-1);
+      await refund();
       throw new Error("Could not start your short. Please try again.");
     }
 
@@ -198,10 +179,10 @@ export const generateVideo = createServerFn({ method: "POST" })
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
-      await charge(-1);
+      await refund();
       await supabaseAdmin
         .from("generations")
-        .update({ status: "failed", error_message: message, coins_spent: 0 })
+        .update({ status: "failed", error_message: message, coins_spent: 0, refunded: true })
         .eq("id", row.id);
       return { generation_id: row.id, status: "failed", video_url: null, error_message: message };
     }
@@ -215,7 +196,7 @@ export const checkStatus = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabaseAdmin
       .from("generations")
-      .select("id, idea, status, provider, fal_request_id, video_url, error_message, created_at, episode_id")
+      .select("id, idea, status, provider, fal_request_id, video_url, error_message, created_at, episode_id, story_id")
       .eq("id", data.generation_id)
       .eq("session_id", data.session_id)
       .single();
@@ -312,7 +293,8 @@ export const checkStatus = createServerFn({ method: "POST" })
       .eq("id", row.id);
 
     // Publish the finished short as a free episode in the Jeje Inc Vibe Shorts feed.
-    if (!row.episode_id) {
+    // Film scene clips are never auto-published; films go out via publishReadyFilm.
+    if (shouldAutoPublish(row)) {
       const { count } = await supabaseAdmin
         .from("episodes")
         .select("id", { count: "exact", head: true })
@@ -469,6 +451,7 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 /** Turn a short theme into a single vivid 5-second short-film prompt. */
 export const generateStory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => storyInput.parse(data))
   .handler(async ({ data }): Promise<{ idea: string }> => {
     const key = process.env["LOVABLE_API_KEY"];

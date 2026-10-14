@@ -250,6 +250,7 @@ async function loadEpisodes(supabaseAdmin: any, filterFreeOnly: boolean): Promis
     .select(
       "id, drama_id, episode_number, title, video_url, storage_path, coin_cost, is_free, dramas(title, cover_url)",
     )
+    .eq("hidden", false)
     .order("drama_id")
     .order("episode_number")
     .limit(200);

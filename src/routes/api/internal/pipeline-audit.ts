@@ -30,6 +30,8 @@ const body = z.object({
   style: z.string().optional().default("cinematic"),
   answers: z.array(z.string()).optional().default([]),
   session_id: z.string().uuid(),
+  /** Owner for films created by "run", so the audit's own "render" step can render them. */
+  user_id: z.string().uuid().optional(),
   film_id: z.string().uuid().optional(),
   scene_id: z.string().uuid().optional(),
   generation_id: z.string().uuid().optional(),
@@ -173,11 +175,14 @@ export const Route = createFileRoute("/api/internal/pipeline-audit")({
           data: { director_session_id: state.id, session_id: input.session_id },
         }).catch((error: Error) => ({ error: error.message }));
 
-        const film = await buildFilmCore({
-          director_session_id: state.id,
-          session_id: input.session_id,
-          style: input.style as never,
-        });
+        const film = await buildFilmCore(
+          {
+            director_session_id: state.id,
+            session_id: input.session_id,
+            style: input.style as never,
+          },
+          input.user_id,
+        );
 
         const requests = film.scenes.map((scene) => {
           const truth =
