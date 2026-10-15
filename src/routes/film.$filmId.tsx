@@ -387,7 +387,11 @@ function FilmPage() {
               Review scenes for clarity
             </Button>
           </div>
-          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-4 text-sm font-medium text-foreground">
+            Per scene: {SHOT_COST} credits · Whole film: {film.scenes.length} × {SHOT_COST} ={" "}
+            {film.scenes.length * SHOT_COST} credits
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
             Every five-second EZY shot costs {SHOT_COST} credits — exactly what is charged when it
             renders. A start the video service rejects is refunded.
           </p>
