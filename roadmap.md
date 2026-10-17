@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Character library + film start screen: own uploads, locked traits, approval, editable template scenes and full-film cost before rendering
+- [ ] Paid film / published tick verification — blocked until owner approves displayed price; scenes are collected, never auto-published
+- [ ] Publish requested changes after security check; owner shares public link
+
 - [x] Publish homepage (Creator copy + gallery loglines)
 - [x] Universe memory: versioned, locked traits, conflicts asked, picker before Director, film card, /universe page
 - [x] Creator gate (locked view with Go Creator button)
