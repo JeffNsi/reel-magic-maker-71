@@ -153,6 +153,9 @@ describe("reference resolution during a parallel render", () => {
           characters: ["QA_LIBRARY_DEFFA1_01"],
           status: "processing",
           has_clip: false,
+          location: null,
+          wardrobe: null,
+          props: [],
         },
         {
           scene_id: "s2",
@@ -164,6 +167,9 @@ describe("reference resolution during a parallel render", () => {
           characters: ["QA_LIBRARY_DEFFA1_01"],
           status: "idle",
           has_clip: false,
+          location: null,
+          wardrobe: null,
+          props: [],
         },
       ],
       style_assets: [
