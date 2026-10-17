@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CharactersRouteImport } from './routes/characters'
+import { Route as CreateRouteImport } from './routes/create'
 import { Route as EngineRouteImport } from './routes/engine'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -42,6 +44,16 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CharactersRoute = CharactersRouteImport.update({
+  id: '/characters',
+  path: '/characters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateRoute = CreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EngineRoute = EngineRouteImport.update({
@@ -161,6 +173,8 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/characters': typeof CharactersRoute
+  '/create': typeof CreateRoute
   '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
@@ -187,6 +201,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/characters': typeof CharactersRoute
+  '/create': typeof CreateRoute
   '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
@@ -213,6 +229,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/characters': typeof CharactersRoute
+  '/create': typeof CreateRoute
   '/engine': typeof EngineRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
@@ -241,6 +259,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/characters'
+    | '/create'
     | '/engine'
     | '/history'
     | '/privacy'
@@ -267,6 +287,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/characters'
+    | '/create'
     | '/engine'
     | '/history'
     | '/privacy'
@@ -292,6 +314,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/characters'
+    | '/create'
     | '/engine'
     | '/history'
     | '/privacy'
@@ -319,6 +343,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CharactersRoute: typeof CharactersRoute
+  CreateRoute: typeof CreateRoute
   EngineRoute: typeof EngineRoute
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -352,6 +378,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/characters': {
+      id: '/characters'
+      path: '/characters'
+      fullPath: '/characters'
+      preLoaderRoute: typeof CharactersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create': {
+      id: '/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/engine': {
@@ -532,6 +572,8 @@ const VibeRouteWithChildren = VibeRoute._addFileChildren(VibeRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CharactersRoute: CharactersRoute,
+  CreateRoute: CreateRoute,
   EngineRoute: EngineRoute,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,

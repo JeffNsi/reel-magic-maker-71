@@ -13,3 +13,6 @@
 - Homepage layout and contrast overrides are scoped to its wrapper; other routes retain their existing presentation.
 - Rolling universe lives in `src/lib/universe.ts` (pure merge/versioning) and `universe.functions.ts`; every change is a new `universe_versions` row, locked traits are never overwritten, contradictions become pending rows the creator resolves — so history is always recoverable and nothing changes silently.
 - Creator status is read server-side from the existing active monthly plan on the profile; no payment code is changed for gating — keeps checkout untouched.
+- Character-library uploads are free and owner-scoped; film creation snapshots their locked traits and reference into existing film canon atomically, so later library edits never change old films.
+- The explicit template start flow reuses stories, story_scenes, SceneTruth and the existing render path; no provider is called while writing, approving or saving a draft.
+- New film tools use useLocale for bilingual copy; the rest of the existing homepage remains unchanged.
