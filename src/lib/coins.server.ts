@@ -1,6 +1,19 @@
 /** The real coin port: atomic database functions, service role only. */
 import type { Charge, CoinPort } from "@/lib/coin-charge";
 
+const REFUND_FAILED_MESSAGE =
+  "Credits could not be returned; the refund must be retried. / Credits kunde inte återbetalas; återbetalningen måste försökas igen.";
+
+export async function refundGeneration(generation: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.rpc("refund_generation", { _generation: generation });
+  if (error) {
+    console.error("refund_generation failed", { generation, code: error.code });
+    throw new Error(REFUND_FAILED_MESSAGE);
+  }
+  return data === true;
+}
+
 export const dbCoins: CoinPort = {
   async spend(user, cost) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -16,6 +29,10 @@ export const dbCoins: CoinPort = {
       _bonus: charge.bonus,
       _paid: charge.paid,
     });
-    if (error) console.error("refund_coins failed", user, charge, error.message);
+    if (error) {
+      console.error("refund_coins failed", { user, charge, code: error.code });
+      throw new Error(REFUND_FAILED_MESSAGE);
+    }
   },
+  refundGeneration,
 };

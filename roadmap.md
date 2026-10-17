@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Approved charge safety: no duplicate inflight jobs; unique index and atomic generation refund applied; failure paths wired; 327/327 tests and changed-file ESLint pass; automatic build OK. Rollback SQL test left zero rows. No rendering or publishing. Independent typecheck/production build not run (harness-managed).
+
 - [ ] QA Homecoming original failure cause — blocked: no request/runtime logs for the original click. Current owner UI click sends POST (intercepted before server); schema, fidelity, 140 balance and mocked five-job wiring pass.
 - [x] QA Homecoming: one readable existing style reference attached (HTTP 200, JPEG, 65,388 bytes), selected by all five scenes; nonblocking image fallback tested. Character identity reference unavailable: original library entry has no portrait and no longer exists.
 - [x] Credit-free tests: 308/308 pass; edited files ESLint clean; automatic build OK. Repository lint still has 1468 errors/13 warnings outside permitted scope; typecheck not independently run (harness-managed).
