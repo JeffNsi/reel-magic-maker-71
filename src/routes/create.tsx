@@ -25,7 +25,7 @@ import realistic from "@/assets/styles/realistic.jpg";
 import claymation from "@/assets/styles/claymation.jpg";
 
 export const Route = createFileRoute("/create")({
-  validateSearch: (search: Record<string, unknown>): { character?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { character?: string | undefined } => ({
     character: typeof search["character"] === "string" ? search["character"] : undefined,
   }),
   head: () => ({
