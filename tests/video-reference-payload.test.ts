@@ -62,7 +62,10 @@ describe("outgoing video reference payload (mocked transport only)", () => {
   it("continues text-only and warns when a signed image is unreadable", async () => {
     vi.stubEnv("SUPABASE_URL", origin);
     vi.stubEnv("LOVABLE_API_KEY", "mock-key");
-    const transport = vi.fn().mockResolvedValueOnce(new Response(null, { status: 403 })).mockResolvedValueOnce(Response.json({ id: "mock-job" }));
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 403 }))
+      .mockResolvedValueOnce(Response.json({ id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
     const warning = vi.fn();
     expect(await submitVideo("lovable", "Scene", true, [reference], warning)).toBe("mock-job");
@@ -74,7 +77,11 @@ describe("outgoing video reference payload (mocked transport only)", () => {
   it("caps inline images at 10 and warns rather than blocking", async () => {
     vi.stubEnv("SUPABASE_URL", origin);
     vi.stubEnv("LOVABLE_API_KEY", "mock-key");
-    const transport = vi.fn(async (url) => url === AI_VIDEO_BASE ? Response.json({ id: "mock-job" }) : new Response(png, { headers: { "content-type": "image/png" } }));
+    const transport = vi.fn(async (url) =>
+      url === AI_VIDEO_BASE
+        ? Response.json({ id: "mock-job" })
+        : new Response(png, { headers: { "content-type": "image/png" } }),
+    );
     vi.stubGlobal("fetch", transport);
     const warning = vi.fn();
     await submitVideo("lovable", "Scene", true, Array(11).fill(reference), warning);
@@ -85,7 +92,11 @@ describe("outgoing video reference payload (mocked transport only)", () => {
   it("keeps readable images in a partial pack even when another image fails", async () => {
     vi.stubEnv("SUPABASE_URL", origin);
     vi.stubEnv("LOVABLE_API_KEY", "mock-key");
-    const transport = vi.fn().mockResolvedValueOnce(new Response(null, { status: 404 })).mockResolvedValueOnce(new Response(png, { headers: { "content-type": "image/png" } })).mockResolvedValueOnce(Response.json({ id: "mock-job" }));
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(new Response(png, { headers: { "content-type": "image/png" } }))
+      .mockResolvedValueOnce(Response.json({ id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
     const warning = vi.fn();
     await submitVideo("lovable", "Scene", true, [reference, reference], warning);
@@ -105,8 +116,10 @@ describe("outgoing video reference payload (mocked transport only)", () => {
     vi.stubEnv("FAL_KEY", "mock-key");
     const transport = vi.fn().mockResolvedValue(Response.json({ request_id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
-    for (const provider of ["fal", "live"] as const) await submitVideo(provider, "Scene", true, [reference]);
+    for (const provider of ["fal", "live"] as const)
+      await submitVideo(provider, "Scene", true, [reference]);
     expect(transport).toHaveBeenCalledTimes(2);
-    for (const call of transport.mock.calls) expect(JSON.parse(call[1].body)).not.toHaveProperty("input");
+    for (const call of transport.mock.calls)
+      expect(JSON.parse(call[1].body)).not.toHaveProperty("input");
   });
 });

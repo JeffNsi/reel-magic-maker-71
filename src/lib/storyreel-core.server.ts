@@ -83,7 +83,15 @@ export async function submitLovableVideo(
     ? prompt
     : `${prompt} No dialogue. No music. No sound effects — silent footage.`;
   const images = await inlineReferenceImages(references, onWarning);
-  console.info("generation references", JSON.stringify({ provider: "lovable", offered: references.length, used: images.length, mode: images.length ? "image-conditioned" : "text-only" }));
+  console.info(
+    "generation references",
+    JSON.stringify({
+      provider: "lovable",
+      offered: references.length,
+      used: images.length,
+      mode: images.length ? "image-conditioned" : "text-only",
+    }),
+  );
   const res = await fetch(AI_VIDEO_BASE, {
     method: "POST",
     headers: { Authorization: `Bearer ${readAiKey()}`, "Content-Type": "application/json" },
@@ -158,7 +166,8 @@ export const PROVIDER_ACCEPTS_IMAGE_REFERENCES: Record<VideoProvider, boolean> =
 /** Only fetch our signed canon images, never arbitrary caller-supplied URLs. */
 async function inlineReferenceImages(references: string[], onWarning: (message: string) => void) {
   const warn = () => {
-    const message = "Reference image missing or unreadable; continuing with available images or text only. / Referensbild saknas eller kan inte läsas; fortsätter med tillgängliga bilder eller enbart text.";
+    const message =
+      "Reference image missing or unreadable; continuing with available images or text only. / Referensbild saknas eller kan inte läsas; fortsätter med tillgängliga bilder eller enbart text.";
     console.warn("generation reference fallback", message);
     onWarning(message);
   };
@@ -167,30 +176,30 @@ async function inlineReferenceImages(references: string[], onWarning: (message: 
   let totalBytes = 0;
   for (const reference of references.slice(0, 10)) {
     try {
-    const origin = process.env["SUPABASE_URL"];
-    const url = new URL(reference);
-    if (
-      !origin ||
-      url.protocol !== "https:" ||
-      url.origin !== new URL(origin).origin ||
-      !url.pathname.startsWith("/storage/v1/object/sign/films/")
-    ) {
-      throw new Error("Invalid reference image source. / Ogiltig källa för referensbild.");
-    }
-    const response = await fetch(url, { redirect: "error" });
-    if (!response.ok)
-      throw new Error("Reference image could not be read. / Referensbilden kunde inte läsas.");
-    const mime = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    const { validateCharacterImage } = await import("@/lib/character-library");
-    validateCharacterImage(bytes, mime);
-    if (totalBytes + bytes.length > 40 * 1024 * 1024)
-      throw new Error("Reference images are too large. / Referensbilderna är för stora.");
-    let binary = "";
-    for (let offset = 0; offset < bytes.length; offset += 8192)
-      binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
-    images.push({ type: "image", data: btoa(binary), mime_type: mime });
-    totalBytes += bytes.length;
+      const origin = process.env["SUPABASE_URL"];
+      const url = new URL(reference);
+      if (
+        !origin ||
+        url.protocol !== "https:" ||
+        url.origin !== new URL(origin).origin ||
+        !url.pathname.startsWith("/storage/v1/object/sign/films/")
+      ) {
+        throw new Error("Invalid reference image source. / Ogiltig källa för referensbild.");
+      }
+      const response = await fetch(url, { redirect: "error" });
+      if (!response.ok)
+        throw new Error("Reference image could not be read. / Referensbilden kunde inte läsas.");
+      const mime = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const { validateCharacterImage } = await import("@/lib/character-library");
+      validateCharacterImage(bytes, mime);
+      if (totalBytes + bytes.length > 40 * 1024 * 1024)
+        throw new Error("Reference images are too large. / Referensbilderna är för stora.");
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += 8192)
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+      images.push({ type: "image", data: btoa(binary), mime_type: mime });
+      totalBytes += bytes.length;
     } catch {
       // Never fetch foreign URLs, follow redirects, or block the video for an optional image.
       warn();
@@ -357,10 +366,20 @@ export async function startGeneration(opts: {
 
   try {
     const warnings = new Set<string>();
-    const taskId = await submitVideo(provider, opts.prompt, opts.audio, opts.references ?? [], (message) => warnings.add(message));
+    const taskId = await submitVideo(
+      provider,
+      opts.prompt,
+      opts.audio,
+      opts.references ?? [],
+      (message) => warnings.add(message),
+    );
     await supabaseAdmin
       .from("generations")
-      .update({ fal_request_id: taskId, status: "processing", error_message: [...warnings].join("\n") || null })
+      .update({
+        fal_request_id: taskId,
+        status: "processing",
+        error_message: [...warnings].join("\n") || null,
+      })
       .eq("id", row.id);
 
     return row.id as string;
