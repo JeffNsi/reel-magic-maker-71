@@ -37,13 +37,7 @@ function loadSumUpSdk(): Promise<void> {
   return sumupSdkPromise;
 }
 
-function SumUpCardForm({
-  pack,
-  onSuccess,
-}: {
-  pack: ShopPack;
-  onSuccess: () => void;
-}) {
+function SumUpCardForm({ pack, onSuccess }: { pack: ShopPack; onSuccess: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const createFn = useServerFn(createSumUpCheckout);
   const confirmFn = useServerFn(confirmSumUpCheckout);
@@ -100,7 +94,11 @@ function SumUpCardForm({
   }, [pack]);
 
   if (error) {
-    return <p className="rounded-xl border border-dw-border bg-dw-background/50 p-4 text-center text-sm text-dw-muted">{error}</p>;
+    return (
+      <p className="rounded-xl border border-dw-border bg-dw-background/50 p-4 text-center text-sm text-dw-muted">
+        {error}
+      </p>
+    );
   }
   return (
     <div className="rounded-xl bg-white p-2">
@@ -109,13 +107,7 @@ function SumUpCardForm({
   );
 }
 
-function EmbeddedCheckoutView({
-  pack,
-  userId,
-}: {
-  pack: ShopPack;
-  userId: string;
-}) {
+function EmbeddedCheckoutView({ pack, userId }: { pack: ShopPack; userId: string }) {
   const createFn = useServerFn(createShopCheckout);
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createFn({
@@ -177,7 +169,9 @@ export function CoinShopModal({
       return;
     }
     window.open(result.url, "_blank", "noopener,noreferrer");
-    toast.message("Payment link opened in a new tab. Your coins are added when the payment is confirmed.");
+    toast.message(
+      "Payment link opened in a new tab. Your coins are added when the payment is confirmed.",
+    );
   };
 
   const back = () => {
@@ -272,7 +266,8 @@ export function CoinShopModal({
           <div className="mt-4 space-y-3">
             <CoinApplePay pack={selectedPack} onSuccess={handleSuccess} />
             <p className="text-center text-sm text-dw-muted">
-              How do you want to pay for <span className="font-semibold text-dw-foreground">{PACK_LABELS[selectedPack]}</span>?
+              How do you want to pay for{" "}
+              <span className="font-semibold text-dw-foreground">{PACK_LABELS[selectedPack]}</span>?
             </p>
             <MethodButton
               title="Card"
@@ -363,7 +358,9 @@ function CoinPack({
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-full bg-dw-card">{icon}</div>
+        <div className="flex size-10 items-center justify-center rounded-full bg-dw-card">
+          {icon}
+        </div>
         <div>
           <p className="font-semibold">{name}</p>
           <p className="text-xs text-dw-muted">

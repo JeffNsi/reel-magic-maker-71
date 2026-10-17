@@ -18,8 +18,14 @@ export function assertCoinCheckout(
 export function assertAppleValidationUrl(target: string): void {
   const url = new URL(target);
   if (
-    url.protocol !== "https:" || url.username || url.password || url.port ||
-    !(url.hostname === "apple-pay-gateway.apple.com" ||
-      /^apple-pay-gateway-[a-z0-9-]+\.apple\.com$/.test(url.hostname))
-  ) throw new Error("Invalid Apple Pay validation address. / Ogiltig Apple Pay-valideringsadress.");
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.port ||
+    !(
+      url.hostname === "apple-pay-gateway.apple.com" ||
+      /^apple-pay-gateway-[a-z0-9-]+\.apple\.com$/.test(url.hostname)
+    )
+  )
+    throw new Error("Invalid Apple Pay validation address. / Ogiltig Apple Pay-valideringsadress.");
 }

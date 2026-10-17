@@ -10,13 +10,16 @@ export type WalletSession = {
   completePayment(status: number): void;
 };
 export type WalletConstructor = {
-  new(version: number, request: {
-    countryCode: string;
-    currencyCode: string;
-    merchantCapabilities: string[];
-    supportedNetworks: string[];
-    total: { label: string; amount: string; type: string };
-  }): WalletSession;
+  new (
+    version: number,
+    request: {
+      countryCode: string;
+      currencyCode: string;
+      merchantCapabilities: string[];
+      supportedNetworks: string[];
+      total: { label: string; amount: string; type: string };
+    },
+  ): WalletSession;
   canMakePayments(): boolean;
   STATUS_SUCCESS: number;
   STATUS_FAILURE: number;

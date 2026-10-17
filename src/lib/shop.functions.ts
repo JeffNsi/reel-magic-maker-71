@@ -243,38 +243,66 @@ type WalletJson = string | number | boolean | null | WalletJson[] | { [key: stri
 
 export const coinApplePaySession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => coinWalletInput.extend({
-    target: z.string().url(), context: z.string().regex(/^[a-z0-9.-]+$/i),
-  }).parse(data))
+  .inputValidator((data: unknown) =>
+    coinWalletInput
+      .extend({
+        target: z.string().url(),
+        context: z.string().regex(/^[a-z0-9.-]+$/i),
+      })
+      .parse(data),
+  )
   .handler(async ({ data, context }): Promise<{ session: WalletJson } | { error: string }> => {
     try {
       assertAppleValidationUrl(data.target);
-      const checkout = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, { method: "GET" });
+      const checkout = await sumupRequest(
+        `/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`,
+        { method: "GET" },
+      );
       assertCoinCheckout(checkout, context.userId, data.pack, PACKS[data.pack].amountSek);
-      const session = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}/apple-pay-session`, {
-        method: "PUT", body: JSON.stringify({ target: data.target, context: data.context }),
-      });
+      const session = await sumupRequest(
+        `/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}/apple-pay-session`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ target: data.target, context: data.context }),
+        },
+      );
       return { session: session as WalletJson };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades." };
+      return {
+        error:
+          error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades.",
+      };
     }
   });
 
 export const coinApplePayProcess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => coinWalletInput.extend({ token: z.record(z.string(), z.unknown()) }).parse(data))
+  .inputValidator((data: unknown) =>
+    coinWalletInput.extend({ token: z.record(z.string(), z.unknown()) }).parse(data),
+  )
   .handler(async ({ data, context }) => {
     try {
-      const checkout = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, { method: "GET" });
+      const checkout = await sumupRequest(
+        `/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`,
+        { method: "GET" },
+      );
       assertCoinCheckout(checkout, context.userId, data.pack, PACKS[data.pack].amountSek);
       if (checkout.status === "PAID") return { paid: true };
       const result = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, {
         method: "PUT",
-        body: JSON.stringify({ payment_type: "apple_pay", amount: PACKS[data.pack].amountSek, currency: "SEK", apple_pay: { token: data.token } }),
+        body: JSON.stringify({
+          payment_type: "apple_pay",
+          amount: PACKS[data.pack].amountSek,
+          currency: "SEK",
+          apple_pay: { token: data.token },
+        }),
       });
       return { paid: result?.status === "PAID" };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades." };
+      return {
+        error:
+          error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades.",
+      };
     }
   });
 

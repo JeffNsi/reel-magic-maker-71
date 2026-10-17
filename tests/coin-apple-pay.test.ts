@@ -16,12 +16,20 @@ describe("coin Apple Pay checkout authorization", () => {
     expect(() => assertCoinCheckout({ ...checkout, amount: 1 }, "owner", "small", 49)).toThrow();
   });
   it("rejects a different currency", () => {
-    expect(() => assertCoinCheckout({ ...checkout, currency: "EUR" }, "owner", "small", 49)).toThrow();
+    expect(() =>
+      assertCoinCheckout({ ...checkout, currency: "EUR" }, "owner", "small", 49),
+    ).toThrow();
   });
   it("accepts Apple's HTTPS gateway", () => {
-    expect(() => assertAppleValidationUrl("https://apple-pay-gateway.apple.com/paymentservices/startSession")).not.toThrow();
+    expect(() =>
+      assertAppleValidationUrl("https://apple-pay-gateway.apple.com/paymentservices/startSession"),
+    ).not.toThrow();
   });
-  it.each(["https://apple-pay-gateway.apple.com.evil.test/", "http://apple-pay-gateway.apple.com/", "https://example.com/"])("rejects non-Apple validation %s", (url) => {
+  it.each([
+    "https://apple-pay-gateway.apple.com.evil.test/",
+    "http://apple-pay-gateway.apple.com/",
+    "https://example.com/",
+  ])("rejects non-Apple validation %s", (url) => {
     expect(() => assertAppleValidationUrl(url)).toThrow();
   });
 });
