@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] QA Homecoming original failure cause — blocked: no request/runtime logs for the original click. Current owner UI click sends POST (intercepted before server); schema, fidelity, 140 balance and mocked five-job wiring pass.
+- [x] QA Homecoming: one readable existing style reference attached (HTTP 200, JPEG, 65,388 bytes), selected by all five scenes; nonblocking image fallback tested. Character identity reference unavailable: original library entry has no portrait and no longer exists.
+- [x] Credit-free tests: 308/308 pass; edited files ESLint clean; automatic build OK. Repository lint still has 1468 errors/13 warnings outside permitted scope; typecheck not independently run (harness-managed).
+- [ ] Actual five-clip / Gemini transport run — waits for explicit owner approval (70 app credits plus gateway usage); no publishing or Knowledge rewrite (point 3).
+
 - [x] Controlled owner trial readback: balance stayed 140; both prepared films have no generation rows and no clips.
 - [x] Point 2: EZY image-reference adapter enabled; 5 behavioral mocked-transport tests verify inline bytes and safe failures. Live image-conditioned output is unverified: prepared film has no stored reference images; no paid generation or point 3 in this phase.
 
