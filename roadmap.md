@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] QA Homecoming: diagnose click-to-job failure without paid calls, fix only confirmed cause, add click/job tests.
+- [ ] QA Homecoming: attach readable existing reference images; test nonblocking reference fallback and documented Gemini request format.
+- [ ] Report evidence and await explicit paid-trial approval; do not publish or start Knowledge rewrite (point 3).
+
 - [x] Controlled owner trial readback: balance stayed 140; both prepared films have no generation rows and no clips.
 - [x] Point 2: EZY image-reference adapter enabled; 5 behavioral mocked-transport tests verify inline bytes and safe failures. Live image-conditioned output is unverified: prepared film has no stored reference images; no paid generation or point 3 in this phase.
 
