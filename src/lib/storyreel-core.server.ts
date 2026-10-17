@@ -73,13 +73,19 @@ function aiVideoError(status: number, message: string) {
 }
 
 /** Submit one 5-second vertical clip to Lovable AI and return its job id. */
-export async function submitLovableVideo(prompt: string, audio: boolean): Promise<string> {
+export async function submitLovableVideo(
+  prompt: string,
+  audio: boolean,
+  references: string[] = [],
+): Promise<string> {
+  const text = audio ? prompt : `${prompt} No dialogue. No music. No sound effects — silent footage.`;
+  const images = await inlineReferenceImages(references);
   const res = await fetch(AI_VIDEO_BASE, {
     method: "POST",
     headers: { Authorization: `Bearer ${readAiKey()}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: LOVABLE_VIDEO_MODEL,
-      input: audio ? prompt : `${prompt} No dialogue. No music. No sound effects — silent footage.`,
+      input: images.length ? [{ type: "text", text }, ...images] : text,
       response_format: {
         type: "video",
         resolution: "720p",
@@ -136,15 +142,45 @@ export async function submitFalVideo(
 export const REFERENCE_WEIGHT = 0.85;
 
 /**
- * Which engines accept image conditioning. Both current video endpoints are
- * text-to-video, so references cannot be enforced there — the scene is honestly
- * marked "text-only continuity" instead of pretending the lock holds.
+ * Gemini Omni accepts inline reference images. The existing fal/live endpoints
+ * remain text-only; changing those models is a separate, explicit decision.
  */
 export const PROVIDER_ACCEPTS_IMAGE_REFERENCES: Record<VideoProvider, boolean> = {
-  lovable: false,
+  lovable: true,
   fal: false,
   live: false,
 };
+
+/** Only fetch our signed canon images, never arbitrary caller-supplied URLs. */
+async function inlineReferenceImages(references: string[]) {
+  if (references.length > 10)
+    throw new Error("At most 10 reference images are supported. / Högst 10 referensbilder stöds.");
+  const images: { type: "image"; data: string; mime_type: string }[] = [];
+  let totalBytes = 0;
+  for (const reference of references) {
+    const origin = process.env["SUPABASE_URL"];
+    const url = new URL(reference);
+    if (!origin || url.protocol !== "https:" || url.origin !== new URL(origin).origin ||
+      !url.pathname.startsWith("/storage/v1/object/sign/films/")) {
+      throw new Error("Invalid reference image source. / Ogiltig källa för referensbild.");
+    }
+    const response = await fetch(url, { redirect: "error" });
+    if (!response.ok)
+      throw new Error("Reference image could not be read. / Referensbilden kunde inte läsas.");
+    const mime = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const { validateCharacterImage } = await import("@/lib/character-library");
+    validateCharacterImage(bytes, mime);
+    totalBytes += bytes.length;
+    if (totalBytes > 40 * 1024 * 1024)
+      throw new Error("Reference images are too large. / Referensbilderna är för stora.");
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 8192)
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    images.push({ type: "image", data: btoa(binary), mime_type: mime });
+  }
+  return images;
+}
 
 export function submitVideo(
   provider: VideoProvider,
@@ -165,7 +201,7 @@ export function submitVideo(
   );
 
   return provider === "lovable"
-    ? submitLovableVideo(prompt, audio)
+    ? submitLovableVideo(prompt, audio, accepted)
     : submitFalVideo(prompt, audio, falModelFor(provider));
 }
 

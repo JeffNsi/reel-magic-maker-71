@@ -255,8 +255,8 @@ describe("prompt compiler", () => {
 });
 
 describe("provider adapter", () => {
-  it("a provider that rejects image input falls back to text-only", () => {
-    expect(PROVIDER_ACCEPTS_IMAGE_REFERENCES.lovable).toBe(false);
+  it("only the existing image-capable provider accepts references", () => {
+    expect(PROVIDER_ACCEPTS_IMAGE_REFERENCES.lovable).toBe(true);
     expect(PROVIDER_ACCEPTS_IMAGE_REFERENCES.fal).toBe(false);
     expect(PROVIDER_ACCEPTS_IMAGE_REFERENCES.live).toBe(false);
   });

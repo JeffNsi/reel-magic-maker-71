@@ -16,3 +16,4 @@
 - Character-library uploads are free and owner-scoped; film creation snapshots their locked traits and reference into existing film canon atomically, so later library edits never change old films.
 - The explicit template start flow reuses stories, story_scenes, SceneTruth and the existing render path; no provider is called while writing, approving or saving a draft.
 - New film tools use useLocale for bilingual copy; the rest of the existing homepage remains unchanged.
+- EZY sends canon reference images as validated inline media in the existing Gemini request; only signed project-storage URLs are fetched, while unchanged fal/live text endpoints remain text-only.
