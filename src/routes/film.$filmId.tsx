@@ -538,7 +538,10 @@ function SceneCard({
           )}
 
           {scene.status !== "failed" && scene.error_message && (
-            <ReferenceWarning key={`${scene.generation_id}:${scene.error_message}`} message={scene.error_message} />
+            <ReferenceWarning
+              key={`${scene.generation_id}:${scene.error_message}`}
+              message={scene.error_message}
+            />
           )}
           {scene.status === "failed" && scene.error_message && (
             <p className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
