@@ -114,7 +114,7 @@ describe("outgoing video reference payload (mocked transport only)", () => {
 
   it("does not treat STRONG or LIVE as image-compatible", async () => {
     vi.stubEnv("FAL_KEY", "mock-key");
-    const transport = vi.fn().mockResolvedValue(Response.json({ request_id: "mock-job" }));
+    const transport = vi.fn(async () => Response.json({ request_id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
     for (const provider of ["fal", "live"] as const)
       await submitVideo(provider, "Scene", true, [reference]);
