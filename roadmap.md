@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Coin Shop Apple Pay: add native SumUp payment button with owner-validated checkout; mocked tests and browser checks. Real iPhone sheet/payment and published delivery require the owner's device and a published update.
+- [x] Coin Shop Apple Pay: native SumUp button, owner/pack/amount/currency validation, provider confirmation and balance refresh; 9 new mocked tests, 336 total tests pass. Browser button verified with outgoing payment requests blocked.
+- [ ] Real Apple Pay iPhone payment and published clip delivery — blocked: no access to owner's iPhone or SumUp merchant registration; new Coin Shop UI is not published.
 
 - [x] Approved charge safety: no duplicate inflight jobs; unique index and atomic generation refund applied; failure paths wired; 327/327 tests and changed-file ESLint pass; automatic build OK. Rollback SQL test left zero rows. No rendering or publishing. Independent typecheck/production build not run (harness-managed).
 

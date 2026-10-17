@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { Apple, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getApplePay } from "@/lib/apple-pay";
@@ -13,6 +14,7 @@ import {
 import { useLocale } from "@/hooks/use-locale";
 
 export function CoinApplePay({ pack, onSuccess }: { pack: ShopPack; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
   const { locale } = useLocale();
   const sv = locale === "sv";
   const create = useServerFn(createSumUpCheckout);
@@ -105,6 +107,7 @@ export function CoinApplePay({ pack, onSuccess }: { pack: ShopPack; onSuccess: (
             throw new Error(
               sv ? "Köpet väntar på bekräftelse." : "Purchase awaiting confirmation.",
             );
+          await queryClient.invalidateQueries({ queryKey: ["profile"] });
           onSuccess();
         } catch (failure) {
           if (!paymentCompleted) session.completePayment(APS.STATUS_FAILURE);
