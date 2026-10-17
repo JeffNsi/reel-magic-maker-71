@@ -601,7 +601,18 @@ export function sceneGenerationInput(
 /** The film with its scenes, budgets, clarity notes and playable clips. */
 export const getFilm = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ref.parse(data))
-  .handler(({ data }) => loadFilm(data.film_id, data.session_id));
+  .handler(async ({ data }) => {
+    // Path A (no cron): only the signed-in owner's poll advances this film's jobs.
+    try {
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const auth = getRequest()?.headers.get("authorization") ?? "";
+      const { ownerTickIfAllowed } = await import("@/lib/film-tick-poll.server");
+      await ownerTickIfAllowed(data.film_id, auth);
+    } catch (err) {
+      console.info("film tick skipped", err instanceof Error ? err.message : "unknown");
+    }
+    return loadFilm(data.film_id, data.session_id);
+  });
 
 /** Review every scene for clarity and re-cost the shot list from what it finds. */
 export const reviewScenes = createServerFn({ method: "POST" })
