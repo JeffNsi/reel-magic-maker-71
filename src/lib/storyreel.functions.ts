@@ -438,6 +438,7 @@ export const listShowcase = createServerFn({ method: "GET" }).handler(
       .from("generations")
       .select("id, idea, style, video_url")
       .eq("status", "completed")
+      .is("story_id", null)
       .not("video_url", "is", null)
       .order("created_at", { ascending: false })
       .limit(6);
