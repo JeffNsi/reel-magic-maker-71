@@ -6,8 +6,20 @@ export function useFilmAccount() {
   const [checked, setChecked] = useState(false);
   useEffect(() => {
     let active = true;
-    void supabase.auth.getUser().then(({ data }) => { if (active) { setUserId(data.user?.id ?? null); setChecked(true); } }).catch(() => { if (active) setChecked(true); });
-    return () => { active = false; };
+    void supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (active) {
+          setUserId(data.user?.id ?? null);
+          setChecked(true);
+        }
+      })
+      .catch(() => {
+        if (active) setChecked(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
   return { userId, checked };
 }
