@@ -327,6 +327,10 @@ function StoryReel() {
       <Header signedIn={!!user} />
 
       <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-10 sm:px-6 sm:pt-16">
+        <nav className="mb-8 flex flex-wrap justify-center gap-3" aria-label="Film tools">
+          <Button asChild><Link to="/create">Create a full film <ArrowRight /></Link></Button>
+          <Button asChild variant="outline"><Link to="/characters">My characters</Link></Button>
+        </nav>
         {(phase === "create" || phase === "working") && (
           <>
             <section className="text-center">

@@ -23,6 +23,7 @@ import { ClipPurchase } from "@/components/film/clip-purchase";
 import { ContinuityPanel } from "@/components/film/continuity-panel";
 import { SceneEngine } from "@/components/film/scene-engine";
 import { UniverseFilmCard } from "@/components/universe/universe-ui";
+import { FullFilmRender } from "@/components/film/full-film-render";
 import { SceneReferences } from "@/components/film/scene-references";
 import { getSceneReferencePlans, type SceneReferencePlan } from "@/lib/canon.functions";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
@@ -396,6 +397,8 @@ function FilmPage() {
             renders. A start the video service rejects is refunded.
           </p>
         </section>
+
+        <FullFilmRender film={film} sessionId={sessionId} onStarted={() => { void filmQuery.refetch(); }} />
 
         <CreditDashboard
           scenes={film.scenes}
