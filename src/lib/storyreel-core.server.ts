@@ -78,7 +78,9 @@ export async function submitLovableVideo(
   audio: boolean,
   references: string[] = [],
 ): Promise<string> {
-  const text = audio ? prompt : `${prompt} No dialogue. No music. No sound effects — silent footage.`;
+  const text = audio
+    ? prompt
+    : `${prompt} No dialogue. No music. No sound effects — silent footage.`;
   const images = await inlineReferenceImages(references);
   const res = await fetch(AI_VIDEO_BASE, {
     method: "POST",
@@ -160,8 +162,12 @@ async function inlineReferenceImages(references: string[]) {
   for (const reference of references) {
     const origin = process.env["SUPABASE_URL"];
     const url = new URL(reference);
-    if (!origin || url.protocol !== "https:" || url.origin !== new URL(origin).origin ||
-      !url.pathname.startsWith("/storage/v1/object/sign/films/")) {
+    if (
+      !origin ||
+      url.protocol !== "https:" ||
+      url.origin !== new URL(origin).origin ||
+      !url.pathname.startsWith("/storage/v1/object/sign/films/")
+    ) {
       throw new Error("Invalid reference image source. / Ogiltig källa för referensbild.");
     }
     const response = await fetch(url, { redirect: "error" });

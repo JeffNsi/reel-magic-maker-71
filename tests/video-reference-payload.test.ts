@@ -14,7 +14,8 @@ describe("outgoing video reference payload (mocked transport only)", () => {
   it("sends reference bytes, not URLs, to the existing EZY video model", async () => {
     vi.stubEnv("SUPABASE_URL", origin);
     vi.stubEnv("LOVABLE_API_KEY", "mock-key");
-    const transport = vi.fn()
+    const transport = vi
+      .fn()
       .mockResolvedValueOnce(new Response(png, { headers: { "content-type": "image/png" } }))
       .mockResolvedValueOnce(Response.json({ id: "mock-video-job" }));
     vi.stubGlobal("fetch", transport);
@@ -25,7 +26,10 @@ describe("outgoing video reference payload (mocked transport only)", () => {
     const payload = JSON.parse(init.body);
     expect(payload.model).toBe("google/gemini-omni-1.1-flash");
     expect(payload.input).toEqual([
-      { type: "text", text: "Scene action No dialogue. No music. No sound effects — silent footage." },
+      {
+        type: "text",
+        text: "Scene action No dialogue. No music. No sound effects — silent footage.",
+      },
       { type: "image", mime_type: "image/png", data: "iVBORw0KGgo=" },
     ]);
     expect(JSON.stringify(payload)).not.toContain(reference);
@@ -46,8 +50,9 @@ describe("outgoing video reference payload (mocked transport only)", () => {
     vi.stubEnv("SUPABASE_URL", origin);
     const transport = vi.fn();
     vi.stubGlobal("fetch", transport);
-    await expect(submitVideo("lovable", "Scene", true, ["https://foreign.example/image.png"]))
-      .rejects.toThrow("Invalid reference image source");
+    await expect(
+      submitVideo("lovable", "Scene", true, ["https://foreign.example/image.png"]),
+    ).rejects.toThrow("Invalid reference image source");
     expect(transport).not.toHaveBeenCalled();
   });
 
@@ -55,15 +60,18 @@ describe("outgoing video reference payload (mocked transport only)", () => {
     vi.stubEnv("SUPABASE_URL", origin);
     const transport = vi.fn().mockResolvedValue(new Response(null, { status: 403 }));
     vi.stubGlobal("fetch", transport);
-    await expect(submitVideo("lovable", "Scene", true, [reference])).rejects.toThrow("could not be read");
+    await expect(submitVideo("lovable", "Scene", true, [reference])).rejects.toThrow(
+      "could not be read",
+    );
     expect(transport).toHaveBeenCalledTimes(1);
   });
 
   it("rejects more than 10 images without silently dropping references", async () => {
     const transport = vi.fn();
     vi.stubGlobal("fetch", transport);
-    await expect(submitVideo("lovable", "Scene", true, Array(11).fill(reference)))
-      .rejects.toThrow("At most 10");
+    await expect(submitVideo("lovable", "Scene", true, Array(11).fill(reference))).rejects.toThrow(
+      "At most 10",
+    );
     expect(transport).not.toHaveBeenCalled();
   });
 });
