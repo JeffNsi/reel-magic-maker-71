@@ -94,7 +94,10 @@ beforeEach(() => {
       if (table === "story_scenes")
         return { data: retryAvailable ? { id: "scene" } : null, error: null };
       if (table === "stories")
-        return { data: retryAvailable ? { id: "film", session_id: "session", user_id: "owner" } : null, error: null };
+        return {
+          data: retryAvailable ? { id: "film", session_id: "session", user_id: "owner" } : null,
+          error: null,
+        };
       if (refundFilter)
         return {
           data: row.status === "failed" && !row.refunded ? [{ id: row.id }] : [],
@@ -195,6 +198,8 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     });
     const report = await runFilmTick(new Date("2026-10-17T12:30:00Z"));
     expect(report.retried).toBe(1);
-    expect(mocks.render).toHaveBeenCalledWith(expect.objectContaining({ scene_id: "scene", attempt: 2 }));
+    expect(mocks.render).toHaveBeenCalledWith(
+      expect.objectContaining({ scene_id: "scene", attempt: 2 }),
+    );
   });
 });
