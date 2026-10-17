@@ -183,7 +183,8 @@ export const generateVideo = createServerFn({ method: "POST" })
         .update({ status: "failed", error_message: message })
         .eq("id", row.id)
         .in("status", ["queued", "processing"]);
-      await dbCoins.refundGeneration?.(row.id);
+      const { refundGeneration } = await import("@/lib/coins.server");
+      await refundGeneration(row.id);
       return { generation_id: row.id, status: "failed", video_url: null, error_message: message };
     }
   });

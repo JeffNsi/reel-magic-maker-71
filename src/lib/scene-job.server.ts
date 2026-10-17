@@ -20,13 +20,29 @@ export async function runFilmTick(now = new Date()) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { providerProgress, BUCKET } = await import("@/lib/storyreel-core.server");
 
+  // Recover refunds separately so settled failed rows cannot starve inflight polling.
+  const { data: pendingRefunds } = await supabaseAdmin
+    .from("generations")
+    .select("id")
+    .not("story_id", "is", null)
+    .eq("status", "failed")
+    .eq("refunded", false)
+    .is("video_url", null)
+    .or("charged_bonus.gt.0,charged_paid.gt.0")
+    .order("created_at", { ascending: true })
+    .limit(TICK_LIMIT);
+  for (const pending of pendingRefunds ?? []) {
+    const { refundGeneration } = await import("@/lib/coins.server");
+    await refundGeneration(pending.id);
+  }
+
   const { data } = await supabaseAdmin
     .from("generations")
     .select(
       "id, story_id, user_id, status, provider, fal_request_id, deadline_at, attempts, video_url, refunded, charged_bonus, charged_paid",
     )
     .not("story_id", "is", null)
-    .in("status", ["queued", "processing", "failed"])
+    .in("status", ["queued", "processing"])
     .order("created_at", { ascending: true })
     .limit(TICK_LIMIT);
 
@@ -35,13 +51,6 @@ export async function runFilmTick(now = new Date()) {
   const report = { polled: 0, completed: 0, expired: 0, failed: 0, retried: 0 };
 
   for (const row of rows) {
-    if (row.status === "failed") {
-      if (shouldRefund(row)) {
-        const { refundGeneration } = await import("@/lib/coins.server");
-        await refundGeneration(row.id);
-      }
-      continue;
-    }
     touched.add(row.story_id);
     let action = tickAction(row, now);
 
@@ -90,7 +99,7 @@ async function settleFailed(row: Row): Promise<boolean> {
     .update({
       status: "failed",
       error_message:
-        "This scene did not finish in time. Any credits were returned. / Scenen blev inte klar i tid. Eventuella credits har återbetalats.",
+        "This scene did not finish in time. / Scenen blev inte klar i tid.",
     })
     .eq("id", row.id)
     .in("status", ["queued", "processing"])
