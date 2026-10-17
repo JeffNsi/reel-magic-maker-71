@@ -269,7 +269,9 @@ export function ClipPurchase({
       ) : awaiting ? (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-card/60 p-3 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Waiting for the payment to be confirmed — your clip appears here as soon as it is.</span>
+          <span>
+            Waiting for the payment to be confirmed — your clip appears here as soon as it is.
+          </span>
           <button
             type="button"
             className="ml-auto shrink-0 text-xs underline underline-offset-4 hover:text-primary"
@@ -321,7 +323,7 @@ export function ClipPurchase({
               />
               {canApplePay && (
                 <Button className="w-full" onClick={payWithApplePay} disabled={busy}>
-                   Pay with Apple Pay
+                  Pay with Apple Pay
                 </Button>
               )}
               <Button

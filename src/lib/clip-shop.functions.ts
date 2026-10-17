@@ -254,22 +254,17 @@ const appleSessionInput = z.object({
  */
 export const sumupApplePaySession = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => appleSessionInput.parse(data))
-  .handler(
-    async ({ data }): Promise<{ session: Json } | { error: string }> => {
+  .handler(async ({ data }): Promise<{ session: Json } | { error: string }> => {
     try {
-      const session = await sumupRequest(
-        `/v0.1/checkouts/${data.checkout_id}/apple-pay-session`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ target: data.target, context: data.context }),
-        },
-      );
+      const session = await sumupRequest(`/v0.1/checkouts/${data.checkout_id}/apple-pay-session`, {
+        method: "PUT",
+        body: JSON.stringify({ target: data.target, context: data.context }),
+      });
       return { session: session as Json };
     } catch (error: any) {
       return { error: error?.message || "Could not validate the Apple Pay session." };
     }
-    },
-  );
+  });
 
 const appleProcessInput = z.object({
   checkout_id: z.string().min(1),
