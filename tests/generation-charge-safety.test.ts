@@ -80,6 +80,7 @@ beforeEach(async () => {
       single: async () => {
         if (!insertion) throw new Error("Missing insert");
         const value = insertion;
+        console.info("insert trace", value.story_id, value.scene_number, jobs.map((job) => [job.id, job.status, job.story_id, job.scene_number]));
         if (
           jobs.some(
             (job) =>
@@ -154,6 +155,7 @@ describe("generation charge safety (behavioral, fake database and transport)", (
       },
     };
     const results = await Promise.allSettled([start(port), start(port)]);
+    console.info("result trace", results, jobs);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const rejected = results.find((result) => result.status === "rejected");
     expect(rejected?.status === "rejected" && rejected.reason.message).toBe(
