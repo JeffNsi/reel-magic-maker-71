@@ -398,7 +398,13 @@ function FilmPage() {
           </p>
         </section>
 
-        <FullFilmRender film={film} sessionId={sessionId} onStarted={() => { void filmQuery.refetch(); }} />
+        <FullFilmRender
+          film={film}
+          sessionId={sessionId}
+          onStarted={() => {
+            void filmQuery.refetch();
+          }}
+        />
 
         <CreditDashboard
           scenes={film.scenes}

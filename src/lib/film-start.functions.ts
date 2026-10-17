@@ -53,7 +53,13 @@ export const saveApprovedFilm = createServerFn({ method: "POST" })
           scene_count: data.scenes.length,
           mode: "template",
           character_approved: true,
-          canonical_character_id: canonicalId(character.name.replace(/\s*\([^)]*\)\s*$/, "").split(/\s+[—–-]\s+/)[0]?.trim() || character.name, new Set()),
+          canonical_character_id: canonicalId(
+            character.name
+              .replace(/\s*\([^)]*\)\s*$/, "")
+              .split(/\s+[—–-]\s+/)[0]
+              ?.trim() || character.name,
+            new Set(),
+          ),
           scene_credit_cost: EZY_SCENE_COST,
         },
         _scenes: data.scenes.map((scene) => ({
