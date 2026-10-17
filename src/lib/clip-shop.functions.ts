@@ -261,11 +261,12 @@ export const sumupApplePaySession = createServerFn({ method: "POST" })
           body: JSON.stringify({ target: data.target, context: data.context }),
         },
       );
-      return { session };
+      return { session: session as Record<string, unknown> };
     } catch (error: any) {
       return { error: error?.message || "Could not validate the Apple Pay session." };
     }
-  });
+    },
+  );
 
 const appleProcessInput = z.object({
   checkout_id: z.string().min(1),
