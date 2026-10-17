@@ -239,13 +239,14 @@ export const confirmSumUpCheckout = createServerFn({ method: "POST" })
   });
 
 const coinWalletInput = sumupInput.extend({ checkoutId: z.string().min(1) });
+type WalletJson = string | number | boolean | null | WalletJson[] | { [key: string]: WalletJson };
 
 export const coinApplePaySession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => coinWalletInput.extend({
     target: z.string().url(), context: z.string().regex(/^[a-z0-9.-]+$/i),
   }).parse(data))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{ session: WalletJson } | { error: string }> => {
     try {
       assertAppleValidationUrl(data.target);
       const checkout = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, { method: "GET" });
@@ -253,7 +254,7 @@ export const coinApplePaySession = createServerFn({ method: "POST" })
       const session = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}/apple-pay-session`, {
         method: "PUT", body: JSON.stringify({ target: data.target, context: data.context }),
       });
-      return { session: session as Record<string, unknown> };
+      return { session: session as WalletJson };
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades." };
     }

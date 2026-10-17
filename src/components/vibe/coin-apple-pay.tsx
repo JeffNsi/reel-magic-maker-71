@@ -56,16 +56,19 @@ export function CoinApplePay({ pack, onSuccess }: { pack: ShopPack; onSuccess: (
         }
       };
       session.onpaymentauthorized = async (event) => {
+        let paymentCompleted = false;
         try {
           const result = await process({ data: { pack, checkoutId: checkout.checkoutId, token: event.payment.token } });
           if ("error" in result) throw new Error(result.error);
           if (!result.paid) throw new Error(sv ? "Betalningen är inte bekräftad." : "Payment has not been confirmed.");
           session.completePayment(APS.STATUS_SUCCESS);
+          paymentCompleted = true;
           const delivered = await confirm({ data: { pack, checkoutId: checkout.checkoutId } });
           if ("error" in delivered) throw new Error(delivered.error);
           if (!delivered.paid) throw new Error(sv ? "Köpet väntar på bekräftelse." : "Purchase awaiting confirmation.");
           onSuccess();
         } catch (failure) {
+          if (!paymentCompleted) session.completePayment(APS.STATUS_FAILURE);
           setError(failure instanceof Error ? failure.message : "Apple Pay failed. / Apple Pay misslyckades.");
         } finally { setBusy(false); }
       };
