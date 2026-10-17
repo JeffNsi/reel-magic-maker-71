@@ -30,3 +30,4 @@
 - [x] Unpublish the 17 scene clips — completed in earlier phase
 - [ ] Character portrait price — waiting for owner
 - [ ] Start-screen extensions: kids rules+AI safety check, style-image conditioning, AI scene writing — unavailable in template start flow; no paid calls without owner approval
+- [x] Path A: film-tick schedule removed; owner getFilm poll drives tickFilm; 344/344 tests
