@@ -47,6 +47,7 @@ Byggt och verifierat:
 
 - Ingen pg_cron, ingen pg_net, inget Vault. Cron-hemligheten lagras aldrig i databasen.
 - `/api/public/hooks/film-tick` får ligga kvar men schemaläggs inte.
+- Det redan skapade HTTP-schemat `film-tick` ska tas bort när Väg A byggs (tas inte bort nu, bara planerat).
 - Scenjobben drivs framåt när **ägaren** pollar `getFilm`:
   - `getFilm` behåller sin publika läsväg via session_id (ingen krav-middleware; anonyma läsningar fungerar som i dag). Den läser valfritt den inloggade användaren från bearer-token som redan bifogas.
   - Bara när den inloggade användaren är `stories.user_id` körs tick-logiken, och bara för den filmens pågående generationer: hämta klara klipp (publiceras aldrig), 30-minutersdeadline, högst 2 nya försök via `renderSceneCore` som ägaren, återbetalning, ny beräkning av `stories.status`.
