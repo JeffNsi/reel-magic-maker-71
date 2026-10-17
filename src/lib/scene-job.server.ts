@@ -98,8 +98,7 @@ async function settleFailed(row: Row): Promise<boolean> {
     .from("generations")
     .update({
       status: "failed",
-      error_message:
-        "This scene did not finish in time. / Scenen blev inte klar i tid.",
+      error_message: "This scene did not finish in time. / Scenen blev inte klar i tid.",
     })
     .eq("id", row.id)
     .in("status", ["queued", "processing"])

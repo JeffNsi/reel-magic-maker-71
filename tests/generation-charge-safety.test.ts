@@ -27,7 +27,10 @@ beforeEach(() => {
   refundFails = false;
   coinRefundFails = false;
   vi.stubEnv("LOVABLE_API_KEY", "mock-key");
-  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ id: "mock-provider-job" })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => Response.json({ id: "mock-provider-job" })),
+  );
   mock.rpc.mockImplementation(async (name: string, args: Record<string, number | string>) => {
     if (name === "spend_coins") {
       const cost = Number(args._cost);
@@ -64,40 +67,83 @@ beforeEach(() => {
       return { error: null };
     };
     const chain = {
-      insert: (value: typeof insertion) => { insertion = value; return chain; },
+      insert: (value: typeof insertion) => {
+        insertion = value;
+        return chain;
+      },
       select: () => chain,
       single: async () => {
         if (!insertion) throw new Error("Missing insert");
         const value = insertion;
-        if (jobs.some((job) => job.story_id === value.story_id && job.scene_number === value.scene_number && ["queued", "processing"].includes(job.status))) {
-          return { data: null, error: { code: "23505", message: 'duplicate key violates unique constraint "generations_one_inflight_per_scene"' } };
+        if (
+          jobs.some(
+            (job) =>
+              job.story_id === value.story_id &&
+              job.scene_number === value.scene_number &&
+              ["queued", "processing"].includes(job.status),
+          )
+        ) {
+          return {
+            data: null,
+            error: {
+              code: "23505",
+              message:
+                'duplicate key violates unique constraint "generations_one_inflight_per_scene"',
+            },
+          };
         }
         const row = { ...value, id: `generation-${jobs.length + 1}`, refunded: false };
         jobs.push(row);
         return { data: { id: row.id }, error: null };
       },
-      update: (value: Partial<Job>) => { update = value; return chain; },
-      eq: (_key: string, value: string) => { id = value; return chain; },
-      in: (_key: string, value: string[]) => { statuses = value; return chain; },
-      then: (resolve: (value: { error: null }) => unknown) => Promise.resolve(applyUpdate()).then(resolve),
+      update: (value: Partial<Job>) => {
+        update = value;
+        return chain;
+      },
+      eq: (_key: string, value: string) => {
+        id = value;
+        return chain;
+      },
+      in: (_key: string, value: string[]) => {
+        statuses = value;
+        return chain;
+      },
+      then: (resolve: (value: { error: null }) => unknown) =>
+        Promise.resolve(applyUpdate()).then(resolve),
     };
     return chain;
   });
 });
 
-afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
-const start = () => withCharge(dbCoins, "owner", 14, (charge) => startGeneration({
-  session_id: "session", idea: "scene", style: "cinematic", prompt: "scene", audio: false,
-  story_id: "film", scene_number: 1, user_id: "owner", charged_bonus: charge.bonus, charged_paid: charge.paid,
-}));
+const start = () =>
+  withCharge(dbCoins, "owner", 14, (charge) =>
+    startGeneration({
+      session_id: "session",
+      idea: "scene",
+      style: "cinematic",
+      prompt: "scene",
+      audio: false,
+      story_id: "film",
+      scene_number: 1,
+      user_id: "owner",
+      charged_bonus: charge.bonus,
+      charged_paid: charge.paid,
+    }),
+  );
 
 describe("generation charge safety (behavioral, fake database and transport)", () => {
   it("two simultaneous scene starts create one job and one net 14-credit debit", async () => {
     const results = await Promise.allSettled([start(), start()]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const rejected = results.find((result) => result.status === "rejected");
-    expect(rejected?.status === "rejected" && rejected.reason.message).toBe("This scene is already rendering. / Scenen renderas redan.");
+    expect(rejected?.status === "rejected" && rejected.reason.message).toBe(
+      "This scene is already rendering. / Scenen renderas redan.",
+    );
     expect(jobs).toHaveLength(1);
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(balance.bonus + balance.paid).toBe(86);
@@ -116,7 +162,10 @@ describe("generation charge safety (behavioral, fake database and transport)", (
   });
 
   it("refunds a persisted rejected start only through refund_generation", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ message: "Provider rejected" }, { status: 400 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ message: "Provider rejected" }, { status: 400 })),
+    );
     await expect(start()).rejects.toBeInstanceOf(GenerationStartError);
     expect(jobs[0]?.refunded).toBe(true);
     expect(balance).toEqual({ bonus: 10, paid: 90 });
@@ -128,19 +177,28 @@ describe("generation charge safety (behavioral, fake database and transport)", (
     const row = jobs[0];
     if (!row) throw new Error("Missing job");
     row.status = "failed";
-    expect(await Promise.all([refundGeneration(row.id), refundGeneration(row.id)])).toEqual([true, false]);
+    expect(await Promise.all([refundGeneration(row.id), refundGeneration(row.id)])).toEqual([
+      true,
+      false,
+    ]);
     expect(balance).toEqual({ bonus: 10, paid: 90 });
   });
 
   it("failed generation refund stays unrefunded, surfaces the error, and can be retried", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     refundFails = true;
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({}, { status: 400 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({}, { status: 400 })),
+    );
     await expect(start()).rejects.toThrow("Credits kunde inte återbetalas");
     expect(jobs[0]?.status).toBe("failed");
     expect(jobs[0]?.refunded).toBe(false);
     expect(balance.bonus + balance.paid).toBe(86);
-    expect(log).toHaveBeenCalledWith("refund_generation failed", expect.objectContaining({ code: "mock-refund-error" }));
+    expect(log).toHaveBeenCalledWith(
+      "refund_generation failed",
+      expect.objectContaining({ code: "mock-refund-error" }),
+    );
     refundFails = false;
     expect(await refundGeneration(jobs[0]?.id ?? "missing")).toBe(true);
     expect(balance).toEqual({ bonus: 10, paid: 90 });
@@ -152,7 +210,10 @@ describe("generation charge safety (behavioral, fake database and transport)", (
     await start();
     coinRefundFails = true;
     await expect(start()).rejects.toThrow("Credits kunde inte återbetalas");
-    expect(log).toHaveBeenCalledWith("refund_coins failed", expect.objectContaining({ code: "mock-refund-error" }));
+    expect(log).toHaveBeenCalledWith(
+      "refund_coins failed",
+      expect.objectContaining({ code: "mock-refund-error" }),
+    );
     expect(jobs).toHaveLength(1);
     log.mockRestore();
   });

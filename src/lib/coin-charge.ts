@@ -17,7 +17,10 @@ export type CoinPort = {
 
 /** Distinguishes a persisted rejected start from an insert that never created a row. */
 export class GenerationStartError extends Error {
-  constructor(message: string, readonly generationId: string) {
+  constructor(
+    message: string,
+    readonly generationId: string,
+  ) {
     super(message);
   }
 }
