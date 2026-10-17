@@ -319,7 +319,17 @@ export function ClipPurchase({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Button className="w-full" onClick={() => begin("stripe")} disabled={busy}>
+              {canApplePay && (
+                <Button className="w-full" onClick={payWithApplePay} disabled={busy}>
+                   Pay with Apple Pay
+                </Button>
+              )}
+              <Button
+                className="w-full"
+                variant={canApplePay ? "secondary" : "default"}
+                onClick={() => begin("stripe")}
+                disabled={busy}
+              >
                 <Wallet className="mr-2 h-4 w-4" /> Card, Apple Pay or Google Pay
               </Button>
               <Button
