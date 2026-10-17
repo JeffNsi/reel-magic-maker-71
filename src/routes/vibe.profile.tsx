@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { getProfile } from "@/lib/vibe.functions";
+import { getIsOwner } from "@/lib/sumup-account.functions";
 import { Button } from "@/components/ui/button";
 import { CoinShopModal } from "@/components/vibe/coin-shop-modal";
 import { useEffect, useState } from "react";
@@ -49,6 +50,13 @@ function ProfilePage() {
     queryKey: ["profile", user?.id],
     enabled: !!user,
     queryFn: () => fetchProfile(),
+  });
+
+  const fetchOwner = useServerFn(getIsOwner);
+  const { data: owner } = useQuery({
+    queryKey: ["is-owner", user?.id],
+    enabled: !!user,
+    queryFn: () => fetchOwner(),
   });
 
   const signOut = async () => {
@@ -139,6 +147,14 @@ function ProfilePage() {
       </div>
 
       <div className="mt-4 rounded-3xl border border-dw-border bg-dw-card p-4">
+        {owner?.owner && (
+          <Link
+            to="/sumup"
+            className="flex w-full items-center gap-3 rounded-2xl p-3 text-left text-sm font-medium text-dw-foreground transition-colors hover:bg-dw-background/50"
+          >
+            <Wallet className="size-5 text-dw-muted" aria-hidden /> SumUp
+          </Link>
+        )}
         <button
           onClick={signOut}
           className="flex w-full items-center gap-3 rounded-2xl p-3 text-left text-sm font-medium text-dw-foreground transition-colors hover:bg-dw-background/50"
