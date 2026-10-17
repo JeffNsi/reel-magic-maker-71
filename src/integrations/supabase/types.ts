@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      characters: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          idempotency_key: string
+          name: string
+          reference_path: string | null
+          traits: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          idempotency_key: string
+          name: string
+          reference_path?: string | null
+          traits?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          idempotency_key?: string
+          name?: string
+          reference_path?: string | null
+          traits?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clip_purchases: {
         Row: {
           amount: number
@@ -1002,6 +1038,8 @@ export type Database = {
       stories: {
         Row: {
           blueprint: string | null
+          character_approved_at: string | null
+          character_id: string | null
           characters: Json
           created_at: string
           director_session_id: string | null
@@ -1011,6 +1049,8 @@ export type Database = {
           setting: string
           share_slug: string | null
           shared_at: string | null
+          start_key: string | null
+          start_metadata: Json | null
           status: string
           style: string
           theme: string
@@ -1020,6 +1060,8 @@ export type Database = {
         }
         Insert: {
           blueprint?: string | null
+          character_approved_at?: string | null
+          character_id?: string | null
           characters?: Json
           created_at?: string
           director_session_id?: string | null
@@ -1029,6 +1071,8 @@ export type Database = {
           setting?: string
           share_slug?: string | null
           shared_at?: string | null
+          start_key?: string | null
+          start_metadata?: Json | null
           status?: string
           style?: string
           theme?: string
@@ -1038,6 +1082,8 @@ export type Database = {
         }
         Update: {
           blueprint?: string | null
+          character_approved_at?: string | null
+          character_id?: string | null
           characters?: Json
           created_at?: string
           director_session_id?: string | null
@@ -1047,6 +1093,8 @@ export type Database = {
           setting?: string
           share_slug?: string | null
           shared_at?: string | null
+          start_key?: string | null
+          start_metadata?: Json | null
           status?: string
           style?: string
           theme?: string
@@ -1054,7 +1102,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stories_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       story_scenes: {
         Row: {
@@ -1356,6 +1412,21 @@ export type Database = {
     }
     Functions: {
       claim_film_slot: { Args: { _user: string }; Returns: boolean }
+      create_approved_character_film: {
+        Args: {
+          _character: string
+          _idea: string
+          _key: string
+          _metadata: Json
+          _scenes: Json
+          _session: string
+          _setting: string
+          _style: string
+          _title: string
+          _user: string
+        }
+        Returns: string
+      }
       refund_coins: {
         Args: { _bonus: number; _paid: number; _user: string }
         Returns: undefined
