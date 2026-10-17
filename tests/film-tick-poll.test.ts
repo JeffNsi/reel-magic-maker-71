@@ -6,7 +6,8 @@ const deps = (over: Partial<TickDeps> = {}) => {
   return {
     tick,
     d: {
-      userFromToken: async (t: string) => (t === "owner-token" ? "u1" : t === "other" ? "u2" : null),
+      userFromToken: async (t: string) =>
+        t === "owner-token" ? "u1" : t === "other" ? "u2" : null,
       ownerOf: async () => "u1",
       tick,
       ...over,
@@ -41,7 +42,11 @@ describe("getFilm-driven tick (Path A)", () => {
     expect(tick).toHaveBeenCalledWith("film-9");
   });
   it("tick failure never throws to getFilm", async () => {
-    const { d } = deps({ tick: async () => { throw new Error("boom"); } });
+    const { d } = deps({
+      tick: async () => {
+        throw new Error("boom");
+      },
+    });
     await expect(ownerTickIfAllowed("f", "Bearer owner-token", d)).resolves.toBe(true);
   });
 });
