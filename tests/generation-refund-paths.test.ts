@@ -46,6 +46,7 @@ let refundFails: boolean;
 let credited: number;
 let updates: Record<string, unknown>[];
 let cron: boolean;
+let retryAvailable: boolean;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -53,6 +54,7 @@ beforeEach(() => {
   credited = 0;
   updates = [];
   cron = false;
+  retryAvailable = false;
   row = {
     id: "generation",
     story_id: "film",
@@ -89,8 +91,10 @@ beforeEach(() => {
         }
         return { data: [], error: null };
       }
-      if (table === "story_scenes") return { data: null, error: null };
-      if (table === "stories") return { data: null, error: null };
+      if (table === "story_scenes")
+        return { data: retryAvailable ? { id: "scene" } : null, error: null };
+      if (table === "stories")
+        return { data: retryAvailable ? { id: "film", session_id: "session", user_id: "owner" } : null, error: null };
       if (refundFilter)
         return {
           data: row.status === "failed" && !row.refunded ? [{ id: row.id }] : [],
@@ -180,5 +184,17 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     expect(row.refunded).toBe(true);
     expect(credited).toBe(14);
     log.mockRestore();
+  });
+
+  it("cron can retry after the old row is failed and refunded", async () => {
+    cron = true;
+    retryAvailable = true;
+    mocks.render.mockImplementation(async () => {
+      expect(row.status).toBe("failed");
+      expect(row.refunded).toBe(true);
+    });
+    const report = await runFilmTick(new Date("2026-10-17T12:30:00Z"));
+    expect(report.retried).toBe(1);
+    expect(mocks.render).toHaveBeenCalledWith(expect.objectContaining({ scene_id: "scene", attempt: 2 }));
   });
 });
