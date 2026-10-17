@@ -3,6 +3,8 @@
  * Never imported from client code directly — always behind a server function handler.
  */
 
+import { GenerationStartError, SCENE_ALREADY_RENDERING_MESSAGE } from "@/lib/coin-charge";
+
 export const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
 /** LIVE engine: fal.ai's realtime director model, run through the same queue transport. */
 export const FAL_LIVE_MODEL_ID = "fal-ai/minimax/h3-max/director";
@@ -362,6 +364,9 @@ export async function startGeneration(opts: {
     .select("id")
     .single();
 
+  if (error?.code === "23505" && error.message.includes("generations_one_inflight_per_scene")) {
+    throw new Error(SCENE_ALREADY_RENDERING_MESSAGE);
+  }
   if (error || !row) throw new Error("Could not start this scene. Please try again.");
 
   try {
@@ -387,10 +392,10 @@ export async function startGeneration(opts: {
     const message = err instanceof Error ? err.message : "The video service could not start this.";
     await supabaseAdmin
       .from("generations")
-      // The caller's withCharge refunds a rejected start; record that here so the
-      // cron tick never refunds the same charge twice.
-      .update({ status: "failed", error_message: message, refunded: true, coins_spent: 0 })
-      .eq("id", row.id);
-    throw new Error(message);
+      // Keep the conditional failure claim; withCharge uses the row's atomic refund.
+      .update({ status: "failed", error_message: message })
+      .eq("id", row.id)
+      .in("status", ["queued", "processing"]);
+    throw new GenerationStartError(message, row.id);
   }
 }

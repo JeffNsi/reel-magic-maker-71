@@ -11,7 +11,19 @@ export type CoinPort = {
   /** Atomic: debits bonus first, then paid; null when the balance is too low. */
   spend(user: string, cost: number): Promise<Charge | null>;
   refund(user: string, charge: Charge): Promise<void>;
+  /** A persisted failed start must be refunded atomically with its generation row. */
+  refundGeneration?(generation: string): Promise<boolean>;
 };
+
+/** Distinguishes a persisted rejected start from an insert that never created a row. */
+export class GenerationStartError extends Error {
+  constructor(message: string, readonly generationId: string) {
+    super(message);
+  }
+}
+
+export const SCENE_ALREADY_RENDERING_MESSAGE =
+  "This scene is already rendering. / Scenen renderas redan.";
 
 export class NeedsCreditsError extends Error {
   readonly code = "needs_credits";
@@ -39,7 +51,12 @@ export async function withCharge<T>(
   try {
     return { result: await run(charge), charge };
   } catch (err) {
-    await port.refund(user, charge);
+    if (err instanceof GenerationStartError) {
+      if (!port.refundGeneration) throw new Error("Generation refund is not configured.");
+      await port.refundGeneration(err.generationId);
+    } else {
+      await port.refund(user, charge);
+    }
     throw err;
   }
 }
