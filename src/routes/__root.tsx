@@ -14,7 +14,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,10 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "STORYREEL — AI short film studio" },
-      { name: "description", content: "Turn your idea into a cinematic vertical short film with AI." },
+      {
+        name: "description",
+        content: "Turn your idea into a cinematic vertical short film with AI.",
+      },
       { name: "author", content: "STORYREEL" },
       { property: "og:title", content: "STORYREEL — AI short film studio" },
-      { property: "og:description", content: "Turn your idea into a cinematic vertical short film with AI." },
+      {
+        property: "og:description",
+        content: "Turn your idea into a cinematic vertical short film with AI.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#07070a" },
@@ -108,7 +113,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -153,4 +157,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
