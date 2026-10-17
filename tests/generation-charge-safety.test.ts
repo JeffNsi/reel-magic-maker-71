@@ -20,7 +20,9 @@ let balance: { bonus: number; paid: number };
 let refundFails: boolean;
 let coinRefundFails: boolean;
 
-beforeEach(() => {
+beforeEach(async () => {
+  // Warm the mocked dynamic module before exercising concurrent starts.
+  await import("@/integrations/supabase/client.server");
   vi.clearAllMocks();
   jobs = [];
   balance = { bonus: 10, paid: 90 };
@@ -34,7 +36,6 @@ beforeEach(() => {
   mock.rpc.mockImplementation(async (name: string, args: Record<string, number | string>) => {
     if (name === "spend_coins") {
       const cost = Number(args._cost);
-      console.info("mock debit", cost, balance);
       if (balance.bonus + balance.paid < cost) return { data: [], error: null };
       const bonus = Math.min(balance.bonus, cost);
       balance.bonus -= bonus;
