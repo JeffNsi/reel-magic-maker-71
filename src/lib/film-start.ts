@@ -42,5 +42,6 @@ export function startScenePrompt(scene: StartScene, position: number, input: Pic
   return buildGenerationRequest(approvedSceneTruth(scene, input, character), {
     style_prefix: input.style, original_idea: input.idea, scene_number: position,
     scene_title: scene.title, cast: `${character.name}: ${character.description}`, film_setting: input.setting,
+    film_continuity: "Keep the approved character unchanged across scenes.",
   });
 }

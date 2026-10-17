@@ -26,7 +26,6 @@ export function FullFilmRender({ film, sessionId, onStarted }: { film: FilmView;
   const estimatedUsd = rate === undefined ? null : pending * 5 * rate;
   const start = useMutation({ mutationFn: () => run({ data: { film_id: film.id, session_id: sessionId, engine } }), onSuccess: (res) => {
     if (res.status === "needs_credits") setWarning(t("Not enough credits. Top up before rendering.", "Inte tillräckligt med credits. Fyll på före rendering."));
-    else if (res.failed.length) setWarning(t("Some scenes could not start. Check their status below.", "Vissa scener kunde inte starta. Kontrollera status nedan."));
     onStarted(); void profile.refetch();
   }, onError: (e: Error) => setWarning(e.message) });
   return <section className="mt-8 border-y border-border py-6">
