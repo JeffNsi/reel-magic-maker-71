@@ -34,6 +34,7 @@ beforeEach(() => {
   mock.rpc.mockImplementation(async (name: string, args: Record<string, number | string>) => {
     if (name === "spend_coins") {
       const cost = Number(args._cost);
+      console.info("mock debit", cost, balance);
       if (balance.bonus + balance.paid < cost) return { data: [], error: null };
       const bonus = Math.min(balance.bonus, cost);
       balance.bonus -= bonus;
