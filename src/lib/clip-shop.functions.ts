@@ -251,7 +251,8 @@ const appleSessionInput = z.object({
  */
 export const sumupApplePaySession = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => appleSessionInput.parse(data))
-  .handler(async ({ data }): Promise<{ session: unknown } | { error: string }> => {
+  .handler(
+    async ({ data }): Promise<{ session: Record<string, unknown> } | { error: string }> => {
     try {
       const session = await sumupRequest(
         `/v0.1/checkouts/${data.checkout_id}/apple-pay-session`,
