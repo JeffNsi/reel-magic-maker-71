@@ -170,7 +170,7 @@ const FOOTER_LINKS = {
     { label: "Create", href: "#create" },
     { label: "How it works", href: "#how" },
   ],
-  Company: [{ label: "Contact", href: "mailto:hello@storyreel.app" }],
+  Company: [{ label: "Contact", href: "mailto:hello@jejeincvibe.app" }],
   Legal: [
     { label: "Privacy", to: "/privacy" as const },
     { label: "Terms", to: "/terms" as const },

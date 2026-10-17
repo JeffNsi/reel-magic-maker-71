@@ -64,6 +64,21 @@ const SHOWCASE_SUBJECTS: ShowcaseSubject[] = [
     logline: "He falls for the woman whose name he cannot remember.",
   },
   {
+    pattern: /missing son/i,
+    title: "The Returned Son",
+    logline: "A grieving family welcomes home a son who may not be theirs.",
+  },
+  {
+    pattern: /lighthouse/i,
+    title: "The Keeper's Light",
+    logline: "Through the storm, he climbs to keep one light burning.",
+  },
+  {
+    pattern: /soccer|football/i,
+    title: "The Final Kick",
+    logline: "One shot decides whether he is remembered or forgotten.",
+  },
+  {
     pattern: /train|station/i,
     title: "Last Train Home",
     logline: "The last train leaves, and so does the life she knew.",
