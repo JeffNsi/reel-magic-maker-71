@@ -26,7 +26,7 @@ export async function runFilmTick(now = new Date()) {
       "id, story_id, user_id, status, provider, fal_request_id, deadline_at, attempts, video_url, refunded, charged_bonus, charged_paid",
     )
     .not("story_id", "is", null)
-    .in("status", ["queued", "processing"])
+    .in("status", ["queued", "processing", "failed"])
     .order("created_at", { ascending: true })
     .limit(TICK_LIMIT);
 
@@ -35,6 +35,13 @@ export async function runFilmTick(now = new Date()) {
   const report = { polled: 0, completed: 0, expired: 0, failed: 0, retried: 0 };
 
   for (const row of rows) {
+    if (row.status === "failed") {
+      if (shouldRefund(row)) {
+        const { refundGeneration } = await import("@/lib/coins.server");
+        await refundGeneration(row.id);
+      }
+      continue;
+    }
     touched.add(row.story_id);
     let action = tickAction(row, now);
 
@@ -84,19 +91,15 @@ async function settleFailed(row: Row): Promise<boolean> {
       status: "failed",
       error_message:
         "This scene did not finish in time. Any credits were returned. / Scenen blev inte klar i tid. Eventuella credits har återbetalats.",
-      ...(refund ? { refunded: true } : {}),
     })
     .eq("id", row.id)
     .in("status", ["queued", "processing"])
     .select("id");
   if (!claimed?.length) return false;
 
-  if (refund && row.user_id) {
-    const { dbCoins } = await import("@/lib/coins.server");
-    await dbCoins.refund(row.user_id, {
-      bonus: row.charged_bonus ?? 0,
-      paid: row.charged_paid ?? 0,
-    });
+  if (refund) {
+    const { refundGeneration } = await import("@/lib/coins.server");
+    await refundGeneration(row.id);
   }
   return true;
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { STORYREEL_DRAMA_ID } from "@/lib/vibe.functions";
 import { SINGLE_SHORT_COST } from "@/lib/pricing";
-import { shouldAutoPublish, shouldRefund } from "@/lib/scene-job";
+import { shouldAutoPublish } from "@/lib/scene-job";
 
 /** Coins burned by one generation. Coins are earned in Rewards or bought in the coin shop. */
 export const COIN_COST = SINGLE_SHORT_COST;
@@ -178,11 +178,12 @@ export const generateVideo = createServerFn({ method: "POST" })
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
-      await refund();
       await supabaseAdmin
         .from("generations")
-        .update({ status: "failed", error_message: message, coins_spent: 0, refunded: true })
-        .eq("id", row.id);
+        .update({ status: "failed", error_message: message })
+        .eq("id", row.id)
+        .in("status", ["queued", "processing"]);
+      await dbCoins.refundGeneration?.(row.id);
       return { generation_id: row.id, status: "failed", video_url: null, error_message: message };
     }
   });
@@ -214,26 +215,19 @@ export const checkStatus = createServerFn({ method: "POST" })
     const fail = async (message: string): Promise<GenerationStatus> => {
       // Guarded claim: only the first caller (poll or cron tick) settles the row,
       // and a charged job with no clip is refunded exactly once.
-      const { data: job } = await supabaseAdmin
-        .from("generations")
-        .select("user_id, status, video_url, refunded, charged_bonus, charged_paid")
-        .eq("id", row.id)
-        .maybeSingle();
-      const refund =
-        !!job &&
-        shouldRefund({ ...job, deadline_at: null, attempts: null } as Parameters<typeof shouldRefund>[0]);
       const { data: claimed } = await supabaseAdmin
         .from("generations")
-        .update({ status: "failed", error_message: message, ...(refund ? { refunded: true } : {}) })
+        .update({ status: "failed", error_message: message })
         .eq("id", row.id)
         .in("status", ["queued", "processing"])
         .select("id");
-      if (refund && claimed?.length && job?.user_id) {
-        const { dbCoins } = await import("@/lib/coins.server");
-        await dbCoins.refund(job.user_id as string, {
-          bonus: (job.charged_bonus as number | null) ?? 0,
-          paid: (job.charged_paid as number | null) ?? 0,
-        });
+      if (claimed?.length) {
+        const { refundGeneration } = await import("@/lib/coins.server");
+        try {
+          await refundGeneration(row.id);
+        } catch (err) {
+          message += `\n${err instanceof Error ? err.message : "Refund failed. / Återbetalningen misslyckades."}`;
+        }
       }
       return {
         generation_id: row.id,
@@ -244,11 +238,18 @@ export const checkStatus = createServerFn({ method: "POST" })
     };
 
     if (row.status === "failed") {
+      const { refundGeneration } = await import("@/lib/coins.server");
+      let message = row.error_message ?? "Something went wrong.";
+      try {
+        await refundGeneration(row.id);
+      } catch (err) {
+        message += `\n${err instanceof Error ? err.message : "Refund failed. / Återbetalningen misslyckades."}`;
+      }
       return {
         generation_id: row.id,
         status: "failed",
         video_url: null,
-        error_message: row.error_message ?? "Something went wrong.",
+        error_message: message,
       };
     }
 
