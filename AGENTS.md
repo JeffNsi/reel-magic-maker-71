@@ -19,3 +19,5 @@
 - EZY sends readable canon references as validated inline media from signed project-storage URLs; optional image failures are logged and persisted as dismissible scene warnings, never render blockers. Existing fal/live endpoints remain text-only.
 - Inflight film scenes are unique in the database; persisted failed jobs refund through service-role-only refund_generation, while insert failures use refund_coins and surface errors — this prevents double starts and makes refund retries idempotent.
 - Coin Apple Pay prepares a SumUp checkout before the gesture, validates owner/pack/amount/currency server-side, and confirms through the existing purchase fulfillment — Safari requires synchronous wallet opening and credits must follow provider confirmation.
+
+- App-wide owner access uses `public.user_roles` + `has_role(uid, role)` checked server-side; the SumUp overview (`/sumup`) is read-only and admin-only — merchant revenue must never reach other users.

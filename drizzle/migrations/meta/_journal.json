@@ -43,6 +43,13 @@
       "when": 1792252803576,
       "tag": "0005_generation_charge_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792256658957,
+      "tag": "0006_owner_admin_role",
+      "breakpoints": true
     }
   ]
 }

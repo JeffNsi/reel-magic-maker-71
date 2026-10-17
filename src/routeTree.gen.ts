@@ -18,6 +18,7 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SelftestRouteImport } from './routes/selftest'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as SumupRouteImport } from './routes/sumup'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as UniverseRouteImport } from './routes/universe'
@@ -79,6 +80,11 @@ const SelftestRoute = SelftestRouteImport.update({
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SumupRoute = SumupRouteImport.update({
+  id: '/sumup',
+  path: '/sumup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamRoute = TeamRouteImport.update({
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
+  '/sumup': typeof SumupRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/universe': typeof UniverseRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
+  '/sumup': typeof SumupRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/universe': typeof UniverseRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/selftest': typeof SelftestRoute
   '/studio': typeof StudioRoute
+  '/sumup': typeof SumupRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/universe': typeof UniverseRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/selftest'
     | '/studio'
+    | '/sumup'
     | '/team'
     | '/terms'
     | '/universe'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/selftest'
     | '/studio'
+    | '/sumup'
     | '/team'
     | '/terms'
     | '/universe'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/selftest'
     | '/studio'
+    | '/sumup'
     | '/team'
     | '/terms'
     | '/universe'
@@ -350,6 +362,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SelftestRoute: typeof SelftestRoute
   StudioRoute: typeof StudioRoute
+  SumupRoute: typeof SumupRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   UniverseRoute: typeof UniverseRoute
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sumup': {
+      id: '/sumup'
+      path: '/sumup'
+      fullPath: '/sumup'
+      preLoaderRoute: typeof SumupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/team': {
@@ -579,6 +599,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SelftestRoute: SelftestRoute,
   StudioRoute: StudioRoute,
+  SumupRoute: SumupRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   UniverseRoute: UniverseRoute,
