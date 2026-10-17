@@ -127,7 +127,10 @@ beforeEach(() => {
       order: () => chain,
       limit: () => chain,
       single: async () => result(),
-      maybeSingle: async () => { single = true; return result(); },
+      maybeSingle: async () => {
+        single = true;
+        return result();
+      },
       then: (resolve: (value: ReturnType<typeof result>) => unknown) =>
         Promise.resolve(result()).then(resolve),
     };
