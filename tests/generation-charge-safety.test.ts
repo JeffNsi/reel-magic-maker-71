@@ -4,7 +4,9 @@ import { startGeneration } from "@/lib/storyreel-core.server";
 import { dbCoins, refundGeneration } from "@/lib/coins.server";
 
 const mock = vi.hoisted(() => ({
-  from: (_table: string): unknown => { throw new Error("Database not initialized"); },
+  from: (_table: string): unknown => {
+    throw new Error("Database not initialized");
+  },
   rpc: vi.fn(),
 }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: mock }));
@@ -146,9 +148,19 @@ describe("generation charge safety (behavioral, fake database and transport)", (
     // Hold the first submission open while the second caller attempts the same scene.
     let release: (response: Response) => void = () => {};
     let submitted: () => void = () => {};
-    const arrived = new Promise<void>((resolve) => { submitted = resolve; });
-    const response = new Promise<Response>((resolve) => { release = resolve; });
-    vi.stubGlobal("fetch", vi.fn(() => { submitted(); return response; }));
+    const arrived = new Promise<void>((resolve) => {
+      submitted = resolve;
+    });
+    const response = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        submitted();
+        return response;
+      }),
+    );
     const first = start();
     await arrived;
     const second = start();
