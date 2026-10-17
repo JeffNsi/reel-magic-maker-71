@@ -19,6 +19,8 @@ describe("generation safety migration (source checks, not SQL execution)", () =>
   it("keeps the security-definer refund callable only by service_role", () => {
     expect(sql).toContain("SECURITY DEFINER\nSET search_path = public");
     expect(sql).toContain("FROM PUBLIC, anon, authenticated");
-    expect(sql).toContain("GRANT EXECUTE ON FUNCTION public.refund_generation(uuid) TO service_role");
+    expect(sql).toContain(
+      "GRANT EXECUTE ON FUNCTION public.refund_generation(uuid) TO service_role",
+    );
   });
 });

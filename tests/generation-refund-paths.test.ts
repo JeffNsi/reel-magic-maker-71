@@ -54,10 +54,18 @@ beforeEach(() => {
   updates = [];
   cron = false;
   row = {
-    id: "generation", story_id: "film", user_id: "owner", status: "processing",
-    error_message: null, video_url: null, refunded: false,
-    charged_bonus: 4, charged_paid: 10, attempts: 1,
-    deadline_at: "2026-10-17T12:00:00Z", fal_request_id: "job",
+    id: "generation",
+    story_id: "film",
+    user_id: "owner",
+    status: "processing",
+    error_message: null,
+    video_url: null,
+    refunded: false,
+    charged_bonus: 4,
+    charged_paid: 10,
+    attempts: 1,
+    deadline_at: "2026-10-17T12:00:00Z",
+    fal_request_id: "job",
   };
   mocks.progress.mockResolvedValue({ state: "failed", message: "Provider failed" });
   mocks.rpc.mockImplementation(async (name: string) => {
@@ -83,15 +91,28 @@ beforeEach(() => {
       }
       if (table === "story_scenes") return { data: null, error: null };
       if (table === "stories") return { data: null, error: null };
-      if (refundFilter) return { data: row.status === "failed" && !row.refunded ? [{ id: row.id }] : [], error: null };
+      if (refundFilter)
+        return {
+          data: row.status === "failed" && !row.refunded ? [{ id: row.id }] : [],
+          error: null,
+        };
       if (statuses) return { data: statuses.includes(row.status) ? [{ ...row }] : [], error: null };
       return { data: cron ? [] : { ...row }, error: null };
     };
     const chain = {
       select: () => chain,
-      update: (value: Record<string, unknown>) => { update = value; return chain; },
-      eq: (key: string, value: unknown) => { if (key === "refunded" && value === false) refundFilter = true; return chain; },
-      in: (_key: string, value: string[]) => { statuses = value; return chain; },
+      update: (value: Record<string, unknown>) => {
+        update = value;
+        return chain;
+      },
+      eq: (key: string, value: unknown) => {
+        if (key === "refunded" && value === false) refundFilter = true;
+        return chain;
+      },
+      in: (_key: string, value: string[]) => {
+        statuses = value;
+        return chain;
+      },
       not: () => chain,
       is: () => chain,
       or: () => chain,
@@ -99,15 +120,17 @@ beforeEach(() => {
       limit: () => chain,
       single: async () => result(),
       maybeSingle: async () => result(),
-      then: (resolve: (value: ReturnType<typeof result>) => unknown) => Promise.resolve(result()).then(resolve),
+      then: (resolve: (value: ReturnType<typeof result>) => unknown) =>
+        Promise.resolve(result()).then(resolve),
     };
     return chain;
   });
 });
 
-const poll = () => (checkStatus as unknown as (args: unknown) => Promise<{ error_message: string }>)(
-  { data: { generation_id: row.id, session_id: "session" } },
-);
+const poll = () =>
+  (checkStatus as unknown as (args: unknown) => Promise<{ error_message: string }>)({
+    data: { generation_id: row.id, session_id: "session" },
+  });
 
 describe("refund failure paths (behavioral, mocked database only)", () => {
   it("checkStatus conditionally fails then atomically refunds, never premarks refunded", async () => {
@@ -146,7 +169,9 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     cron = true;
     refundFails = true;
-    await expect(runFilmTick(new Date("2026-10-17T12:30:00Z"))).rejects.toThrow("Credits kunde inte återbetalas");
+    await expect(runFilmTick(new Date("2026-10-17T12:30:00Z"))).rejects.toThrow(
+      "Credits kunde inte återbetalas",
+    );
     expect(row.status).toBe("failed");
     expect(row.refunded).toBe(false);
     expect(mocks.render).not.toHaveBeenCalled();
