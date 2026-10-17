@@ -46,32 +46,67 @@ describe("outgoing video reference payload (mocked transport only)", () => {
     expect(JSON.parse(transport.mock.calls[0]?.[1].body).input).toBe("Scene action");
   });
 
-  it("rejects foreign image sources before any network or video call", async () => {
+  it("never fetches foreign sources and continues with text only", async () => {
     vi.stubEnv("SUPABASE_URL", origin);
-    const transport = vi.fn();
+    vi.stubEnv("LOVABLE_API_KEY", "mock-key");
+    const transport = vi.fn().mockResolvedValue(Response.json({ id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
-    await expect(
-      submitVideo("lovable", "Scene", true, ["https://foreign.example/image.png"]),
-    ).rejects.toThrow("Invalid reference image source");
-    expect(transport).not.toHaveBeenCalled();
-  });
-
-  it("rejects unreadable references without submitting a paid job", async () => {
-    vi.stubEnv("SUPABASE_URL", origin);
-    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 403 }));
-    vi.stubGlobal("fetch", transport);
-    await expect(submitVideo("lovable", "Scene", true, [reference])).rejects.toThrow(
-      "could not be read",
-    );
+    const warning = vi.fn();
+    await submitVideo("lovable", "Scene", true, ["https://foreign.example/image.png"], warning);
     expect(transport).toHaveBeenCalledTimes(1);
+    expect(transport.mock.calls[0]?.[0]).toBe(AI_VIDEO_BASE);
+    expect(JSON.parse(transport.mock.calls[0]?.[1].body).input).toBe("Scene");
+    expect(warning).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects more than 10 images without silently dropping references", async () => {
-    const transport = vi.fn();
+  it("continues text-only and warns when a signed image is unreadable", async () => {
+    vi.stubEnv("SUPABASE_URL", origin);
+    vi.stubEnv("LOVABLE_API_KEY", "mock-key");
+    const transport = vi.fn().mockResolvedValueOnce(new Response(null, { status: 403 })).mockResolvedValueOnce(Response.json({ id: "mock-job" }));
     vi.stubGlobal("fetch", transport);
-    await expect(submitVideo("lovable", "Scene", true, Array(11).fill(reference))).rejects.toThrow(
-      "At most 10",
-    );
-    expect(transport).not.toHaveBeenCalled();
+    const warning = vi.fn();
+    expect(await submitVideo("lovable", "Scene", true, [reference], warning)).toBe("mock-job");
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(transport.mock.calls[1]?.[1].body).input).toBe("Scene");
+    expect(warning).toHaveBeenCalledTimes(1);
+  });
+
+  it("caps inline images at 10 and warns rather than blocking", async () => {
+    vi.stubEnv("SUPABASE_URL", origin);
+    vi.stubEnv("LOVABLE_API_KEY", "mock-key");
+    const transport = vi.fn(async (url) => url === AI_VIDEO_BASE ? Response.json({ id: "mock-job" }) : new Response(png, { headers: { "content-type": "image/png" } }));
+    vi.stubGlobal("fetch", transport);
+    const warning = vi.fn();
+    await submitVideo("lovable", "Scene", true, Array(11).fill(reference), warning);
+    expect(transport).toHaveBeenCalledTimes(11);
+    expect(warning).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps readable images in a partial pack even when another image fails", async () => {
+    vi.stubEnv("SUPABASE_URL", origin);
+    vi.stubEnv("LOVABLE_API_KEY", "mock-key");
+    const transport = vi.fn().mockResolvedValueOnce(new Response(null, { status: 404 })).mockResolvedValueOnce(new Response(png, { headers: { "content-type": "image/png" } })).mockResolvedValueOnce(Response.json({ id: "mock-job" }));
+    vi.stubGlobal("fetch", transport);
+    const warning = vi.fn();
+    await submitVideo("lovable", "Scene", true, [reference, reference], warning);
+    expect(JSON.parse(transport.mock.calls[2]?.[1].body).input).toHaveLength(2);
+    expect(warning).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a missing pack even though text-only submission succeeds", async () => {
+    vi.stubEnv("LOVABLE_API_KEY", "mock-key");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ id: "mock-job" })));
+    const warning = vi.fn();
+    await submitVideo("lovable", "Scene", true, [], warning);
+    expect(warning).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat STRONG or LIVE as image-compatible", async () => {
+    vi.stubEnv("FAL_KEY", "mock-key");
+    const transport = vi.fn().mockResolvedValue(Response.json({ request_id: "mock-job" }));
+    vi.stubGlobal("fetch", transport);
+    for (const provider of ["fal", "live"] as const) await submitVideo(provider, "Scene", true, [reference]);
+    expect(transport).toHaveBeenCalledTimes(2);
+    for (const call of transport.mock.calls) expect(JSON.parse(call[1].body)).not.toHaveProperty("input");
   });
 });
