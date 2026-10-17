@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] Controlled owner trial readback: balance stayed 140; both prepared films have no generation rows and no clips.
-- [ ] Point 2 only: enable supported image-reference adapter and verify outgoing media with mocked transport; no paid generation or point 3 in this phase.
+- [x] Point 2: EZY image-reference adapter enabled; 5 behavioral mocked-transport tests verify inline bytes and safe failures. Live image-conditioned output is unverified: prepared film has no stored reference images; no paid generation or point 3 in this phase.
 
 - [x] Character library + film start screen: own uploads, locked traits, approval, editable template scenes and full-film cost before rendering
 - [ ] Paid film / published tick verification — blocked until owner approves displayed price; scenes are collected, never auto-published
