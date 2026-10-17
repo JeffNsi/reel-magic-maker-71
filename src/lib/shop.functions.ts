@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
+import { assertAppleValidationUrl, assertCoinCheckout } from "@/lib/coin-apple-pay";
 
 export type ShopPack = "small" | "medium" | "large" | "vip";
 
@@ -217,12 +218,14 @@ export const confirmSumUpCheckout = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ paid: boolean } | { error: string }> => {
     try {
       const checkout = await sumupRequest(`/v0.1/checkouts/${data.checkoutId}`, { method: "GET" });
+      assertCoinCheckout(checkout, context.userId, data.pack, PACKS[data.pack].amountSek);
       if (checkout.status !== "PAID") return { paid: false };
       const reference = checkout.checkout_reference as string;
       // Guard: the reference must belong to this caller.
       if (!reference.startsWith(`${context.userId}:`)) throw new Error("Invalid reference.");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const result = await fulfillPurchase({
-        supabase: context.supabase,
+        supabase: supabaseAdmin,
         userId: context.userId,
         pack: data.pack,
         provider: "sumup",
@@ -232,6 +235,45 @@ export const confirmSumUpCheckout = createServerFn({ method: "POST" })
       return { paid: true, ...result };
     } catch (error: any) {
       return { error: error?.message || "Could not verify the SumUp payment." };
+    }
+  });
+
+const coinWalletInput = sumupInput.extend({ checkoutId: z.string().min(1) });
+
+export const coinApplePaySession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => coinWalletInput.extend({
+    target: z.string().url(), context: z.string().regex(/^[a-z0-9.-]+$/i),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    try {
+      assertAppleValidationUrl(data.target);
+      const checkout = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, { method: "GET" });
+      assertCoinCheckout(checkout, context.userId, data.pack, PACKS[data.pack].amountSek);
+      const session = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}/apple-pay-session`, {
+        method: "PUT", body: JSON.stringify({ target: data.target, context: data.context }),
+      });
+      return { session: session as Record<string, unknown> };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades." };
+    }
+  });
+
+export const coinApplePayProcess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => coinWalletInput.extend({ token: z.record(z.string(), z.unknown()) }).parse(data))
+  .handler(async ({ data, context }) => {
+    try {
+      const checkout = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, { method: "GET" });
+      assertCoinCheckout(checkout, context.userId, data.pack, PACKS[data.pack].amountSek);
+      if (checkout.status === "PAID") return { paid: true };
+      const result = await sumupRequest(`/v0.1/checkouts/${encodeURIComponent(data.checkoutId)}`, {
+        method: "PUT",
+        body: JSON.stringify({ payment_type: "apple_pay", amount: PACKS[data.pack].amountSek, currency: "SEK", apple_pay: { token: data.token } }),
+      });
+      return { paid: result?.status === "PAID" };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Apple Pay failed. / Apple Pay misslyckades." };
     }
   });
 

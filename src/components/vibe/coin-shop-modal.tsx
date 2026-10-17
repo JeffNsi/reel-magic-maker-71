@@ -14,6 +14,7 @@ import {
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Coins, CreditCard, Crown, ExternalLink, Sparkles } from "lucide-react";
+import { CoinApplePay } from "@/components/vibe/coin-apple-pay";
 
 const PACK_LABELS: Record<ShopPack, string> = {
   small: "Starter Coin Pack",
@@ -269,6 +270,7 @@ export function CoinShopModal({
 
         {selectedPack && !method && (
           <div className="mt-4 space-y-3">
+            <CoinApplePay pack={selectedPack} onSuccess={handleSuccess} />
             <p className="text-center text-sm text-dw-muted">
               How do you want to pay for <span className="font-semibold text-dw-foreground">{PACK_LABELS[selectedPack]}</span>?
             </p>
