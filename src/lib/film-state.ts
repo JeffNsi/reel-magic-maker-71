@@ -198,7 +198,7 @@ export const filmSceneStateSchema = z.object({
   input_references: z.array(text).default([]),
   output_assets: z.array(text).default([]),
   generation_status: z
-    .enum(["idle", "queued", "preparing", "generating", "validating", "completed", "failed"])
+    .enum(["idle", "queued", "preparing", "generating", "processing", "validating", "completed", "failed"])
     .default("idle"),
   /** Honest marker: nothing has been semantically validated in this phase. */
   validation_status: z.enum(["unknown", "pass", "warning", "fail"]).default("unknown"),
