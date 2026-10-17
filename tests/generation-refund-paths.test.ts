@@ -82,6 +82,7 @@ beforeEach(() => {
     let update: Record<string, unknown> | undefined;
     let statuses: string[] | undefined;
     let refundFilter = false;
+    let single = false;
     const result = () => {
       if (update) {
         updates.push(update);
@@ -92,7 +93,7 @@ beforeEach(() => {
         return { data: [], error: null };
       }
       if (table === "story_scenes")
-        return { data: retryAvailable ? { id: "scene" } : null, error: null };
+        return { data: single ? (retryAvailable ? { id: "scene" } : null) : [], error: null };
       if (table === "stories")
         return {
           data: retryAvailable ? { id: "film", session_id: "session", user_id: "owner" } : null,
@@ -126,7 +127,7 @@ beforeEach(() => {
       order: () => chain,
       limit: () => chain,
       single: async () => result(),
-      maybeSingle: async () => result(),
+      maybeSingle: async () => { single = true; return result(); },
       then: (resolve: (value: ReturnType<typeof result>) => unknown) =>
         Promise.resolve(result()).then(resolve),
     };
