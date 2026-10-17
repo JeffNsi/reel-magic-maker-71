@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GenerationStartError, withCharge } from "@/lib/coin-charge";
+import { GenerationStartError, withCharge, type CoinPort } from "@/lib/coin-charge";
 import { startGeneration } from "@/lib/storyreel-core.server";
 import { dbCoins, refundGeneration } from "@/lib/coins.server";
 
@@ -122,8 +122,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const start = () =>
-  withCharge(dbCoins, "owner", 14, (charge) =>
+const start = (port: CoinPort = dbCoins) =>
+  withCharge(port, "owner", 14, (charge) =>
     startGeneration({
       session_id: "session",
       idea: "scene",
@@ -140,7 +140,17 @@ const start = () =>
 
 describe("generation charge safety (behavioral, fake database and transport)", () => {
   it("two simultaneous scene starts create one job and one net 14-credit debit", async () => {
-    const results = await Promise.allSettled([start(), start()]);
+    // A serializable ledger port avoids Vitest's concurrent async RPC-mock dispatch.
+    const port: CoinPort = {
+      ...dbCoins,
+      spend: async () => {
+        const bonus = Math.min(balance.bonus, 14);
+        balance.bonus -= bonus;
+        balance.paid -= 14 - bonus;
+        return { bonus, paid: 14 - bonus };
+      },
+    };
+    const results = await Promise.allSettled([start(port), start(port)]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const rejected = results.find((result) => result.status === "rejected");
     expect(rejected?.status === "rejected" && rejected.reason.message).toBe(
