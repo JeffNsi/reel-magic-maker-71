@@ -29,6 +29,13 @@
       "when": 1792236827447,
       "tag": "0003_character_library_and_film_start",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792237158680,
+      "tag": "0004_character_film_snapshot_consistency",
+      "breakpoints": true
     }
   ]
 }
