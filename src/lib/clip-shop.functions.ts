@@ -237,6 +237,9 @@ const deliveryInput = z.object({
 
 // ---------- Native Apple Pay via SumUp (no card widget) ----------
 
+/** JSON-safe value (Apple's merchant session is an opaque JSON blob). */
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
 const appleSessionInput = z.object({
   checkout_id: z.string().min(1),
   /** The validation URL Apple hands us in onvalidatemerchant. */
