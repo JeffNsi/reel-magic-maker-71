@@ -24,6 +24,7 @@ import { ContinuityPanel } from "@/components/film/continuity-panel";
 import { SceneEngine } from "@/components/film/scene-engine";
 import { UniverseFilmCard } from "@/components/universe/universe-ui";
 import { FullFilmRender } from "@/components/film/full-film-render";
+import { ReferenceWarning } from "@/components/film/reference-warning";
 import { SceneReferences } from "@/components/film/scene-references";
 import { getSceneReferencePlans, type SceneReferencePlan } from "@/lib/canon.functions";
 import { CLIP_PRICE_SEK } from "@/lib/clip-shop.functions";
@@ -536,6 +537,9 @@ function SceneCard({
             </p>
           )}
 
+          {scene.status !== "failed" && scene.error_message && (
+            <ReferenceWarning key={`${scene.generation_id}:${scene.error_message}`} message={scene.error_message} />
+          )}
           {scene.status === "failed" && scene.error_message && (
             <p className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs leading-relaxed text-foreground">
               {scene.error_message}

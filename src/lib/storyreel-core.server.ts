@@ -77,11 +77,13 @@ export async function submitLovableVideo(
   prompt: string,
   audio: boolean,
   references: string[] = [],
+  onWarning: (message: string) => void = () => {},
 ): Promise<string> {
   const text = audio
     ? prompt
     : `${prompt} No dialogue. No music. No sound effects — silent footage.`;
-  const images = await inlineReferenceImages(references);
+  const images = await inlineReferenceImages(references, onWarning);
+  console.info("generation references", JSON.stringify({ provider: "lovable", offered: references.length, used: images.length, mode: images.length ? "image-conditioned" : "text-only" }));
   const res = await fetch(AI_VIDEO_BASE, {
     method: "POST",
     headers: { Authorization: `Bearer ${readAiKey()}`, "Content-Type": "application/json" },
@@ -154,12 +156,17 @@ export const PROVIDER_ACCEPTS_IMAGE_REFERENCES: Record<VideoProvider, boolean> =
 };
 
 /** Only fetch our signed canon images, never arbitrary caller-supplied URLs. */
-async function inlineReferenceImages(references: string[]) {
-  if (references.length > 10)
-    throw new Error("At most 10 reference images are supported. / Högst 10 referensbilder stöds.");
+async function inlineReferenceImages(references: string[], onWarning: (message: string) => void) {
+  const warn = () => {
+    const message = "Reference image missing or unreadable; continuing with available images or text only. / Referensbild saknas eller kan inte läsas; fortsätter med tillgängliga bilder eller enbart text.";
+    console.warn("generation reference fallback", message);
+    onWarning(message);
+  };
+  if (!references.length || references.length > 10) warn();
   const images: { type: "image"; data: string; mime_type: string }[] = [];
   let totalBytes = 0;
-  for (const reference of references) {
+  for (const reference of references.slice(0, 10)) {
+    try {
     const origin = process.env["SUPABASE_URL"];
     const url = new URL(reference);
     if (
@@ -177,13 +184,17 @@ async function inlineReferenceImages(references: string[]) {
     const bytes = new Uint8Array(await response.arrayBuffer());
     const { validateCharacterImage } = await import("@/lib/character-library");
     validateCharacterImage(bytes, mime);
-    totalBytes += bytes.length;
-    if (totalBytes > 40 * 1024 * 1024)
+    if (totalBytes + bytes.length > 40 * 1024 * 1024)
       throw new Error("Reference images are too large. / Referensbilderna är för stora.");
     let binary = "";
     for (let offset = 0; offset < bytes.length; offset += 8192)
       binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
     images.push({ type: "image", data: btoa(binary), mime_type: mime });
+    totalBytes += bytes.length;
+    } catch {
+      // Never fetch foreign URLs, follow redirects, or block the video for an optional image.
+      warn();
+    }
   }
   return images;
 }
@@ -193,6 +204,7 @@ export function submitVideo(
   prompt: string,
   audio: boolean,
   references: string[] = [],
+  onWarning: (message: string) => void = () => {},
 ) {
   const accepted = PROVIDER_ACCEPTS_IMAGE_REFERENCES[provider] ? references : [];
   console.info(
@@ -207,7 +219,7 @@ export function submitVideo(
   );
 
   return provider === "lovable"
-    ? submitLovableVideo(prompt, audio, accepted)
+    ? submitLovableVideo(prompt, audio, accepted, onWarning)
     : submitFalVideo(prompt, audio, falModelFor(provider));
 }
 
@@ -344,10 +356,11 @@ export async function startGeneration(opts: {
   if (error || !row) throw new Error("Could not start this scene. Please try again.");
 
   try {
-    const taskId = await submitVideo(provider, opts.prompt, opts.audio, opts.references ?? []);
+    const warnings = new Set<string>();
+    const taskId = await submitVideo(provider, opts.prompt, opts.audio, opts.references ?? [], (message) => warnings.add(message));
     await supabaseAdmin
       .from("generations")
-      .update({ fal_request_id: taskId, status: "processing" })
+      .update({ fal_request_id: taskId, status: "processing", error_message: [...warnings].join("\n") || null })
       .eq("id", row.id);
 
     return row.id as string;
