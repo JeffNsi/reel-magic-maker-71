@@ -16,7 +16,30 @@ type Row = JobRow & {
   fal_request_id: string | null;
 };
 
+/** Unscheduled route: loop the per-film tick over every film with inflight jobs. */
 export async function runFilmTick(now = new Date()) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("generations")
+    .select("story_id")
+    .not("story_id", "is", null)
+    .in("status", ["queued", "processing", "failed"])
+    .limit(50);
+  const ids = [...new Set((data ?? []).map((r) => r.story_id as string))];
+  const report = { polled: 0, completed: 0, expired: 0, failed: 0, retried: 0 };
+  for (const id of ids) {
+    const r = await tickFilm(id, now);
+    for (const k of Object.keys(report) as (keyof typeof report)[]) report[k] += r[k];
+  }
+  return report;
+}
+
+/**
+ * Advance one film's scene jobs. Called by getFilm for the authenticated owner
+ * only. Every write is a conditional UPDATE, so concurrent polls cannot
+ * double-complete, double-refund or double-retry.
+ */
+export async function tickFilm(story_id: string, now = new Date()) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { providerProgress, BUCKET } = await import("@/lib/storyreel-core.server");
 
@@ -25,6 +48,7 @@ export async function runFilmTick(now = new Date()) {
     .from("generations")
     .select("id")
     .not("story_id", "is", null)
+    .eq("story_id", story_id)
     .eq("status", "failed")
     .eq("refunded", false)
     .is("video_url", null)
@@ -41,7 +65,7 @@ export async function runFilmTick(now = new Date()) {
     .select(
       "id, story_id, user_id, status, provider, fal_request_id, deadline_at, attempts, video_url, refunded, charged_bonus, charged_paid",
     )
-    .not("story_id", "is", null)
+    .eq("story_id", story_id)
     .in("status", ["queued", "processing"])
     .order("created_at", { ascending: true })
     .limit(TICK_LIMIT);
@@ -67,11 +91,13 @@ export async function runFilmTick(now = new Date()) {
           .from(BUCKET)
           .upload(path, progress.bytes, { contentType: "video/mp4", upsert: true });
         if (!error) {
-          await supabaseAdmin
+          const { data: won } = await supabaseAdmin
             .from("generations")
             .update({ status: "completed", video_url: path })
-            .eq("id", row.id);
-          report.completed++;
+            .eq("id", row.id)
+            .in("status", ["queued", "processing"])
+            .select("id");
+          if (won?.length) report.completed++;
           continue;
         }
       }
@@ -86,7 +112,7 @@ export async function runFilmTick(now = new Date()) {
     }
   }
 
-  for (const story_id of touched) await refreshFilmStatus(story_id);
+  for (const id of touched) await refreshFilmStatus(id);
   return report;
 }
 

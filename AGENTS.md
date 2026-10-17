@@ -21,3 +21,4 @@
 - Coin Apple Pay prepares a SumUp checkout before the gesture, validates owner/pack/amount/currency server-side, and confirms through the existing purchase fulfillment — Safari requires synchronous wallet opening and credits must follow provider confirmation.
 
 - App-wide owner access uses `public.user_roles` + `has_role(uid, role)` checked server-side; the SumUp overview (`/sumup`) is read-only and admin-only — merchant revenue must never reach other users.
+- Film scene jobs advance only when the signed-in owner polls getFilm (tickFilm per film, conditional updates); no cron schedule — keeps the cron secret out of the database and non-owners from triggering paid retries.
