@@ -235,6 +235,65 @@ const deliveryInput = z.object({
   delivery_token: z.string().min(20),
 });
 
+// ---------- Native Apple Pay via SumUp (no card widget) ----------
+
+/** JSON-safe value (Apple's merchant session is an opaque JSON blob). */
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+const appleSessionInput = z.object({
+  checkout_id: z.string().min(1),
+  /** The validation URL Apple hands us in onvalidatemerchant. */
+  target: z.string().url(),
+  /** The shop's own domain, e.g. "reel-magic-maker-71.lovable.app". */
+  context: z.string().min(1),
+});
+
+/**
+ * Merchant validation: Apple requires a session created server-side. We pass
+ * Apple's validation URL straight to SumUp, which holds the merchant cert.
+ */
+export const sumupApplePaySession = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => appleSessionInput.parse(data))
+  .handler(async ({ data }): Promise<{ session: Json } | { error: string }> => {
+    try {
+      const session = await sumupRequest(`/v0.1/checkouts/${data.checkout_id}/apple-pay-session`, {
+        method: "PUT",
+        body: JSON.stringify({ target: data.target, context: data.context }),
+      });
+      return { session: session as Json };
+    } catch (error: any) {
+      return { error: error?.message || "Could not validate the Apple Pay session." };
+    }
+  });
+
+const appleProcessInput = z.object({
+  checkout_id: z.string().min(1),
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+  /** The payment token from the onpaymentauthorized callback. */
+  token: z.record(z.string(), z.unknown()),
+});
+
+/** Charge the checkout with the Apple Pay token from the buyer's device. */
+export const sumupApplePayProcess = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => appleProcessInput.parse(data))
+  .handler(async ({ data }): Promise<{ paid: boolean } | { error: string }> => {
+    try {
+      const result = await sumupRequest(`/v0.1/checkouts/${data.checkout_id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          payment_type: "apple_pay",
+          amount: data.amount,
+          currency: data.currency,
+          apple_pay: { token: data.token },
+        }),
+      });
+      return { paid: result?.status === "PAID" };
+    } catch (error: any) {
+      return { error: error?.message || "The Apple Pay payment failed." };
+    }
+  });
+
 /**
  * Ask the payment provider whether this purchase is paid, then deliver the clip.
  * Safe to call repeatedly — the clip stays "pending" until the provider confirms.
