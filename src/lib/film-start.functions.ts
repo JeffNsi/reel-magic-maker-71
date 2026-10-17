@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { characterInput, type LibraryCharacter } from "@/lib/character-library";
 import { approvedSceneTruth, filmStartInput } from "@/lib/film-start";
+import { canonicalId } from "@/lib/film-state";
+import { EZY_SCENE_COST } from "@/lib/pricing";
 
 /** A free, explicit template path; uses the existing film + scene + canon contracts. No provider calls. */
 export const saveApprovedFilm = createServerFn({ method: "POST" })
@@ -51,6 +53,8 @@ export const saveApprovedFilm = createServerFn({ method: "POST" })
           scene_count: data.scenes.length,
           mode: "template",
           character_approved: true,
+          canonical_character_id: canonicalId(character.name.replace(/\s*\([^)]*\)\s*$/, "").split(/\s+[—–-]\s+/)[0]?.trim() || character.name, new Set()),
+          scene_credit_cost: EZY_SCENE_COST,
         },
         _scenes: data.scenes.map((scene) => ({
           ...scene,
