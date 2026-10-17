@@ -3,7 +3,10 @@ import { GenerationStartError, withCharge, type CoinPort } from "@/lib/coin-char
 import { startGeneration } from "@/lib/storyreel-core.server";
 import { dbCoins, refundGeneration } from "@/lib/coins.server";
 
-const mock = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }));
+const mock = vi.hoisted(() => ({
+  from: (_table: string): unknown => { throw new Error("Database not initialized"); },
+  rpc: vi.fn(),
+}));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: mock }));
 
 type Job = {
@@ -57,7 +60,7 @@ beforeEach(async () => {
     balance.paid += row.charged_paid;
     return { data: true, error: null };
   });
-  mock.from.mockImplementation((table: string) => {
+  mock.from = (table: string) => {
     if (table !== "generations") throw new Error("Unexpected table");
     let insertion: Omit<Job, "id" | "refunded"> | undefined;
     let update: Partial<Job> | undefined;
@@ -114,7 +117,7 @@ beforeEach(async () => {
         Promise.resolve(applyUpdate()).then(resolve),
     };
     return chain;
-  });
+  };
 });
 
 afterEach(() => {
