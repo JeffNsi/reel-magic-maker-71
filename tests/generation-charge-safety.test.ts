@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GenerationStartError, withCharge, type CoinPort } from "@/lib/coin-charge";
+import { GenerationStartError, withCharge } from "@/lib/coin-charge";
 import { startGeneration } from "@/lib/storyreel-core.server";
 import { dbCoins, refundGeneration } from "@/lib/coins.server";
 
@@ -80,7 +80,6 @@ beforeEach(async () => {
       single: async () => {
         if (!insertion) throw new Error("Missing insert");
         const value = insertion;
-        console.info("insert trace", value.story_id, value.scene_number, jobs.map((job) => [job.id, job.status, job.story_id, job.scene_number]));
         if (
           jobs.some(
             (job) =>
@@ -126,8 +125,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const start = (port: CoinPort = dbCoins) =>
-  withCharge(port, "owner", 14, (charge) =>
+const start = () =>
+  withCharge(dbCoins, "owner", 14, (charge) =>
     startGeneration({
       session_id: "session",
       idea: "scene",
@@ -144,18 +143,18 @@ const start = (port: CoinPort = dbCoins) =>
 
 describe("generation charge safety (behavioral, fake database and transport)", () => {
   it("two simultaneous scene starts create one job and one net 14-credit debit", async () => {
-    // A serializable ledger port avoids Vitest's concurrent async RPC-mock dispatch.
-    const port: CoinPort = {
-      ...dbCoins,
-      spend: async () => {
-        const bonus = Math.min(balance.bonus, 14);
-        balance.bonus -= bonus;
-        balance.paid -= 14 - bonus;
-        return { bonus, paid: 14 - bonus };
-      },
-    };
-    const results = await Promise.allSettled([start(port), start(port)]);
-    console.info("result trace", results, jobs);
+    // Hold the first submission open while the second caller attempts the same scene.
+    let release: (response: Response) => void = () => {};
+    let submitted: () => void = () => {};
+    const arrived = new Promise<void>((resolve) => { submitted = resolve; });
+    const response = new Promise<Response>((resolve) => { release = resolve; });
+    vi.stubGlobal("fetch", vi.fn(() => { submitted(); return response; }));
+    const first = start();
+    await arrived;
+    const second = start();
+    await expect(second).rejects.toThrow("Scenen renderas redan.");
+    release(Response.json({ id: "mock-provider-job" }));
+    const results = await Promise.allSettled([first, second]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const rejected = results.find((result) => result.status === "rejected");
     expect(rejected?.status === "rejected" && rejected.reason.message).toBe(
