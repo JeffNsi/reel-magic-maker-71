@@ -21,8 +21,12 @@ export type SumUpPayout = {
 };
 
 const dayKey = (iso: string, timeZone: string) =>
-  new Intl.DateTimeFormat("sv-SE", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(new Date(iso));
+  new Intl.DateTimeFormat("sv-SE", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
 
 /** Totals of SUCCESSFUL sales today and this month in the given timezone. */
 export function summarizeSales(items: SumUpTx[], now: Date, timeZone = "Europe/Stockholm") {

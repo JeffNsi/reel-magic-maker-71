@@ -36,7 +36,8 @@ export const getSumUpAccount = createServerFn({ method: "GET" })
     if (isOwner !== true) return { allowed: false };
 
     const apiKey = process.env["SUMUP_API_KEY"];
-    if (!apiKey) return { allowed: true, error: "SumUp is not connected. / SumUp är inte kopplat." };
+    if (!apiKey)
+      return { allowed: true, error: "SumUp is not connected. / SumUp är inte kopplat." };
     const get = async (path: string) => {
       const res = await fetch(`https://api.sumup.com${path}`, {
         headers: { Authorization: `Bearer ${apiKey}` },

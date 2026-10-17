@@ -16,7 +16,10 @@ describe("summarizeSales", () => {
   const now = new Date("2026-10-17T16:00:00Z");
 
   it("counts only successful payments", () => {
-    const r = summarizeSales([tx(49, "2026-10-17T10:00:00Z"), tx(99, "2026-10-17T11:00:00Z", "FAILED")], now);
+    const r = summarizeSales(
+      [tx(49, "2026-10-17T10:00:00Z"), tx(99, "2026-10-17T11:00:00Z", "FAILED")],
+      now,
+    );
     expect(r.today).toBe(49);
     expect(r.month).toBe(49);
     expect(r.monthCount).toBe(1);

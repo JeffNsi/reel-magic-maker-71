@@ -51,7 +51,9 @@ function SumUpPage() {
     return shell(
       <div className="mt-20 text-center">
         <Lock className="mx-auto size-8 text-dw-muted" aria-hidden />
-        <p className="mt-3 text-sm text-dw-muted">{t("Sign in as the owner.", "Logga in som ägare.")}</p>
+        <p className="mt-3 text-sm text-dw-muted">
+          {t("Sign in as the owner.", "Logga in som ägare.")}
+        </p>
         <Link to="/auth" className="mt-4 inline-block text-sm underline">
           {t("Sign in", "Logga in")}
         </Link>
@@ -59,7 +61,9 @@ function SumUpPage() {
     );
   }
   if (userLoading || account.isLoading || !account.data) {
-    return shell(<p className="mt-20 text-center text-sm text-dw-muted">{t("Loading…", "Laddar…")}</p>);
+    return shell(
+      <p className="mt-20 text-center text-sm text-dw-muted">{t("Loading…", "Laddar…")}</p>,
+    );
   }
   const data = account.data;
   if (!data.allowed) {
@@ -74,7 +78,10 @@ function SumUpPage() {
   }
   if ("error" in data) {
     return shell(
-      <div role="alert" className="mt-10 rounded-2xl border border-dw-border bg-dw-card p-4 text-sm">
+      <div
+        role="alert"
+        className="mt-10 rounded-2xl border border-dw-border bg-dw-card p-4 text-sm"
+      >
         {data.error}
         <button onClick={() => account.refetch()} className="ml-3 underline">
           {t("Try again", "Försök igen")}
@@ -116,7 +123,9 @@ function SumUpPage() {
       </h2>
       <ul className="mt-3 divide-y divide-dw-border rounded-2xl border border-dw-border bg-dw-card">
         {data.transactions.length === 0 && (
-          <li className="p-4 text-sm text-dw-muted">{t("No payments this month.", "Inga betalningar denna månad.")}</li>
+          <li className="p-4 text-sm text-dw-muted">
+            {t("No payments this month.", "Inga betalningar denna månad.")}
+          </li>
         )}
         {data.transactions.slice(0, 30).map((tx) => (
           <li key={tx.id} className="flex items-center justify-between gap-3 p-4">
@@ -126,7 +135,9 @@ function SumUpPage() {
                 {when(tx.timestamp)} · {tx.paymentType ?? "—"} · {tx.status}
               </p>
             </div>
-            <span className={`text-sm font-bold ${tx.status === "SUCCESSFUL" ? "" : "text-dw-muted line-through"}`}>
+            <span
+              className={`text-sm font-bold ${tx.status === "SUCCESSFUL" ? "" : "text-dw-muted line-through"}`}
+            >
               {money(tx.amount, tx.currency)}
             </span>
           </li>
@@ -138,7 +149,9 @@ function SumUpPage() {
       </h2>
       <ul className="mt-3 divide-y divide-dw-border rounded-2xl border border-dw-border bg-dw-card">
         {data.payouts.length === 0 && (
-          <li className="p-4 text-sm text-dw-muted">{t("No payouts in the last 90 days.", "Inga utbetalningar de senaste 90 dagarna.")}</li>
+          <li className="p-4 text-sm text-dw-muted">
+            {t("No payouts in the last 90 days.", "Inga utbetalningar de senaste 90 dagarna.")}
+          </li>
         )}
         {data.payouts.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-3 p-4">
