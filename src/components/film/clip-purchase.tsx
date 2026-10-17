@@ -127,6 +127,90 @@ export function ClipPurchase({
     }
   };
 
+  // Native Apple Pay (Safari/iOS) — no card widget, straight through SumUp.
+  const canApplePay =
+    typeof window !== "undefined" &&
+    !!(window as any).ApplePaySession &&
+    (window as any).ApplePaySession.canMakePayments();
+
+  const payWithApplePay = async () => {
+    setBusy(true);
+    try {
+      const result = await start({
+        data: { scene_id: sceneId, provider: "sumup", origin: window.location.origin },
+      });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      const next = { purchase_id: result.purchase_id, delivery_token: result.delivery_token };
+      localStorage.setItem(storageKey(sceneId), JSON.stringify(next));
+      setStored(next);
+
+      const APS = (window as any).ApplePaySession;
+      const session = new APS(3, {
+        countryCode: "SE",
+        currencyCode: "SEK",
+        merchantCapabilities: ["supports3DS"],
+        supportedNetworks: ["masterCard", "visa"],
+        total: {
+          label: `${result.film_title} — ${result.scene_title}`,
+          amount: String(result.amount),
+          type: "final",
+        },
+      });
+
+      session.onvalidatemerchant = async (event: any) => {
+        try {
+          const validated = await sumupApplePaySession({
+            data: {
+              checkout_id: result.checkout_id!,
+              target: event.validationURL,
+              context: window.location.hostname,
+            },
+          });
+          if ("error" in validated) throw new Error(validated.error);
+          session.completeMerchantValidation(validated.session);
+        } catch (e: any) {
+          session.abort();
+          toast.error(e?.message || "Apple Pay could not be started.");
+        }
+      };
+
+      session.onpaymentauthorized = async (event: any) => {
+        try {
+          const processed = await sumupApplePayProcess({
+            data: {
+              checkout_id: result.checkout_id!,
+              amount: result.amount,
+              currency: "SEK",
+              token: event.payment.token,
+            },
+          });
+          if ("error" in processed || !processed.paid) {
+            session.completePayment(APS.STATUS_FAILURE);
+            toast.error("error" in processed ? processed.error : "The payment failed. Try again.");
+            return;
+          }
+          session.completePayment(APS.STATUS_SUCCESS);
+          toast.success("Payment received — delivering your clip.");
+          const current = readStored(sceneId);
+          if (current) setStored({ ...current });
+        } catch (e: any) {
+          session.completePayment(APS.STATUS_FAILURE);
+          toast.error(e?.message || "The payment failed. Try again.");
+        }
+      };
+
+      session.oncancel = () => toast.message("The payment was cancelled.");
+      session.begin();
+    } catch (e: any) {
+      toast.error(e?.message || "Could not start the purchase.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // SumUp card + wallet form (Apple Pay on Safari/iOS, Google Pay elsewhere).
   useEffect(() => {
     if (!sumupCheckoutId || sumupMounted.current) return;
