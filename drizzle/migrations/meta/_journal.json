@@ -36,6 +36,13 @@
       "when": 1792237158680,
       "tag": "0004_character_film_snapshot_consistency",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792252803576,
+      "tag": "0005_generation_charge_safety",
+      "breakpoints": true
     }
   ]
 }

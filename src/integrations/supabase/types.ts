@@ -1431,6 +1431,7 @@ export type Database = {
         Args: { _bonus: number; _paid: number; _user: string }
         Returns: undefined
       }
+      refund_generation: { Args: { _generation: string }; Returns: boolean }
       release_film_slot: { Args: { _user: string }; Returns: undefined }
       spend_coins: {
         Args: { _cost: number; _user: string }
