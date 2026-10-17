@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Coin Shop Apple Pay: add native SumUp payment button with owner-validated checkout; mocked tests and browser checks. Real iPhone sheet/payment and published delivery require the owner's device and a published update.
+
 - [x] Approved charge safety: no duplicate inflight jobs; unique index and atomic generation refund applied; failure paths wired; 327/327 tests and changed-file ESLint pass; automatic build OK. Rollback SQL test left zero rows. No rendering or publishing. Independent typecheck/production build not run (harness-managed).
 
 - [ ] QA Homecoming original failure cause — blocked: no request/runtime logs for the original click. Current owner UI click sends POST (intercepted before server); schema, fidelity, 140 balance and mocked five-job wiring pass.
