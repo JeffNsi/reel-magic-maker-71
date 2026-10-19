@@ -202,5 +202,12 @@ async function refreshFilmStatus(story_id: string) {
     : states.some((s) => s.exhausted)
       ? "failed"
       : "generating";
-  await supabaseAdmin.from("stories").update({ status }).eq("id", story_id);
+  const { data: current } = await supabaseAdmin
+    .from("stories")
+    .select("error_message")
+    .eq("id", story_id)
+    .maybeSingle();
+  const { nextFilmError } = await import("@/lib/film-error");
+  const error_message = nextFilmError(status, (current?.error_message as string | null) ?? null);
+  await supabaseAdmin.from("stories").update({ status, error_message }).eq("id", story_id);
 }

@@ -296,6 +296,9 @@ function FilmPage() {
               {film.logline}
             </p>
           )}
+          {film.error_message && (
+            <ReferenceWarning key={film.error_message} message={film.error_message} />
+          )}
         </header>
 
         <section className="mt-8 rounded-2xl border border-border/70 bg-card p-5">
