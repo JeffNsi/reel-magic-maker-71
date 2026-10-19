@@ -149,7 +149,11 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     expect(row.status).toBe("failed");
     expect(row.refunded).toBe(true);
     expect(credited).toBe(14);
-    expect(updates).toEqual([{ status: "failed", error_message: "Provider failed" }]);
+    // The generation is failed once (never premarked refunded); the film gets its sv/en error.
+    expect(updates).toEqual([
+      { status: "failed", error_message: "Provider failed" },
+      { error_message: FILM_SCENE_FAILED_ERROR },
+    ]);
     await poll();
     expect(credited).toBe(14);
   });
