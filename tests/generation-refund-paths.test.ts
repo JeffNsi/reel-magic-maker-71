@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FILM_SCENE_FAILED_ERROR } from "@/lib/film-error";
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
