@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FILM_SCENE_FAILED_ERROR } from "@/lib/film-error";
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
@@ -153,7 +152,7 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     // The generation is failed once (never premarked refunded); the film gets its sv/en error.
     expect(updates).toEqual([
       { status: "failed", error_message: "Provider failed" },
-      { error_message: FILM_SCENE_FAILED_ERROR },
+      { error_message: expect.stringContaining("En scen kunde inte bli klar") },
     ]);
     await poll();
     expect(credited).toBe(14);
