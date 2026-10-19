@@ -133,16 +133,32 @@ export function ClipPurchase({
     !!(window as any).ApplePaySession &&
     (window as any).ApplePaySession.canMakePayments();
 
-  const payWithApplePay = async () => {
-    setBusy(true);
-    try {
-      const result = await start({
-        data: { scene_id: sceneId, provider: "sumup", origin: window.location.origin },
+  // Prepare the SumUp checkout before the press: Safari requires session.begin()
+  // synchronously inside the user gesture, so nothing may be awaited on tap.
+  type Prepared = Extract<Awaited<ReturnType<typeof start>>, { purchase_id: string }>;
+  const [prepared, setPrepared] = useState<Prepared | null>(null);
+  const preparing = useRef(false);
+  useEffect(() => {
+    if (!open || !canApplePay || prepared || preparing.current) return;
+    preparing.current = true;
+    start({ data: { scene_id: sceneId, provider: "sumup", origin: window.location.origin } })
+      .then((result) => {
+        if ("error" in result) {
+          toast.error(result.error);
+          return;
+        }
+        setPrepared(result as Prepared);
+      })
+      .catch((e: any) => toast.error(e?.message || "Could not start the purchase."))
+      .finally(() => {
+        preparing.current = false;
       });
-      if ("error" in result) {
-        toast.error(result.error);
-        return;
-      }
+  }, [open, canApplePay, prepared, sceneId, start]);
+
+  const payWithApplePay = () => {
+    const result = prepared;
+    if (!result) return;
+    try {
       const next = { purchase_id: result.purchase_id, delivery_token: result.delivery_token };
       localStorage.setItem(storageKey(sceneId), JSON.stringify(next));
       setStored(next);
@@ -206,8 +222,6 @@ export function ClipPurchase({
       session.begin();
     } catch (e: any) {
       toast.error(e?.message || "Could not start the purchase.");
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -322,7 +336,7 @@ export function ClipPurchase({
                 onChange={(e) => setEmail(e.target.value)}
               />
               {canApplePay && (
-                <Button className="w-full" onClick={payWithApplePay} disabled={busy}>
+                <Button className="w-full" onClick={payWithApplePay} disabled={busy || !prepared}>
                   Pay with Apple Pay
                 </Button>
               )}
