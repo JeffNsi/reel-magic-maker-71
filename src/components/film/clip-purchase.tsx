@@ -149,7 +149,9 @@ export function ClipPurchase({
         }
         setPrepared(result as Prepared);
       })
-      .catch((e: any) => toast.error(e?.message || "Could not start the purchase."))
+      .catch((e: unknown) =>
+        toast.error(e instanceof Error ? e.message : "Could not start the purchase."),
+      )
       .finally(() => {
         preparing.current = false;
       });
