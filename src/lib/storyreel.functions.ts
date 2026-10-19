@@ -223,6 +223,10 @@ export const checkStatus = createServerFn({ method: "POST" })
         .in("status", ["queued", "processing"])
         .select("id");
       if (claimed?.length) {
+        if (row.story_id) {
+          const { setFilmError, FILM_SCENE_FAILED_ERROR } = await import("@/lib/film-error");
+          await setFilmError(row.story_id, FILM_SCENE_FAILED_ERROR);
+        }
         const { refundGeneration } = await import("@/lib/coins.server");
         try {
           await refundGeneration(row.id);

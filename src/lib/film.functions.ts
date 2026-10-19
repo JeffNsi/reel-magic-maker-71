@@ -98,6 +98,9 @@ export type FilmView = {
   saved: boolean;
   /** Set once the creator turns on the public share link. */
   share_slug: string | null;
+  /** Film job status and the latest film-level error (sv/en), if any. */
+  status: string | null;
+  error_message: string | null;
   scenes: FilmScene[];
 };
 
@@ -266,7 +269,7 @@ export async function loadFilm(film_id: string, session_id: string): Promise<Fil
   const { data: story } = await supabaseAdmin
     .from("stories")
     .select(
-      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id, share_slug",
+      "id, title, logline, setting, style, characters, blueprint, created_at, director_session_id, share_slug, status, error_message",
     )
 
     .eq("id", film_id)
@@ -346,6 +349,8 @@ export async function loadFilm(film_id: string, session_id: string): Promise<Fil
     director_session_id: (story.director_session_id as string | null) ?? null,
     saved: !!saved,
     share_slug: (story.share_slug as string | null) ?? null,
+    status: (story.status as string | null) ?? null,
+    error_message: (story.error_message as string | null) ?? null,
     scenes,
   };
 }
@@ -787,6 +792,9 @@ export async function renderSceneCore(
      * when the provider rejects the start. fal.ai engines bill the fal account.
      */
     const { dbCoins } = await import("@/lib/coins.server");
+    const { setFilmError } = await import("@/lib/film-error");
+    // A re-render clears the previous film-level error.
+    await setFilmError(film.id, null);
     const { result: generationId } = await withCharge(
       dbCoins,
       data.user_id,
@@ -809,7 +817,11 @@ export async function renderSceneCore(
           attempts: data.attempt ?? 1,
           deadline_at: deadlineFrom(new Date()),
         }),
-    );
+    ).catch(async (err: unknown) => {
+      const { FILM_SUBMIT_ERROR } = await import("@/lib/film-error");
+      await setFilmError(film.id, FILM_SUBMIT_ERROR);
+      throw err;
+    });
 
     await supabaseAdmin
       .from("story_scenes")

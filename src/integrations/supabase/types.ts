@@ -1043,6 +1043,7 @@ export type Database = {
           characters: Json
           created_at: string
           director_session_id: string | null
+          error_message: string | null
           id: string
           logline: string
           session_id: string
@@ -1065,6 +1066,7 @@ export type Database = {
           characters?: Json
           created_at?: string
           director_session_id?: string | null
+          error_message?: string | null
           id?: string
           logline?: string
           session_id: string
@@ -1087,6 +1089,7 @@ export type Database = {
           characters?: Json
           created_at?: string
           director_session_id?: string | null
+          error_message?: string | null
           id?: string
           logline?: string
           session_id?: string
