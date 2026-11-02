@@ -4,6 +4,13 @@
  */
 
 import { GenerationStartError, SCENE_ALREADY_RENDERING_MESSAGE } from "@/lib/coin-charge";
+import {
+  FAL_FALLBACK_NOTE,
+  VideoProviderError,
+  looksLikePolicyRejection,
+  providerErrorCode,
+  shouldFallBackToFal,
+} from "@/lib/film-error";
 
 export const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
 /** LIVE engine: fal.ai's realtime director model, run through the same queue transport. */
@@ -75,19 +82,37 @@ export function falModelFor(provider: VideoProvider) {
 export const AI_VIDEO_BASE = "https://ai.gateway.lovable.dev/v1/videos";
 export const LOVABLE_VIDEO_MODEL = "google/gemini-omni-1.1-flash";
 
-function aiVideoError(status: number, message: string) {
+export function aiVideoError(status: number, message: string) {
   if (status === 402) {
-    return new Error(
+    return new VideoProviderError(
       message ||
         "This project is out of AI credits. Top them up in Lovable to keep generating films.",
+      "provider_out_of_credits",
     );
   }
-  if (status === 403)
-    return new Error(message || "AI film generation is blocked for this project.");
-  if (status === 429) {
-    return new Error("The film service is busy right now. Please try again in a moment.");
+  if (looksLikePolicyRejection(message)) {
+    return new VideoProviderError(message, "provider_content_policy");
   }
-  return new Error(message || "The film service could not start this generation.");
+  if (status === 401)
+    return new VideoProviderError(
+      message || "The film service rejected our credentials.",
+      "provider_credentials",
+    );
+  if (status === 403)
+    return new VideoProviderError(
+      message || "AI film generation is blocked for this project.",
+      "provider_error",
+    );
+  if (status === 429) {
+    return new VideoProviderError(
+      "The film service is busy right now. Please try again in a moment.",
+      "provider_busy",
+    );
+  }
+  return new VideoProviderError(
+    message || "The film service could not start this generation.",
+    "provider_error",
+  );
 }
 
 /** Submit one 5-second vertical clip to Lovable AI and return its job id. */
