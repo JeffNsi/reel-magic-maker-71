@@ -412,16 +412,46 @@ export async function startGeneration(opts: {
 
   try {
     const warnings = new Set<string>();
-    const taskId = await submitVideo(
-      provider,
-      opts.prompt,
-      opts.audio,
-      opts.references ?? [],
-      (message) => warnings.add(message),
-    );
+    let taskId: string;
+    let usedProvider: VideoProvider = provider;
+    try {
+      taskId = await submitVideo(
+        provider,
+        opts.prompt,
+        opts.audio,
+        opts.references ?? [],
+        (message) => warnings.add(message),
+      );
+    } catch (first) {
+      if (!shouldFallBackToFal(provider, first)) throw first;
+      // House Lovable AI balance is empty: same prompt to fal (text-only, references dropped).
+      console.warn(
+        "video fallback to fal",
+        JSON.stringify({ from: provider, scene: opts.scene_number ?? null, story_id: opts.story_id ?? null }),
+      );
+      try {
+        taskId = await submitFalVideo(opts.prompt, opts.audio, FAL_MODEL_ID);
+      } catch (second) {
+        const falMissing = !process.env["FAL_KEY"];
+        const falCode = providerErrorCode(second);
+        const reason = falMissing
+          ? "the fal.ai key is not configured"
+          : `fal.ai also failed (${second instanceof Error ? second.message : "unknown error"})`;
+        throw new VideoProviderError(
+          `The house AI video balance is empty, and ${reason}.`,
+          falMissing || falCode === "provider_out_of_credits" || falCode === "provider_credentials"
+            ? falMissing ? "provider_unavailable" : falCode
+            : (falCode ?? "provider_error"),
+        );
+      }
+      usedProvider = "fal";
+      warnings.clear();
+      warnings.add(FAL_FALLBACK_NOTE);
+    }
     await supabaseAdmin
       .from("generations")
       .update({
+        provider: usedProvider,
         fal_request_id: taskId,
         status: "processing",
         error_message: [...warnings].join("\n") || null,
@@ -437,6 +467,9 @@ export async function startGeneration(opts: {
       .update({ status: "failed", error_message: message })
       .eq("id", row.id)
       .in("status", ["queued", "processing"]);
-    throw new GenerationStartError(message, row.id);
+    const startError = new GenerationStartError(message, row.id);
+    const code = providerErrorCode(err);
+    if (code) Object.assign(startError, { code });
+    throw startError;
   }
 }
