@@ -818,8 +818,8 @@ export async function renderSceneCore(
           deadline_at: deadlineFrom(new Date()),
         }),
     ).catch(async (err: unknown) => {
-      const { FILM_SUBMIT_ERROR } = await import("@/lib/film-error");
-      await setFilmError(film.id, FILM_SUBMIT_ERROR);
+      const { filmSubmitErrorFor } = await import("@/lib/film-error");
+      await setFilmError(film.id, filmSubmitErrorFor(scene.scene_number, err));
       throw err;
     });
 

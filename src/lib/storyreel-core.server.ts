@@ -4,6 +4,13 @@
  */
 
 import { GenerationStartError, SCENE_ALREADY_RENDERING_MESSAGE } from "@/lib/coin-charge";
+import {
+  FAL_FALLBACK_NOTE,
+  VideoProviderError,
+  looksLikePolicyRejection,
+  providerErrorCode,
+  shouldFallBackToFal,
+} from "@/lib/film-error";
 
 export const FAL_MODEL_ID = "fal-ai/kling-video/v3/standard/text-to-video";
 /** LIVE engine: fal.ai's realtime director model, run through the same queue transport. */
@@ -30,16 +37,32 @@ export function falHeaders(key: string) {
 
 export function falSubmitError(status: number, detail: string) {
   if (/balance|locked|credit/i.test(detail)) {
-    return new Error(
+    return new VideoProviderError(
       "The video account is out of credit. Top up the fal.ai balance and try again.",
+      "provider_out_of_credits",
+    );
+  }
+  if (looksLikePolicyRejection(detail)) {
+    return new VideoProviderError(
+      "The video service refused this content.",
+      "provider_content_policy",
     );
   }
   if (status === 401 || status === 403)
-    return new Error("The video service rejected our credentials.");
+    return new VideoProviderError(
+      "The video service rejected our credentials.",
+      "provider_credentials",
+    );
   if (status === 429) {
-    return new Error("The video service is busy right now. Please try again in a moment.");
+    return new VideoProviderError(
+      "The video service is busy right now. Please try again in a moment.",
+      "provider_busy",
+    );
   }
-  return new Error("The video service could not start this generation.");
+  return new VideoProviderError(
+    "The video service could not start this generation.",
+    "provider_error",
+  );
 }
 
 export async function signedUrl(path: string | null) {
@@ -59,19 +82,37 @@ export function falModelFor(provider: VideoProvider) {
 export const AI_VIDEO_BASE = "https://ai.gateway.lovable.dev/v1/videos";
 export const LOVABLE_VIDEO_MODEL = "google/gemini-omni-1.1-flash";
 
-function aiVideoError(status: number, message: string) {
+export function aiVideoError(status: number, message: string) {
   if (status === 402) {
-    return new Error(
+    return new VideoProviderError(
       message ||
         "This project is out of AI credits. Top them up in Lovable to keep generating films.",
+      "provider_out_of_credits",
     );
   }
-  if (status === 403)
-    return new Error(message || "AI film generation is blocked for this project.");
-  if (status === 429) {
-    return new Error("The film service is busy right now. Please try again in a moment.");
+  if (looksLikePolicyRejection(message)) {
+    return new VideoProviderError(message, "provider_content_policy");
   }
-  return new Error(message || "The film service could not start this generation.");
+  if (status === 401)
+    return new VideoProviderError(
+      message || "The film service rejected our credentials.",
+      "provider_credentials",
+    );
+  if (status === 403)
+    return new VideoProviderError(
+      message || "AI film generation is blocked for this project.",
+      "provider_error",
+    );
+  if (status === 429) {
+    return new VideoProviderError(
+      "The film service is busy right now. Please try again in a moment.",
+      "provider_busy",
+    );
+  }
+  return new VideoProviderError(
+    message || "The film service could not start this generation.",
+    "provider_error",
+  );
 }
 
 /** Submit one 5-second vertical clip to Lovable AI and return its job id. */
@@ -371,16 +412,48 @@ export async function startGeneration(opts: {
 
   try {
     const warnings = new Set<string>();
-    const taskId = await submitVideo(
-      provider,
-      opts.prompt,
-      opts.audio,
-      opts.references ?? [],
-      (message) => warnings.add(message),
-    );
+    let taskId: string;
+    let usedProvider: VideoProvider = provider;
+    try {
+      taskId = await submitVideo(
+        provider,
+        opts.prompt,
+        opts.audio,
+        opts.references ?? [],
+        (message) => warnings.add(message),
+      );
+    } catch (first) {
+      if (!shouldFallBackToFal(provider, first)) throw first;
+      // House Lovable AI balance is empty: same prompt to fal (text-only, references dropped).
+      console.warn(
+        "video fallback to fal",
+        JSON.stringify({
+          from: provider,
+          scene: opts.scene_number ?? null,
+          story_id: opts.story_id ?? null,
+        }),
+      );
+      try {
+        taskId = await submitFalVideo(opts.prompt, opts.audio, FAL_MODEL_ID);
+      } catch (second) {
+        const falMissing = !process.env["FAL_KEY"];
+        const falCode = providerErrorCode(second);
+        const reason = falMissing
+          ? "the fal.ai key is not configured"
+          : `fal.ai also failed (${second instanceof Error ? second.message : "unknown error"})`;
+        throw new VideoProviderError(
+          `The house AI video balance is empty, and ${reason}.`,
+          falMissing ? "provider_unavailable" : (falCode ?? "provider_error"),
+        );
+      }
+      usedProvider = "fal";
+      warnings.clear();
+      warnings.add(FAL_FALLBACK_NOTE);
+    }
     await supabaseAdmin
       .from("generations")
       .update({
+        provider: usedProvider,
         fal_request_id: taskId,
         status: "processing",
         error_message: [...warnings].join("\n") || null,
@@ -396,6 +469,9 @@ export async function startGeneration(opts: {
       .update({ status: "failed", error_message: message })
       .eq("id", row.id)
       .in("status", ["queued", "processing"]);
-    throw new GenerationStartError(message, row.id);
+    const startError = new GenerationStartError(message, row.id);
+    const code = providerErrorCode(err);
+    if (code) Object.assign(startError, { code });
+    throw startError;
   }
 }
