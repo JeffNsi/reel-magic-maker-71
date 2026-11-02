@@ -30,16 +30,32 @@ export function falHeaders(key: string) {
 
 export function falSubmitError(status: number, detail: string) {
   if (/balance|locked|credit/i.test(detail)) {
-    return new Error(
+    return new VideoProviderError(
       "The video account is out of credit. Top up the fal.ai balance and try again.",
+      "provider_out_of_credits",
+    );
+  }
+  if (looksLikePolicyRejection(detail)) {
+    return new VideoProviderError(
+      "The video service refused this content.",
+      "provider_content_policy",
     );
   }
   if (status === 401 || status === 403)
-    return new Error("The video service rejected our credentials.");
+    return new VideoProviderError(
+      "The video service rejected our credentials.",
+      "provider_credentials",
+    );
   if (status === 429) {
-    return new Error("The video service is busy right now. Please try again in a moment.");
+    return new VideoProviderError(
+      "The video service is busy right now. Please try again in a moment.",
+      "provider_busy",
+    );
   }
-  return new Error("The video service could not start this generation.");
+  return new VideoProviderError(
+    "The video service could not start this generation.",
+    "provider_error",
+  );
 }
 
 export async function signedUrl(path: string | null) {
