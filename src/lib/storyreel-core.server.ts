@@ -427,7 +427,11 @@ export async function startGeneration(opts: {
       // House Lovable AI balance is empty: same prompt to fal (text-only, references dropped).
       console.warn(
         "video fallback to fal",
-        JSON.stringify({ from: provider, scene: opts.scene_number ?? null, story_id: opts.story_id ?? null }),
+        JSON.stringify({
+          from: provider,
+          scene: opts.scene_number ?? null,
+          story_id: opts.story_id ?? null,
+        }),
       );
       try {
         taskId = await submitFalVideo(opts.prompt, opts.audio, FAL_MODEL_ID);
@@ -439,9 +443,7 @@ export async function startGeneration(opts: {
           : `fal.ai also failed (${second instanceof Error ? second.message : "unknown error"})`;
         throw new VideoProviderError(
           `The house AI video balance is empty, and ${reason}.`,
-          falMissing || falCode === "provider_out_of_credits" || falCode === "provider_credentials"
-            ? falMissing ? "provider_unavailable" : falCode
-            : (falCode ?? "provider_error"),
+          falMissing ? "provider_unavailable" : (falCode ?? "provider_error"),
         );
       }
       usedProvider = "fal";
