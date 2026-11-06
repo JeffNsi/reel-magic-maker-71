@@ -371,12 +371,21 @@ describe("Migration order: what an automatic runner applies is safe before the n
   /** drizzle-orm's rule: run journal entries in order whose `when` is newer than the last applied row. */
   const pending = (lastApplied) =>
     JOURNAL.entries.filter((e) => e.when > lastApplied).map((e) => e.tag);
+  // PR #1's migrations (idx 9-10) are already applied live; their replay is
+  // tested in auto-engine/db-verify. Here only this PR's migrations are run.
+  const PR1 = ["0009_auto_engine_step1", "0010_auto_engine_review_fixes"];
+  const OURS = ["0011_server_only_balances_and_unlocks", "0012_unlock_fixes_and_atomic_rewards"];
+  const ours = (tags) => tags.filter((t) => !PR1.includes(t));
 
-  test("against the live history, a runner would apply exactly 0011 and 0012, in that order", () => {
-    assert.deepEqual(pending(LIVE_LAST_APPLIED), [
-      "0011_server_only_balances_and_unlocks",
-      "0012_unlock_fixes_and_atomic_rewards",
-    ]);
+  test("against the live history, a runner applies 0011 then 0012 (after 0009-0010 when PR #1 is merged)", () => {
+    const tags = pending(LIVE_LAST_APPLIED);
+    const alone = OURS;
+    const combined = [...PR1, ...OURS];
+    assert.ok(
+      JSON.stringify(tags) === JSON.stringify(alone) ||
+        JSON.stringify(tags) === JSON.stringify(combined),
+      `unexpected pending order: ${tags.join(", ")}`,
+    );
   });
 
   test("the post-deploy unlock lock is not reachable by any runner", () => {
@@ -391,7 +400,7 @@ describe("Migration order: what an automatic runner applies is safe before the n
 
   test("runner on the live state (0011 already applied by hand): 0011 re-runs as a no-op, then 0012", async () => {
     const { db, coin, free } = await fresh({ upTo: "0011" });
-    for (const tag of pending(LIVE_LAST_APPLIED)) {
+    for (const tag of ours(pending(LIVE_LAST_APPLIED))) {
       await db.exec(read(`drizzle/migrations/${tag}.sql`));
     }
     // The currently published app keeps working after the runner:
@@ -425,7 +434,7 @@ describe("Migration order: what an automatic runner applies is safe before the n
 
   test("runner on a fresh history: 0011 then 0012 in one go gives the same end state", async () => {
     const { db } = await fresh({ upTo: "none" });
-    for (const tag of pending(LIVE_LAST_APPLIED)) {
+    for (const tag of ours(pending(LIVE_LAST_APPLIED))) {
       await db.exec(read(`drizzle/migrations/${tag}.sql`));
     }
     const fn = await db.query(

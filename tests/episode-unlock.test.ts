@@ -236,12 +236,14 @@ describe("migrations and the post-deploy step (source checks; executed in db-ver
   });
 
   it("leaves idx 9 and 10 to PR #1 and sorts after it in the combined history", () => {
-    expect(journal.entries.slice(-3).map((e) => [e.idx, e.tag])).toEqual([
-      [8, "0008_generation_provider_check_throttle"],
+    const at = (i: number) => journal.entries.find((e) => e.idx === i)?.tag;
+    // Before PR #1 is merged idx 9-10 are free; after, they are PR #1's.
+    expect([undefined, "0009_auto_engine_step1"]).toContain(at(9));
+    expect([undefined, "0010_auto_engine_review_fixes"]).toContain(at(10));
+    expect(journal.entries.slice(-2).map((e) => [e.idx, e.tag])).toEqual([
       [11, "0011_server_only_balances_and_unlocks"],
       [12, "0012_unlock_fixes_and_atomic_rewards"],
     ]);
-    expect(journal.entries.some((e) => e.idx === 9 || e.idx === 10)).toBe(false);
     for (const e of journal.entries.slice(-2)) expect(e.when).toBeGreaterThan(PR1_0010_WHEN);
   });
 
