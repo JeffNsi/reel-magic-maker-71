@@ -180,13 +180,13 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     expect(mocks.progress).not.toHaveBeenCalled();
   });
 
-  it("cron refund error is surfaced and the next tick can refund the failed row", async () => {
+  it("tick refund error is logged, does not stop the tick, and the next tick refunds", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     cron = true;
     refundFails = true;
-    await expect(runFilmTick(new Date("2026-10-17T12:30:00Z"))).rejects.toThrow(
-      "Credits kunde inte återbetalas",
-    );
+    retryAvailable = true;
+    await runFilmTick(new Date("2026-10-17T12:30:00Z"));
+    expect(log).toHaveBeenCalledWith("scene refund failed", "generation", expect.any(String));
     expect(row.status).toBe("failed");
     expect(row.refunded).toBe(false);
     expect(mocks.render).not.toHaveBeenCalled();

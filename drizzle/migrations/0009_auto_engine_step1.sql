@@ -1,4 +1,4 @@
--- Shortizereel Auto Engine, step 1: post-production jobs, film exports, teaser candidates.
+-- Shortizereel Auto Engine, step 1 (migration 0009): post-production jobs, film exports, teaser candidates.
 --
 -- Additive only: no existing table, column, function or policy is changed.
 -- Idempotent: safe to run twice (applied by hand, then again by the migrator).

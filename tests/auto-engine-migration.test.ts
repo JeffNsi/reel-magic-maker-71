@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
  * executed twice against a local Postgres with RLS during development; these
  * checks keep its guarantees from regressing.
  */
-const sql = readFileSync("drizzle/migrations/0008_auto_engine_step1.sql", "utf8");
+const sql = readFileSync("drizzle/migrations/0009_auto_engine_step1.sql", "utf8");
 const journal = JSON.parse(readFileSync("drizzle/migrations/meta/_journal.json", "utf8")) as {
   entries: { idx: number; tag: string }[];
 };
@@ -17,11 +17,11 @@ const code = sql
   .filter((line) => !line.trim().startsWith("--"))
   .join("\n");
 
-describe("auto engine migration 0008", () => {
+describe("auto engine migration 0009", () => {
   it("is registered as the next migration in the journal", () => {
     const last = journal.entries.at(-1);
-    expect(last).toMatchObject({ idx: 8, tag: "0008_auto_engine_step1" });
-    expect(journal.entries.map((e) => e.idx)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(last).toMatchObject({ idx: 9, tag: "0009_auto_engine_step1" });
+    expect(journal.entries.map((e) => e.idx)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 
   it("is additive: it never alters, drops or truncates an existing table", () => {

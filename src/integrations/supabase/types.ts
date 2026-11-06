@@ -869,6 +869,7 @@ export type Database = {
           narration: string | null
           prompt_final: string | null
           provider: string
+          provider_checked_at: string | null
           refunded: boolean
           scene_number: number | null
           session_id: string
@@ -897,6 +898,7 @@ export type Database = {
           narration?: string | null
           prompt_final?: string | null
           provider?: string
+          provider_checked_at?: string | null
           refunded?: boolean
           scene_number?: number | null
           session_id: string
@@ -925,6 +927,7 @@ export type Database = {
           narration?: string | null
           prompt_final?: string | null
           provider?: string
+          provider_checked_at?: string | null
           refunded?: boolean
           scene_number?: number | null
           session_id?: string

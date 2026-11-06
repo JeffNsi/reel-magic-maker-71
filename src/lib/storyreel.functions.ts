@@ -312,10 +312,34 @@ export const checkStatus = createServerFn({ method: "POST" })
       return fail("The finished video could not be saved.");
     }
 
-    await supabaseAdmin
+    // Conditional: never overwrite a job another path already failed/refunded or completed.
+    const { data: won } = await supabaseAdmin
       .from("generations")
       .update({ status: "completed", video_url: path })
-      .eq("id", row.id);
+      .eq("id", row.id)
+      .in("status", ["queued", "processing"])
+      .select("id");
+    if (!won?.length) {
+      const { data: latest } = await supabaseAdmin
+        .from("generations")
+        .select("status, video_url, error_message")
+        .eq("id", row.id)
+        .single();
+      if (latest?.status === "completed" && latest.video_url) {
+        return {
+          generation_id: row.id,
+          status: "completed",
+          video_url: await signedUrl(latest.video_url as string),
+          error_message: null,
+        };
+      }
+      return {
+        generation_id: row.id,
+        status: "failed",
+        video_url: null,
+        error_message: (latest?.error_message as string | null) ?? "Something went wrong.",
+      };
+    }
 
     // Publish the finished short as a free episode in the Jeje Inc Vibe Shorts feed.
     // Film scene clips are never auto-published; films go out via publishReadyFilm.

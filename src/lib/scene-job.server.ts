@@ -56,8 +56,7 @@ export async function tickFilm(story_id: string, now = new Date()) {
     .order("created_at", { ascending: true })
     .limit(TICK_LIMIT);
   for (const pending of pendingRefunds ?? []) {
-    const { refundGeneration } = await import("@/lib/coins.server");
-    await refundGeneration(pending.id);
+    await refundLogged(pending.id);
   }
 
   const { data } = await supabaseAdmin
@@ -80,6 +79,8 @@ export async function tickFilm(story_id: string, now = new Date()) {
 
     if (action === "poll") {
       if (!row.fal_request_id) continue;
+      // Throttle: only one poll per job per window may ask the provider.
+      if (!(await claimProviderCheck(row.id, now))) continue;
       report.polled++;
       const provider =
         row.provider === "fal" ? "fal" : row.provider === "live" ? "live" : "lovable";
@@ -131,11 +132,38 @@ async function settleFailed(row: Row): Promise<boolean> {
     .select("id");
   if (!claimed?.length) return false;
 
-  if (refund) {
-    const { refundGeneration } = await import("@/lib/coins.server");
-    await refundGeneration(row.id);
-  }
+  // No retry while the refund is outstanding; the next tick recovers it.
+  if (refund) return refundLogged(row.id);
   return true;
+}
+
+/** Refund errors are logged loudly; the row stays refunded = false and is retried next tick. */
+async function refundLogged(id: string): Promise<boolean> {
+  const { refundGeneration } = await import("@/lib/coins.server");
+  try {
+    await refundGeneration(id);
+    return true;
+  } catch (err) {
+    console.error("scene refund failed", id, err instanceof Error ? err.message : "unknown");
+    return false;
+  }
+}
+
+/** Minimum time between provider checks for one job. */
+export const PROVIDER_CHECK_INTERVAL_MS = 10_000;
+
+/** Atomic claim: true only for the one caller allowed to ask the provider now. */
+export async function claimProviderCheck(id: string, now = new Date()): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const cutoff = new Date(now.getTime() - PROVIDER_CHECK_INTERVAL_MS).toISOString();
+  const { data } = await supabaseAdmin
+    .from("generations")
+    .update({ provider_checked_at: now.toISOString() })
+    .eq("id", id)
+    .in("status", ["queued", "processing"])
+    .or(`provider_checked_at.is.null,provider_checked_at.lt.${cutoff}`)
+    .select("id");
+  return !!data?.length;
 }
 
 /** Retry through the charged core as the film's stored owner, if retries remain. */
