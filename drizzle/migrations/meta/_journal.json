@@ -57,6 +57,13 @@
       "when": 1792394922150,
       "tag": "0007_story_error",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793991736562,
+      "tag": "0008_auto_engine_step1",
+      "breakpoints": true
     }
   ]
 }
