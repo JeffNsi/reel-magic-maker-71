@@ -2,9 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { unlockWith } from "@/lib/episode-unlock";
-
-const REWARDS = [20, 60, 80, 100, 100, 100, 100];
-const STREAK_RESET_HOURS = 48;
+import { claimCheckinWith, REWARD_MESSAGES } from "@/lib/rewards";
 
 export type Profile = {
   id: string;
@@ -19,30 +17,14 @@ export type Profile = {
 
 export type Balance = { paid_coins: number; bonus_coins: number };
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function isYesterday(dateString: string | null) {
-  if (!dateString) return false;
-  const d = new Date(dateString);
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return d.toISOString().slice(0, 10) === yesterday.toISOString().slice(0, 10);
-}
-
 async function fetchProfile(supabase: { from: (table: string) => any }) {
   const { data, error } = await supabase.from("profiles").select("*").single();
   if (error || !data) throw new Error("Could not load your profile.");
   return data as Profile;
 }
 
-// Coin balances and VIP flags are locked from client-side updates; only the
-// server (verified caller + payment/reward rules) may change them.
-async function adminProfiles() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin.from("profiles");
-}
+// Coin balances and VIP flags can only be changed by the server: browser
+// roles have no write access to profiles (migrations 0011 and 0012).
 
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -51,47 +33,26 @@ export const getProfile = createServerFn({ method: "GET" })
 export const claimDailyCheckin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Profile & { reward: number }> => {
-    const profile = await fetchProfile(context.supabase);
-    const todayStr = today();
-
-    if (profile.last_checkin_date === todayStr) {
-      throw new Error("You already checked in today.");
-    }
-
-    const newStreak = isYesterday(profile.last_checkin_date)
-      ? Math.min(7, profile.checkin_streak + 1)
-      : 1;
-    const reward = REWARDS[newStreak - 1] ?? 20;
-
-    const { data, error } = await (
-      await adminProfiles()
-    )
-      .update({
-        last_checkin_date: todayStr,
-        checkin_streak: newStreak,
-        bonus_coins: profile.bonus_coins + reward,
-      })
-      .eq("id", profile.id)
-      .select()
-      .single();
-
-    if (error || !data) throw new Error("Could not record check-in.");
-    return { ...(data as Profile), reward };
+    // The streak, the once-per-day rule and the atomic credit are decided in
+    // one database transaction (public.claim_daily_checkin, service role only).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return claimCheckinWith(
+      (user, rewards) =>
+        supabaseAdmin.rpc("claim_daily_checkin", { _user: user, _rewards: rewards }),
+      context.userId,
+    );
   });
 
+/**
+ * Ad rewards are paused: no ad provider verifies a viewing server-side yet, so
+ * this endpoint never credits coins. A future reward must come from a provider
+ * callback that is verified on the server and recorded once per event id in
+ * reward_events — never from a request the browser can repeat.
+ */
 export const watchAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Balance> => {
-    const profile = await fetchProfile(context.supabase);
-    const { data, error } = await (
-      await adminProfiles()
-    )
-      .update({ bonus_coins: profile.bonus_coins + 15 })
-      .eq("id", profile.id)
-      .select("paid_coins, bonus_coins")
-      .single();
-    if (error || !data) throw new Error("Could not add coins.");
-    return data as Balance;
+  .handler(async (): Promise<Balance> => {
+    throw new Error(REWARD_MESSAGES.ads_paused);
   });
 
 const unlockInput = z.object({ episode_id: z.string().uuid() });

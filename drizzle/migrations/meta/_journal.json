@@ -66,17 +66,17 @@
       "breakpoints": true
     },
     {
-      "idx": 9,
+      "idx": 11,
       "version": "7",
       "when": 1794002097159,
       "tag": "0011_server_only_balances_and_unlocks",
       "breakpoints": true
     },
     {
-      "idx": 10,
+      "idx": 12,
       "version": "7",
-      "when": 1794002157159,
-      "tag": "0012_server_only_unlock_inserts",
+      "when": 1794003260553,
+      "tag": "0012_unlock_fixes_and_atomic_rewards",
       "breakpoints": true
     }
   ]

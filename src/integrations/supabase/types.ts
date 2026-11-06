@@ -1038,6 +1038,41 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_events: {
+        Row: {
+          bonus_coins: number
+          created_at: string
+          event_id: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          bonus_coins: number
+          created_at?: string
+          event_id: string
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          bonus_coins?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           blueprint: string | null
@@ -1447,6 +1482,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_daily_checkin: {
+        Args: { _rewards: number[]; _user: string }
+        Returns: Json
+      }
       claim_film_slot: { Args: { _user: string }; Returns: boolean }
       create_approved_character_film: {
         Args: {

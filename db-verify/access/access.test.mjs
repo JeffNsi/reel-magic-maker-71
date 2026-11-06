@@ -1,156 +1,39 @@
-// Executable regression tests for migrations 0011 and 0012 (server-only coin
-// balances, VIP status and episode unlocks). Applies them to a real Postgres
-// (PGlite) on a stub that mirrors the live Lovable Cloud catalog, then checks
-// each rule as the roles the app really uses: anon, authenticated (a signed-in
-// browser) and service_role (trusted server code).
+// Executable regression tests for migrations 0011 and 0012 and the post-deploy
+// unlock lock (server-only coin balances, VIP status and episode unlocks).
+// Applies them to a real Postgres (PGlite) on a stub that mirrors the live
+// Lovable Cloud catalog, then checks each rule as the roles the app really
+// uses: anon, authenticated (a signed-in browser) and service_role (trusted
+// server code). Fixes and rewards are covered in fixes.test.mjs.
 // Run: cd db-verify/access && npm ci && npm test
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 
-import { PGlite } from "@electric-sql/pglite";
-
-const repo = new URL("../../", import.meta.url);
-const read = (path) => readFileSync(new URL(path, repo), "utf8");
-const STUB = readFileSync(new URL("./supabase-stub.sql", import.meta.url), "utf8");
-const M0002 = read("drizzle/migrations/0002_atomic_coins.sql");
-const M0011 = read("drizzle/migrations/0011_server_only_balances_and_unlocks.sql");
-const M0012 = read("drizzle/migrations/0012_server_only_unlock_inserts.sql");
-const TYPES = read("src/integrations/supabase/types.ts");
-
-const NORMAL = "00000000-0000-4000-8000-0000000000a1"; // default 210 bonus coins
-const PAYING = "00000000-0000-4000-8000-0000000000a2"; // 5 bonus + 100 paid
-const VIP = "00000000-0000-4000-8000-0000000000a3"; // active VIP, no coins
-const EXPIRED = "00000000-0000-4000-8000-0000000000a4"; // VIP ended yesterday, 30 bonus
-const BROKE = "00000000-0000-4000-8000-0000000000a5"; // 10 paid coins
-const LEGACY = "00000000-0000-4000-8000-0000000000a6"; // existing state before 0011
-
-const PERMISSION = /permission denied|server-managed|row-level security/;
-
-async function fresh({ upTo = "0012" } = {}) {
-  const db = new PGlite();
-  await db.exec(STUB);
-  await db.exec(M0002);
-  const ids = await seedBefore(db);
-  if (upTo >= "0011") await db.exec(M0011);
-  if (upTo >= "0012") await db.exec(M0012);
-  return { db, ...ids };
-}
-
-/** State that already exists live before the migrations run. */
-async function seedBefore(db) {
-  for (const [id, email] of [
-    [NORMAL, "normal@example.com"],
-    [PAYING, "paying@example.com"],
-    [VIP, "vip@example.com"],
-    [EXPIRED, "expired@example.com"],
-    [BROKE, "broke@example.com"],
-    [LEGACY, "legacy@example.com"],
-  ]) {
-    await db.query("INSERT INTO auth.users (id, email) VALUES ($1, $2)", [id, email]);
-  }
-  await db.query("UPDATE public.profiles SET bonus_coins = 5, paid_coins = 100 WHERE id = $1", [
-    PAYING,
-  ]);
-  await db.query(
-    "UPDATE public.profiles SET bonus_coins = 0, is_vip = true, vip_until = now() + interval '30 days' WHERE id = $1",
-    [VIP],
-  );
-  await db.query(
-    "UPDATE public.profiles SET bonus_coins = 30, is_vip = true, vip_until = now() - interval '1 day' WHERE id = $1",
-    [EXPIRED],
-  );
-  await db.query("UPDATE public.profiles SET bonus_coins = 0, paid_coins = 10 WHERE id = $1", [
-    BROKE,
-  ]);
-  await db.query(
-    "UPDATE public.profiles SET bonus_coins = 20, paid_coins = 500, is_vip = true, vip_until = '2026-10-13T16:12:09Z' WHERE id = $1",
-    [LEGACY],
-  );
-
-  const one = async (sql, params = []) => (await db.query(sql, params)).rows[0].id;
-  const drama = await one(
-    "INSERT INTO public.dramas (title, cover_url) VALUES ('Series', 'c') RETURNING id",
-  );
-  const vipDrama = await one(
-    "INSERT INTO public.dramas (title, cover_url, is_vip_only) VALUES ('VIP series', 'c', true) RETURNING id",
-  );
-  const ep = (dramaId, n, cost, free, hidden = false) =>
-    one(
-      "INSERT INTO public.episodes (drama_id, episode_number, coin_cost, is_free, hidden) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [dramaId, n, cost, free, hidden],
-    );
-  const ids = {
-    free: await ep(drama, 1, 0, true),
-    coin: await ep(drama, 2, 20, false),
-    coinB: await ep(drama, 3, 20, false),
-    hidden: await ep(drama, 4, 20, false, true),
-    zero: await ep(drama, 5, 0, false),
-    vipCoin: await ep(vipDrama, 1, 20, false),
-    vipFree: await ep(vipDrama, 2, 0, true),
-  };
-  // One unlock that exists before the migrations (as live: 1 row).
-  await db.query(
-    "INSERT INTO public.user_unlocked_episodes (user_id, episode_id) VALUES ($1, $2)",
-    [LEGACY, ids.coin],
-  );
-  await db.query(
-    "INSERT INTO public.user_unlocked_episodes (user_id, episode_id) VALUES ($1, $2)",
-    [LEGACY, ids.hidden],
-  );
-  return ids;
-}
-
-/** Run `fn` as a signed-in browser (authenticated + JWT sub), then reset. */
-async function asUser(db, userId, fn) {
-  await db.exec("SET ROLE authenticated");
-  await db.query("SELECT set_config('request.jwt.claims', $1, false)", [
-    JSON.stringify({ sub: userId, role: "authenticated" }),
-  ]);
-  try {
-    return await fn();
-  } finally {
-    await db.exec("RESET ROLE");
-    await db.query("SELECT set_config('request.jwt.claims', '', false)");
-  }
-}
-
-async function asRole(db, role, fn) {
-  await db.exec(`SET ROLE ${role}`);
-  try {
-    return await fn();
-  } finally {
-    await db.exec("RESET ROLE");
-  }
-}
-
-const unlock = async (db, user, episode) =>
-  asRole(db, "service_role", async () => {
-    const { rows } = await db.query("SELECT public.unlock_episode($1, $2) AS r", [user, episode]);
-    return rows[0].r;
-  });
-
-const balance = async (db, id) =>
-  (
-    await db.query(
-      "SELECT paid_coins, bonus_coins, is_vip, vip_until FROM public.profiles WHERE id = $1",
-      [id],
-    )
-  ).rows[0];
-
-const unlocks = async (db, user) =>
-  (
-    await db.query(
-      "SELECT episode_id, charged_bonus, charged_paid, unlock_method FROM public.user_unlocked_episodes WHERE user_id = $1 ORDER BY unlocked_at",
-      [user],
-    )
-  ).rows;
+import {
+  asRole,
+  asUser,
+  balance,
+  BROKE,
+  EXPIRED,
+  fresh,
+  LEGACY,
+  LOCK,
+  M0011,
+  M0012,
+  NORMAL,
+  PAYING,
+  PERMISSION,
+  TYPES,
+  unlock,
+  unlocks,
+  VIP,
+} from "./helpers.mjs";
 
 describe("migrations apply forward-only and keep every row", () => {
-  test("0011 and 0012 apply on the live-like schema and can be re-run", async () => {
+  test("0011, 0012 and the post-deploy lock apply on the live-like schema and can be re-run", async () => {
     const { db } = await fresh();
     await db.exec(M0011);
     await db.exec(M0012);
+    await db.exec(LOCK);
     const fn = await db.query(
       "SELECT prosecdef, proconfig FROM pg_proc WHERE oid = 'public.unlock_episode(uuid,uuid)'::regprocedure",
     );
@@ -172,7 +55,7 @@ describe("migrations apply forward-only and keep every row", () => {
   });
 
   test("the live column-level REVOKE alone does not protect balances (the bug being fixed)", async () => {
-    const { db } = await fresh({ upTo: "0000" });
+    const { db } = await fresh({ upTo: "none" });
     await asUser(db, NORMAL, () =>
       db.query(
         "UPDATE public.profiles SET paid_coins = 999999, is_vip = true WHERE id = auth.uid()",
@@ -184,7 +67,7 @@ describe("migrations apply forward-only and keep every row", () => {
   });
 
   test("the live insert policy alone lets a browser unlock any episode (the bug being fixed)", async () => {
-    const { db, vipCoin } = await fresh({ upTo: "0000" });
+    const { db, vipCoin } = await fresh({ upTo: "none" });
     await asUser(db, NORMAL, () =>
       db.query("INSERT INTO public.user_unlocked_episodes (user_id, episode_id) VALUES ($1, $2)", [
         NORMAL,
@@ -486,9 +369,9 @@ describe("B: unlock_episode decides and charges in one transaction", () => {
   });
 });
 
-describe("B: browsers can no longer write unlocks (0012), in the right order", () => {
-  test("after 0011 only, the current app's own-unlock insert still works (safe to apply first)", async () => {
-    const { db, free } = await fresh({ upTo: "0011" });
+describe("B: browsers can no longer write unlocks (post-deploy step), in the right order", () => {
+  test("after every journal migration (what an automatic runner applies), the current app's own-unlock insert still works", async () => {
+    const { db, free } = await fresh({ upTo: "0012" });
     await asUser(db, NORMAL, () =>
       db.query("INSERT INTO public.user_unlocked_episodes (user_id, episode_id) VALUES ($1, $2)", [
         NORMAL,
@@ -498,7 +381,7 @@ describe("B: browsers can no longer write unlocks (0012), in the right order", (
     assert.equal((await unlocks(db, NORMAL)).length, 1);
   });
 
-  test("after 0012, a signed-in user cannot insert, change or delete unlocks", async () => {
+  test("after the post-deploy step, a signed-in user cannot insert, change or delete unlocks", async () => {
     const { db, vipCoin, coin } = await fresh();
     await asUser(db, LEGACY, async () => {
       await assert.rejects(
@@ -517,7 +400,7 @@ describe("B: browsers can no longer write unlocks (0012), in the right order", (
     assert.deepEqual((await unlocks(db, LEGACY)).map((u) => u.episode_id).includes(coin), true);
   });
 
-  test("after 0012, a signed-in user still reads own unlocks and only own", async () => {
+  test("after the post-deploy step, a signed-in user still reads own unlocks and only own", async () => {
     const { db, coin } = await fresh();
     await unlock(db, NORMAL, coin);
     const rows = await asUser(

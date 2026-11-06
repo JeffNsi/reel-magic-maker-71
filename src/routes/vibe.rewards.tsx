@@ -11,6 +11,8 @@ import {
   type Profile,
 } from "@/lib/vibe.functions";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/hooks/use-locale";
+import { AD_REWARDS_ENABLED, DAILY_REWARDS } from "@/lib/rewards";
 import { CoinShopModal } from "@/components/vibe/coin-shop-modal";
 import { Check, Gift, Clock, Share2, Film, Coins, Crown } from "lucide-react";
 
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/vibe/rewards")({
   component: RewardsPage,
 });
 
-const REWARDS = [20, 60, 80, 100, 100, 100, 100];
+const REWARDS = DAILY_REWARDS;
 
 function RewardsPage() {
   const queryClient = useQueryClient();
@@ -93,7 +95,7 @@ function RewardsPage() {
       </div>
 
       <CheckInCard profile={profile} loading={profileLoading} />
-      <WatchAdCard />
+      {AD_REWARDS_ENABLED ? <WatchAdCard /> : <AdRewardsPausedCard />}
       <TaskList />
 
       <CoinShopModal open={shopOpen} onOpenChange={setShopOpen} />
@@ -157,6 +159,35 @@ function CheckInCard({ profile, loading }: { profile: Profile | undefined; loadi
         className="mt-5 h-12 w-full rounded-xl dw-btn-primary text-sm font-semibold disabled:opacity-50"
       >
         {checkedIn ? "Come back tomorrow" : mutation.isPending ? "Claiming..." : "Claim daily reward"}
+      </Button>
+    </section>
+  );
+}
+
+/** Shown while no ad provider verifies viewings server-side; nothing is credited. */
+function AdRewardsPausedCard() {
+  const { t } = useLocale();
+  return (
+    <section className="mt-4 rounded-3xl border border-dw-border bg-dw-card p-6">
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-full bg-dw-gold/10 text-dw-gold">
+          <Clock className="size-5" aria-hidden />
+        </div>
+        <div>
+          <h2 className="font-semibold">{t("Watch ad", "Se reklam")}</h2>
+          <p className="text-xs text-dw-muted">
+            {t(
+              "Coin rewards for ads are paused until verified ads are available.",
+              "Myntbelöningar för reklam är pausade tills verifierade annonser finns.",
+            )}
+          </p>
+        </div>
+      </div>
+      <Button
+        disabled
+        className="mt-4 h-12 w-full rounded-xl dw-btn-gold text-sm font-semibold disabled:opacity-50"
+      >
+        {t("Coming soon", "Kommer snart")}
       </Button>
     </section>
   );

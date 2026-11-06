@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync } from "node:fs";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { describe, expect, it, vi } from "vitest";
 import {
   interpretUnlock,
@@ -126,12 +128,28 @@ describe("unlockEpisode server function (source checks)", () => {
   });
 });
 
-describe("migrations 0011/0012 (source checks; executed in db-verify/access)", () => {
+describe("migrations and the post-deploy step (source checks; executed in db-verify/access)", () => {
   const m11 = readFileSync("drizzle/migrations/0011_server_only_balances_and_unlocks.sql", "utf8");
-  const m12 = readFileSync("drizzle/migrations/0012_server_only_unlock_inserts.sql", "utf8");
+  const m12 = readFileSync("drizzle/migrations/0012_unlock_fixes_and_atomic_rewards.sql", "utf8");
+  const lock = readFileSync("ops/post-deploy/server_only_unlock_inserts.sql", "utf8");
   const journal = JSON.parse(readFileSync("drizzle/migrations/meta/_journal.json", "utf8")) as {
     entries: { idx: number; when: number; tag: string }[];
   };
+  const snap = (n: string) =>
+    JSON.parse(readFileSync(`drizzle/migrations/meta/${n}_snapshot.json`, "utf8")) as {
+      id: string;
+      prevId: string;
+    };
+
+  // PR #1 (Auto Engine) owns journal idx 9 and 10; its 0010 snapshot id and time:
+  const PR1_0010_SNAPSHOT_ID = "95602718-eb4b-434a-b263-88c1a1175fb1";
+  const PR1_0010_WHEN = 1793994488393;
+
+  it("keeps 0011 byte-for-byte as applied to the live database", () => {
+    expect(createHash("sha256").update(m11).digest("hex")).toBe(
+      "d1b22bd7db32b60b77fc6107871829b9a89b08e98502c5f8faa571010415545b",
+    );
+  });
 
   it("removes table-level writes on profiles from browser roles", () => {
     expect(m11).toContain(
@@ -143,64 +161,96 @@ describe("migrations 0011/0012 (source checks; executed in db-verify/access)", (
   });
 
   it("guards balances and VIP status for browser roles even if a privilege returns", () => {
-    expect(m11).toContain("current_user NOT IN ('anon', 'authenticated')");
+    expect(m12).toContain("current_user NOT IN ('anon', 'authenticated')");
     expect(m11).toContain("BEFORE INSERT OR UPDATE ON public.profiles");
     for (const col of ["paid_coins", "bonus_coins", "is_vip", "vip_until"]) {
-      expect(m11).toContain(`NEW.${col} IS DISTINCT FROM OLD.${col}`);
+      expect(m12).toContain(`NEW.${col} IS DISTINCT FROM OLD.${col}`);
     }
   });
 
-  it("keeps unlock_episode server-only, locked to the buyer row and with a fixed search path", () => {
-    expect(m11).toContain("SECURITY DEFINER\nSET search_path = ''");
-    expect(m11).toContain("FOR UPDATE;");
-    expect(m11).toContain(
-      "REVOKE ALL ON FUNCTION public.unlock_episode(uuid, uuid) FROM PUBLIC, anon, authenticated;",
-    );
-    expect(m11).toContain(
-      "GRANT EXECUTE ON FUNCTION public.unlock_episode(uuid, uuid) TO service_role;",
-    );
+  it("0012 refuses every profile created by a browser role (bonus coins included)", () => {
+    const guard = m12.slice(m12.indexOf("FUNCTION public.guard_profile_entitlements"));
+    const from = guard.indexOf("IF TG_OP = 'INSERT' THEN");
+    const insertBranch = guard.slice(from, guard.indexOf("END IF;", from));
+    expect(insertBranch).toContain("RAISE EXCEPTION 'profiles are created by sign-up only'");
+    expect(insertBranch).not.toContain("NEW.");
   });
 
-  it("only adds columns with defaults, so existing unlocks are kept", () => {
-    expect(m11).toContain("ADD COLUMN IF NOT EXISTS charged_bonus integer NOT NULL DEFAULT 0");
-    expect(m11).toContain("ADD COLUMN IF NOT EXISTS charged_paid integer NOT NULL DEFAULT 0");
-    expect(m11).toContain("ADD COLUMN IF NOT EXISTS unlock_method text");
-    expect(m11).not.toMatch(/\bDROP\s+(TABLE|COLUMN)\b/i);
-    expect(m11).not.toMatch(/\bDELETE\s+FROM\b|\bTRUNCATE\s+public\./i);
+  it("0012 checks VIP expiry with the wall clock after the lock", () => {
+    const fn = m12.slice(m12.indexOf("FUNCTION public.unlock_episode"));
+    expect(fn.indexOf("FOR UPDATE;")).toBeLessThan(fn.indexOf("checked_at := clock_timestamp();"));
+    expect(fn).toContain("prof.vip_until > checked_at");
+    expect(fn).not.toContain("> now()");
   });
 
-  it("does not touch unlock inserts in part 1, so it is safe before the code is deployed", () => {
-    expect(m11).not.toMatch(/ON public\.user_unlocked_episodes FROM/);
-    expect(m11).not.toContain("Users create own unlocks");
-  });
-
-  it("part 2 removes browser writes to unlocks but keeps reading own unlocks", () => {
+  it("0012 refuses for lack of coins only for a positive coin price", () => {
     expect(m12).toContain(
+      "IF method = 'coins' AND cost > 0 AND prof.bonus_coins + prof.paid_coins < cost THEN",
+    );
+  });
+
+  it("keeps unlock_episode and claim_daily_checkin server-only with a fixed search path", () => {
+    for (const fn of ["unlock_episode(uuid, uuid)", "claim_daily_checkin(uuid, integer[])"]) {
+      expect(m12).toContain(
+        `REVOKE ALL ON FUNCTION public.${fn} FROM PUBLIC, anon, authenticated;`,
+      );
+      expect(m12).toContain(`GRANT EXECUTE ON FUNCTION public.${fn} TO service_role;`);
+    }
+    expect(m12.match(/SECURITY DEFINER\nSET search_path = ''/g)).toHaveLength(2);
+  });
+
+  it("only adds columns and tables, so existing rows are kept", () => {
+    for (const sql of [m11, m12]) {
+      expect(sql).not.toMatch(/\bDROP\s+(TABLE|COLUMN)\b/i);
+      expect(sql).not.toMatch(/\bDELETE\s+FROM\b|\bTRUNCATE\s+public\./i);
+    }
+    expect(m12).toContain("CREATE TABLE IF NOT EXISTS public.reward_events");
+  });
+
+  it("the unlock lock is a post-deploy step, not a migration any runner can apply", () => {
+    expect(lock).toContain(
       "REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.user_unlocked_episodes FROM anon, authenticated;",
     );
-    expect(m12).toContain('DROP POLICY IF EXISTS "Users create own unlocks"');
-    expect(m12).not.toContain("SELECT");
-    expect(m12).not.toContain("Users read own unlocks");
+    expect(lock).toContain('DROP POLICY IF EXISTS "Users create own unlocks"');
+    expect(lock).not.toContain("Users read own unlocks");
+    expect(readdirSync("drizzle/migrations").filter((f) => f.includes("unlock_inserts"))).toEqual(
+      [],
+    );
+    expect(journal.entries.map((e) => e.tag).join(" ")).not.toContain("unlock_inserts");
+    for (const migration of readMigrationFiles({ migrationsFolder: "drizzle/migrations" })) {
+      const sql = migration.sql.join("");
+      expect(sql).not.toMatch(/ON public\.user_unlocked_episodes FROM/);
+      expect(sql).not.toMatch(/DROP POLICY[^;]*"Users create own unlocks"/);
+    }
   });
 
-  it("appends both migrations after 0008 in order", () => {
-    const tags = journal.entries.map((e) => e.tag);
-    expect(tags.slice(-3)).toEqual([
-      "0008_generation_provider_check_throttle",
-      "0011_server_only_balances_and_unlocks",
-      "0012_server_only_unlock_inserts",
-    ]);
+  it("every journal entry resolves to a file, in idx and time order", () => {
+    expect(readMigrationFiles({ migrationsFolder: "drizzle/migrations" })).toHaveLength(
+      journal.entries.length,
+    );
+    const idx = journal.entries.map((e) => e.idx);
     const whens = journal.entries.map((e) => e.when);
+    expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    expect(new Set(idx).size).toBe(idx.length);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
   });
 
-  it("chains the snapshots 0008 → 0011 → 0012", () => {
-    const snap = (n: string) =>
-      JSON.parse(readFileSync(`drizzle/migrations/meta/${n}_snapshot.json`, "utf8")) as {
-        id: string;
-        prevId: string;
-      };
-    expect(snap("0011").prevId).toBe(snap("0008").id);
+  it("leaves idx 9 and 10 to PR #1 and sorts after it in the combined history", () => {
+    expect(journal.entries.slice(-3).map((e) => [e.idx, e.tag])).toEqual([
+      [8, "0008_generation_provider_check_throttle"],
+      [11, "0011_server_only_balances_and_unlocks"],
+      [12, "0012_unlock_fixes_and_atomic_rewards"],
+    ]);
+    expect(journal.entries.some((e) => e.idx === 9 || e.idx === 10)).toBe(false);
+    for (const e of journal.entries.slice(-2)) expect(e.when).toBeGreaterThan(PR1_0010_WHEN);
+  });
+
+  it("chains the snapshots after PR #1: 0010 → 0011 → 0012, with no fork at 0008", () => {
+    expect(snap("0011").prevId).toBe(PR1_0010_SNAPSHOT_ID);
     expect(snap("0012").prevId).toBe(snap("0011").id);
+    const prevIds = readdirSync("drizzle/migrations/meta")
+      .filter((f) => f.endsWith("_snapshot.json"))
+      .map((f) => snap(f.replace("_snapshot.json", "")).prevId);
+    expect(new Set(prevIds).size).toBe(prevIds.length);
   });
 });
