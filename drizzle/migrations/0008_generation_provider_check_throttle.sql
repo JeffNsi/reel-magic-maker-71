@@ -1,0 +1,1 @@
+ALTER TABLE public.generations ADD COLUMN IF NOT EXISTS provider_checked_at timestamptz NULL;
