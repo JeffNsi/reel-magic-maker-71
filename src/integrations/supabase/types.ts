@@ -1399,20 +1399,29 @@ export type Database = {
       }
       user_unlocked_episodes: {
         Row: {
+          charged_bonus: number
+          charged_paid: number
           episode_id: string
           id: string
+          unlock_method: string | null
           unlocked_at: string
           user_id: string
         }
         Insert: {
+          charged_bonus?: number
+          charged_paid?: number
           episode_id: string
           id?: string
+          unlock_method?: string | null
           unlocked_at?: string
           user_id: string
         }
         Update: {
+          charged_bonus?: number
+          charged_paid?: number
           episode_id?: string
           id?: string
+          unlock_method?: string | null
           unlocked_at?: string
           user_id?: string
         }
@@ -1474,6 +1483,7 @@ export type Database = {
           paid_spent: number
         }[]
       }
+      unlock_episode: { Args: { _episode: string; _user: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"

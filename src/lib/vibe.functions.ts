@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { unlockWith } from "@/lib/episode-unlock";
 
 const REWARDS = [20, 60, 80, 100, 100, 100, 100];
 const STREAK_RESET_HOURS = 48;
@@ -28,12 +29,6 @@ function isYesterday(dateString: string | null) {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   return d.toISOString().slice(0, 10) === yesterday.toISOString().slice(0, 10);
-}
-
-function isVipActive(profile: Pick<Profile, "is_vip" | "vip_until">) {
-  if (!profile.is_vip) return false;
-  if (!profile.vip_until) return true;
-  return new Date(profile.vip_until) > new Date();
 }
 
 async function fetchProfile(supabase: { from: (table: string) => any }) {
@@ -105,64 +100,15 @@ export const unlockEpisode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => unlockInput.parse(data))
   .handler(async ({ data, context }): Promise<Balance & { unlocked: boolean }> => {
-    const { data: existing } = await context.supabase
-      .from("user_unlocked_episodes")
-      .select("id")
-      .eq("episode_id", data.episode_id)
-      .maybeSingle();
-    if (existing) return { unlocked: true, paid_coins: 0, bonus_coins: 0 };
-
+    // Free access, VIP entitlement or the coin charge is decided and recorded
+    // in one database transaction (public.unlock_episode, service role only),
+    // so a repeated request can never charge twice.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: episode, error: epError } = (await supabaseAdmin
-      .from("episodes")
-      .select("id, is_free, coin_cost, dramas(is_vip_only)")
-      .eq("id", data.episode_id)
-      .single()) as any;
-    if (epError || !episode) throw new Error("Episode not found.");
-
-    const profile = await fetchProfile(context.supabase);
-
-    const dramaVipOnly = Array.isArray(episode.dramas)
-      ? (episode.dramas[0]?.is_vip_only ?? false)
-      : (episode.dramas?.is_vip_only ?? false);
-
-    if (episode.is_free || isVipActive(profile)) {
-      await context.supabase
-        .from("user_unlocked_episodes")
-        .insert({ episode_id: data.episode_id, user_id: context.userId });
-      return { unlocked: true, paid_coins: profile.paid_coins, bonus_coins: profile.bonus_coins };
-    }
-
-    if (episode.is_vip_only || dramaVipOnly) {
-      throw new Error("This episode is VIP-only. Subscribe to VIP to watch.");
-    }
-
-    const total = profile.paid_coins + profile.bonus_coins;
-    if (total < episode.coin_cost) {
-      throw new Error("Not enough coins. Earn more or buy a coin pack.");
-    }
-
-    let newBonus = profile.bonus_coins;
-    let newPaid = profile.paid_coins;
-    const cost = episode.coin_cost;
-    if (newBonus >= cost) {
-      newBonus -= cost;
-    } else {
-      newPaid -= cost - newBonus;
-      newBonus = 0;
-    }
-
-    const [{ error: updateError }, { error: insertError }] = await Promise.all([
-      (await adminProfiles())
-        .update({ paid_coins: newPaid, bonus_coins: newBonus })
-        .eq("id", profile.id),
-      context.supabase
-        .from("user_unlocked_episodes")
-        .insert({ episode_id: data.episode_id, user_id: context.userId }),
-    ]);
-
-    if (updateError || insertError) throw new Error("Could not unlock episode.");
-    return { unlocked: true, paid_coins: newPaid, bonus_coins: newBonus };
+    return unlockWith(
+      (user, episode) => supabaseAdmin.rpc("unlock_episode", { _user: user, _episode: episode }),
+      context.userId,
+      data.episode_id,
+    );
   });
 
 // Purchases go through the payment providers in shop.functions.ts — coins and

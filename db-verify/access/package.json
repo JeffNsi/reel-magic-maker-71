@@ -1,0 +1,12 @@
+{
+  "name": "db-verify-access",
+  "private": true,
+  "type": "module",
+  "description": "Executes migrations 0011 and 0012 in a real Postgres (PGlite) and checks who may change coin balances, VIP status and episode unlocks. Test-only; not part of the app build.",
+  "scripts": {
+    "test": "node --test --test-reporter=spec"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.16"
+  }
+}
