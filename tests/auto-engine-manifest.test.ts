@@ -11,18 +11,21 @@ import {
   MAX_SEGMENTS,
   type ManifestGenerationInput,
   type ManifestSceneInput,
+  type StorageObjectRevision,
 } from "@/lib/auto-engine/manifest";
 import {
   FilmNotFoundError,
+  FilmSourceInvalidError,
   loadFilmManifest,
   type ManifestReader,
 } from "@/lib/auto-engine/manifest.server";
+import { isExportFile, isSafeStoragePath, isTeaserFile } from "@/lib/auto-engine/storage-paths";
 
 /**
  * Auto Engine step 1 — the manifest is pure, credit-free and mirrors the film
- * page: a scene's clip is its generation_id, and only a completed, stored clip
- * counts. Fixtures use the real ids of the two finished films; which of the
- * duplicate takes is linked for QA Homecoming scenes 1–2 is a fixture choice.
+ * page: a scene's clip is its generation_id, and only a completed, really
+ * stored clip counts. Fixtures use the real ids of the two finished films and
+ * the takes QA Homecoming actually links (verified against the live database).
  */
 
 const QA = "d893842c-16fb-4416-ad8e-8714ef269dbb";
@@ -42,6 +45,17 @@ const QA_TITLES = [
   "04 · Consequence / Följd",
   "05 · Ending / Slut",
 ];
+const ROW_UPDATED = "2026-10-17T10:00:00.500+00:00";
+
+function file(version: string, extra: Partial<StorageObjectRevision> = {}): StorageObjectRevision {
+  return {
+    version,
+    etag: `"etag-${version}"`,
+    size: 2_500_000,
+    updated_at: "2026-10-17T10:00:00.100+00:00",
+    ...extra,
+  };
+}
 
 function gen(
   id: string,
@@ -55,7 +69,20 @@ function gen(
     video_url: `${id}.mp4`,
     voiceover_url: null,
     provider: "lovable",
+    spoken_text: null,
+    updated_at: ROW_UPDATED,
+    clip_object: file(`clip-${id}`),
+    voice_object: null,
     ...extra,
+  };
+}
+
+/** A voice-over recorded the way narrateGeneration records it: file first, then the row. */
+function voiced(text: string | null, version = "voice-v1"): Partial<ManifestGenerationInput> {
+  return {
+    voiceover_url: "voice.mp3",
+    spoken_text: text,
+    voice_object: file(version, { updated_at: "2026-10-17T10:00:00.430+00:00" }),
   };
 }
 
@@ -109,8 +136,16 @@ function vanishingTide() {
   };
 }
 
+type Input = ReturnType<typeof qaHomecoming>;
+const withGen = (input: Input, id: string, extra: Partial<ManifestGenerationInput>): Input => ({
+  ...input,
+  generations: input.generations.map((g) => (g.id === id ? { ...g, ...extra } : g)),
+});
+
 const errors = (m: ReturnType<typeof buildFilmManifest>) =>
   m.issues.filter((i) => i.severity === "error").map((i) => `${i.code}@${i.scene_number}`);
+const codes = (m: ReturnType<typeof buildFilmManifest>) =>
+  m.issues.map((i) => `${i.code}@${i.scene_number}`);
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object") {
@@ -125,6 +160,7 @@ describe("buildFilmManifest — the two finished films", () => {
     const m = buildFilmManifest(qaHomecoming());
     expect(m.ready).toBe(true);
     expect(errors(m)).toEqual([]);
+    expect(m.manifest_version).toBe(2);
     expect(m.subject).toEqual({ type: "film", story_id: QA });
     expect(m.segments.map((s) => s.scene_number)).toEqual([1, 2, 3, 4, 5]);
     expect(m.segments.map((s) => s.clip_path)).toEqual([
@@ -142,27 +178,30 @@ describe("buildFilmManifest — the two finished films", () => {
       segments: 5,
       expected_duration_ms: 5 * DEFAULT_CLIP_MS,
       with_voice: 0,
-      with_narration: 0,
+      with_subtitles: 0,
     });
     expect(m.segments.map((s) => s.expected_start_ms)).toEqual([0, 5000, 10000, 15000, 20000]);
-    expect(m.clip_bucket).toBe("videos");
-    expect(m.aspect_ratio).toBe("9:16");
+    expect(m.segments[0]?.clip_revision).toContain(`clip-${QA_TAKES.s1}`);
   });
 
   it("QA Homecoming: no narration is one warning, never a blocker", () => {
     const m = buildFilmManifest(qaHomecoming());
     expect(m.issues.map((i) => [i.code, i.severity])).toEqual([["no_narration", "warning"]]);
-    expect(m.segments.every((s) => s.narration === null)).toBe(true);
+    expect(m.segments.every((s) => s.subtitle_text === null)).toBe(true);
   });
 
-  it("The Vanishing Tide: four clips with narration for subtitles", () => {
+  it("The Vanishing Tide: four clips, silent, subtitled from the scene text", () => {
     const m = buildFilmManifest(vanishingTide());
     expect(m.ready).toBe(true);
     expect(m.issues).toEqual([]);
     expect(m.totals.segments).toBe(4);
-    expect(m.totals.with_narration).toBe(4);
+    expect(m.totals.with_subtitles).toBe(4);
     expect(m.totals.expected_duration_ms).toBe(20_000);
-    expect(m.segments[3]?.narration).toBe("By nightfall, John Darwin was officially dead.");
+    expect(m.segments[3]).toMatchObject({
+      subtitle_text: "By nightfall, John Darwin was officially dead.",
+      subtitle_source: "scene",
+      voice_path: null,
+    });
   });
 });
 
@@ -185,14 +224,9 @@ describe("buildFilmManifest — order, gaps and broken clips", () => {
     expect(m.segments.map((s) => s.scene_number)).toEqual([1, 2, 4, 5]);
   });
 
-  it.each([
-    ["processing", "clip_not_ready"],
-    ["queued", "clip_not_ready"],
-    ["failed", "clip_not_ready"],
-  ])("a %s clip is not used (%s)", (status, code) => {
-    const input = qaHomecoming();
-    const generations = input.generations.map((g) => (g.id === QA_TAKES.s4 ? { ...g, status } : g));
-    expect(errors(buildFilmManifest({ ...input, generations }))).toEqual([`${code}@4`]);
+  it.each(["processing", "queued", "failed"])("a %s clip is not used", (status) => {
+    const m = buildFilmManifest(withGen(qaHomecoming(), QA_TAKES.s4, { status }));
+    expect(errors(m)).toEqual(["clip_not_ready@4"]);
   });
 
   it("a linked generation that no longer exists is reported", () => {
@@ -202,21 +236,19 @@ describe("buildFilmManifest — order, gaps and broken clips", () => {
   });
 
   it("a clip from another film is never spliced in", () => {
-    const input = qaHomecoming();
-    const generations = input.generations.map((g) =>
-      g.id === QA_TAKES.s2 ? { ...g, story_id: TIDE } : g,
-    );
-    expect(errors(buildFilmManifest({ ...input, generations }))).toEqual([
-      "generation_other_film@2",
-    ]);
+    const m = buildFilmManifest(withGen(qaHomecoming(), QA_TAKES.s2, { story_id: TIDE }));
+    expect(errors(m)).toEqual(["generation_other_film@2"]);
   });
 
-  it("a completed generation without a stored clip is reported", () => {
-    const input = qaHomecoming();
-    const generations = input.generations.map((g) =>
-      g.id === QA_TAKES.s1 ? { ...g, video_url: null } : g,
-    );
-    expect(errors(buildFilmManifest({ ...input, generations }))).toEqual(["clip_path_missing@1"]);
+  it("a completed generation without a stored path is reported", () => {
+    const m = buildFilmManifest(withGen(qaHomecoming(), QA_TAKES.s1, { video_url: null }));
+    expect(errors(m)).toEqual(["clip_path_missing@1"]);
+  });
+
+  it("a path whose file is gone from storage is reported, not assembled", () => {
+    const m = buildFilmManifest(withGen(qaHomecoming(), QA_TAKES.s3, { clip_object: null }));
+    expect(m.ready).toBe(false);
+    expect(errors(m)).toEqual(["clip_file_missing@3"]);
   });
 
   it.each([
@@ -227,30 +259,9 @@ describe("buildFilmManifest — order, gaps and broken clips", () => {
     "folder\\clip.mp4",
     " ",
   ])("refuses a clip path the worker must not fetch: %j", (video_url) => {
-    const input = qaHomecoming();
-    const generations = input.generations.map((g) =>
-      g.id === QA_TAKES.s1 ? { ...g, video_url } : g,
-    );
-    const m = buildFilmManifest({ ...input, generations });
+    const m = buildFilmManifest(withGen(qaHomecoming(), QA_TAKES.s1, { video_url }));
     expect(m.ready).toBe(false);
     expect(m.segments.some((s) => s.scene_number === 1)).toBe(false);
-  });
-
-  it("keeps a valid voice-over and skips an unsafe one with a warning", () => {
-    const input = qaHomecoming();
-    const generations = input.generations.map((g) =>
-      g.id === QA_TAKES.s1
-        ? { ...g, voiceover_url: `${g.id}-voice.mp3` }
-        : g.id === QA_TAKES.s2
-          ? { ...g, voiceover_url: "https://cdn.example.com/v.mp3" }
-          : g,
-    );
-    const m = buildFilmManifest({ ...input, generations });
-    expect(m.ready).toBe(true);
-    expect(m.segments[0]?.voice_path).toBe(`${QA_TAKES.s1}-voice.mp3`);
-    expect(m.segments[1]?.voice_path).toBeNull();
-    expect(m.totals.with_voice).toBe(1);
-    expect(m.issues.find((i) => i.code === "voice_path_invalid")?.scene_number).toBe(2);
   });
 
   it("two scenes with the same number block assembly", () => {
@@ -270,16 +281,76 @@ describe("buildFilmManifest — order, gaps and broken clips", () => {
     const scenes = input.scenes.map((s) => (s.scene_number === 2 ? { ...s, narration: "   " } : s));
     const m = buildFilmManifest({ ...input, scenes });
     expect(m.ready).toBe(true);
-    expect(m.issues.map((i) => `${i.code}@${i.scene_number}`)).toEqual(["narration_missing@2"]);
+    expect(codes(m)).toEqual(["narration_missing@2"]);
   });
 
   it("every issue message is bilingual", () => {
-    const input = qaHomecoming();
+    const input = withGen(qaHomecoming(), QA_TAKES.s2, { clip_object: null });
     const scenes = input.scenes.map((s) =>
       s.scene_number === 3 ? { ...s, generation_id: null } : s,
     );
     for (const i of buildFilmManifest({ ...input, scenes }).issues)
       expect(i.message).toContain(" / ");
+  });
+});
+
+describe("F6 subtitles follow what is actually spoken", () => {
+  it("uses the recorded voice-over text, not the (edited) scene text", () => {
+    const input = vanishingTide();
+    const id = input.generations[0]?.id ?? "";
+    const m = buildFilmManifest(withGen(input, id, voiced("What she really said.")));
+    expect(m.segments[0]).toMatchObject({
+      voice_path: "voice.mp3",
+      subtitle_text: "What she really said.",
+      subtitle_source: "voice",
+    });
+    expect(m.segments[0]?.subtitle_text).not.toBe(input.scenes[0]?.narration);
+    expect(m.ready).toBe(true);
+  });
+
+  it("a voice-over whose text was not saved gets no subtitle rather than a guessed one", () => {
+    const input = vanishingTide();
+    const id = input.generations[0]?.id ?? "";
+    const m = buildFilmManifest(withGen(input, id, voiced(null)));
+    expect(m.segments[0]).toMatchObject({ voice_path: "voice.mp3", subtitle_text: null });
+    expect(codes(m)).toEqual(["voice_text_missing@1"]);
+    expect(m.ready).toBe(true);
+  });
+
+  it("audio newer than its saved text blocks assembly (recording in progress or half-saved)", () => {
+    const input = vanishingTide();
+    const id = input.generations[0]?.id ?? "";
+    const m = buildFilmManifest(
+      withGen(input, id, {
+        ...voiced("Old words."),
+        updated_at: "2026-10-17T10:00:00.000+00:00",
+        voice_object: file("voice-v2", { updated_at: "2026-10-17T10:00:01.000+00:00" }),
+      }),
+    );
+    expect(m.ready).toBe(false);
+    expect(errors(m)).toEqual(["voice_out_of_sync@1"]);
+    expect(m.segments[0]?.subtitle_text).toBeNull();
+  });
+
+  it("an unsafe or missing voice file is skipped with a warning; the scene text still subtitles", () => {
+    const input = vanishingTide();
+    const [a, b] = input.generations.map((g) => g.id);
+    const m = buildFilmManifest(
+      withGen(
+        withGen(input, a ?? "", { voiceover_url: "https://cdn.example.com/v.mp3" }),
+        b ?? "",
+        {
+          voiceover_url: "voice-b.mp3",
+          voice_object: null,
+        },
+      ),
+    );
+    expect(m.ready).toBe(true);
+    expect(codes(m)).toEqual(["voice_path_invalid@1", "voice_file_missing@2"]);
+    expect(m.segments.slice(0, 2).map((s) => [s.voice_path, s.subtitle_source])).toEqual([
+      [null, "scene"],
+      [null, "scene"],
+    ]);
   });
 });
 
@@ -291,7 +362,6 @@ describe("buildFilmManifest — purity, privacy and spoilers", () => {
 
   it("carries no Scene Truth, owner, billing or provider job data", () => {
     const input = qaHomecoming();
-    // Rows read with extra columns must not leak through.
     const leaky = {
       story: { ...input.story, user_id: "owner-1", blueprint: "the twist is…" },
       scenes: input.scenes.map((s) => ({
@@ -328,7 +398,7 @@ describe("buildFilmManifest — purity, privacy and spoilers", () => {
   });
 });
 
-describe("manifestHash", () => {
+describe("F7 manifestHash covers every source file's revision", () => {
   it("is a 64-character hex SHA-256 and stable for the same cut", async () => {
     const a = await manifestHash(buildFilmManifest(qaHomecoming()));
     const input = qaHomecoming();
@@ -343,14 +413,46 @@ describe("manifestHash", () => {
     expect(b).toBe(a);
   });
 
-  it("changes when a scene uses another take, not when the film is renamed", async () => {
+  it("a re-recorded voice-over with the same text and path is a new cut", async () => {
+    const input = vanishingTide();
+    const id = input.generations[0]?.id ?? "";
+    const first = await manifestHash(buildFilmManifest(withGen(input, id, voiced("Same words."))));
+    const again = await manifestHash(buildFilmManifest(withGen(input, id, voiced("Same words."))));
+    const rerecorded = await manifestHash(
+      buildFilmManifest(withGen(input, id, voiced("Same words.", "voice-v2"))),
+    );
+    expect(again).toBe(first);
+    expect(rerecorded).not.toBe(first);
+  });
+
+  it("a re-uploaded clip at the same path is a new cut", async () => {
     const base = await manifestHash(buildFilmManifest(qaHomecoming()));
-    const renamed = qaHomecoming();
-    expect(
-      await manifestHash(
-        buildFilmManifest({ ...renamed, story: { ...renamed.story, title: "New" } }),
+    const reup = await manifestHash(
+      buildFilmManifest(
+        withGen(qaHomecoming(), QA_TAKES.s4, {
+          clip_object: file("clip-reuploaded"),
+        }),
       ),
-    ).toBe(base);
+    );
+    expect(reup).not.toBe(base);
+  });
+
+  it("changed subtitle text is a new cut; renaming the film is not", async () => {
+    const base = await manifestHash(buildFilmManifest(vanishingTide()));
+    const tide = vanishingTide();
+    const renamed = await manifestHash(
+      buildFilmManifest({ ...tide, story: { ...tide.story, title: "New name" } }),
+    );
+    const scenes = tide.scenes.map((s) =>
+      s.scene_number === 1 ? { ...s, narration: "A new line." } : s,
+    );
+    const retext = await manifestHash(buildFilmManifest({ ...tide, scenes }));
+    expect(renamed).toBe(base);
+    expect(retext).not.toBe(base);
+  });
+
+  it("a scene relinked to another take is a new cut", async () => {
+    const base = await manifestHash(buildFilmManifest(qaHomecoming()));
     const retake = qaHomecoming();
     const scenes = retake.scenes.map((s) =>
       s.scene_number === 1 ? { ...s, generation_id: QA_TAKES.s1_unused } : s,
@@ -392,11 +494,12 @@ describe("combineManifests — episodes of several films", () => {
 
   it("one unfinished scene keeps the episode from assembling and says where", () => {
     const tide = vanishingTide();
-    const generations = tide.generations.map((g, i) =>
-      i === 2 ? { ...g, status: "processing" } : g,
-    );
+    const id = tide.generations[2]?.id ?? "";
     const m = combineManifests(
-      [buildFilmManifest(qaHomecoming()), buildFilmManifest({ ...tide, generations })],
+      [
+        buildFilmManifest(qaHomecoming()),
+        buildFilmManifest(withGen(tide, id, { status: "processing" })),
+      ],
       episode,
     );
     expect(m.ready).toBe(false);
@@ -455,39 +558,91 @@ describe("combineManifests — episodes of several films", () => {
   });
 });
 
-describe("loadFilmManifest — read-only loader over an injected reader", () => {
-  function fakeReader(data = qaHomecoming()) {
+describe("F5 loadFilmManifest — one consistent read", () => {
+  function source(data = qaHomecoming()) {
+    return { story: data.story, scenes: data.scenes, generations: data.generations };
+  }
+  function fakeReader(payload: unknown) {
     const calls: string[] = [];
     const reader: ManifestReader = {
-      async story(id) {
-        calls.push(`story:${id}`);
-        return id === data.story.id ? data.story : null;
-      },
-      async scenes(id) {
-        calls.push(`scenes:${id}`);
-        return id === data.story.id ? data.scenes : [];
-      },
-      async generations(ids) {
-        calls.push(`generations:${ids.length}`);
-        return data.generations.filter((g) => ids.includes(g.id));
+      async filmSource(id) {
+        calls.push(id);
+        return payload;
       },
     };
     return { reader, calls };
   }
 
-  it("asks only for the linked clips and builds the same manifest", async () => {
-    const { reader, calls } = fakeReader();
+  it("reads the film exactly once and builds the same manifest", async () => {
+    const { reader, calls } = fakeReader(source());
     const m = await loadFilmManifest(QA, reader);
     expect(m).toEqual(buildFilmManifest(qaHomecoming()));
-    expect(calls).toEqual([`story:${QA}`, `scenes:${QA}`, "generations:5"]);
+    expect(calls).toEqual([QA]);
   });
 
-  it("an unknown film is a clear not-found, with no further reads", async () => {
-    const { reader, calls } = fakeReader();
+  it("a take relinked after the read can not mix into the manifest: one snapshot, one answer", async () => {
+    // The scene links and the clips arrive together; there is no second read
+    // that could see a newer link than the clips it was checked against.
+    const relinked = qaHomecoming();
+    relinked.scenes[0] = { ...relinked.scenes[0]!, generation_id: QA_TAKES.s1_unused };
+    const { reader } = fakeReader(source(relinked));
+    const m = await loadFilmManifest(QA, reader);
+    expect(m.segments[0]?.generation_id).toBe(QA_TAKES.s1_unused);
+    expect(m.segments[0]?.clip_path).toBe(`${QA_TAKES.s1_unused}.mp4`);
+  });
+
+  it("an unknown film is a clear not-found", async () => {
+    const { reader } = fakeReader(null);
     await expect(
       loadFilmManifest("00000000-0000-4000-8000-000000000000", reader),
     ).rejects.toBeInstanceOf(FilmNotFoundError);
-    expect(calls).toHaveLength(1);
+  });
+
+  it.each([
+    [
+      "a scene number that is not a number",
+      { scenes: [{ ...qaHomecoming().scenes[0], scene_number: "1" }] },
+    ],
+    [
+      "an unexpected extra field",
+      { generations: [{ ...qaHomecoming().generations[0], user_id: "x" }] },
+    ],
+    [
+      "a missing revision field",
+      { generations: [{ ...qaHomecoming().generations[0], clip_object: { version: "v" } }] },
+    ],
+    ["another film's data", { story: { id: TIDE, title: "x" } }],
+  ])("refuses a malformed source: %s", async (_label, patch) => {
+    const { reader } = fakeReader({ ...source(), ...patch });
+    await expect(loadFilmManifest(QA, reader)).rejects.toBeInstanceOf(FilmSourceInvalidError);
+  });
+});
+
+describe("F1 storage paths — TypeScript and SQL agree", () => {
+  const corpus = JSON.parse(
+    readFileSync(new URL("./fixtures/auto-engine-paths.json", import.meta.url), "utf8"),
+  ) as { cases: { path: string; root: string; ok: boolean }[] };
+
+  it.each(corpus.cases.map((c) => [c.root, c.path, c.ok] as const))(
+    "%s %j → %s",
+    (root, path, ok) => {
+      expect(isSafeStoragePath(path, root)).toBe(ok);
+    },
+  );
+
+  it("an export file must sit inside its own export folder", () => {
+    const prefix = "exports/film-1/v1/";
+    expect(isExportFile("exports/film-1/v1/film_9x16.mp4", prefix)).toBe(true);
+    expect(isExportFile(null, prefix)).toBe(true);
+    expect(isExportFile("exports/film-2/v1/film_9x16.mp4", prefix)).toBe(false);
+    expect(isExportFile("exports/film-1/v1/../../v9/x.mp4", prefix)).toBe(false);
+    expect(isExportFile(prefix, prefix)).toBe(false);
+  });
+
+  it("a teaser file must sit inside its export's teaser folder", () => {
+    expect(isTeaserFile("teasers/exp-1/hook-r1.mp4", "exp-1")).toBe(true);
+    expect(isTeaserFile("teasers/exp-2/hook-r1.mp4", "exp-1")).toBe(false);
+    expect(isTeaserFile("teasers/exp-1/../exp-2/x.mp4", "exp-1")).toBe(false);
   });
 });
 
@@ -506,11 +661,18 @@ describe("Auto Engine source guards", () => {
     expect(fn).not.toMatch(/client\.server/);
   });
 
+  it("the loader reads through the single snapshot function only", () => {
+    const loader = read("src/lib/auto-engine/manifest.server.ts");
+    expect(loader).toContain('rpc("auto_engine_film_source"');
+    expect(loader).not.toMatch(/\.from\(/);
+  });
+
   it("the manifest code never calls a provider, spends credits or writes", () => {
     for (const path of [
       "src/lib/auto-engine/manifest.ts",
       "src/lib/auto-engine/manifest.server.ts",
       "src/lib/auto-engine/manifest.functions.ts",
+      "src/lib/auto-engine/storage-paths.ts",
     ]) {
       const src = read(path);
       expect(src).not.toMatch(

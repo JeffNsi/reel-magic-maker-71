@@ -1,0 +1,12 @@
+{
+  "name": "auto-engine-db-verify",
+  "private": true,
+  "type": "module",
+  "description": "Executes the Auto Engine migrations (0009, 0010) in a real Postgres (PGlite) and checks every security and data-integrity rule. Test-only; not part of the app build.",
+  "scripts": {
+    "test": "node --test --test-reporter=spec"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.16"
+  }
+}
