@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const REWARDS = [20, 60, 80, 100, 100, 100, 100];
-const STREAK_RESET_HOURS = 48;
+import { unlockWith } from "@/lib/episode-unlock";
+import { claimCheckinWith, REWARD_MESSAGES } from "@/lib/rewards";
 
 export type Profile = {
   id: string;
@@ -18,36 +17,14 @@ export type Profile = {
 
 export type Balance = { paid_coins: number; bonus_coins: number };
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function isYesterday(dateString: string | null) {
-  if (!dateString) return false;
-  const d = new Date(dateString);
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return d.toISOString().slice(0, 10) === yesterday.toISOString().slice(0, 10);
-}
-
-function isVipActive(profile: Pick<Profile, "is_vip" | "vip_until">) {
-  if (!profile.is_vip) return false;
-  if (!profile.vip_until) return true;
-  return new Date(profile.vip_until) > new Date();
-}
-
 async function fetchProfile(supabase: { from: (table: string) => any }) {
   const { data, error } = await supabase.from("profiles").select("*").single();
   if (error || !data) throw new Error("Could not load your profile.");
   return data as Profile;
 }
 
-// Coin balances and VIP flags are locked from client-side updates; only the
-// server (verified caller + payment/reward rules) may change them.
-async function adminProfiles() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin.from("profiles");
-}
+// Coin balances and VIP flags can only be changed by the server: browser
+// roles have no write access to profiles (migrations 0011 and 0012).
 
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -56,47 +33,26 @@ export const getProfile = createServerFn({ method: "GET" })
 export const claimDailyCheckin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Profile & { reward: number }> => {
-    const profile = await fetchProfile(context.supabase);
-    const todayStr = today();
-
-    if (profile.last_checkin_date === todayStr) {
-      throw new Error("You already checked in today.");
-    }
-
-    const newStreak = isYesterday(profile.last_checkin_date)
-      ? Math.min(7, profile.checkin_streak + 1)
-      : 1;
-    const reward = REWARDS[newStreak - 1] ?? 20;
-
-    const { data, error } = await (
-      await adminProfiles()
-    )
-      .update({
-        last_checkin_date: todayStr,
-        checkin_streak: newStreak,
-        bonus_coins: profile.bonus_coins + reward,
-      })
-      .eq("id", profile.id)
-      .select()
-      .single();
-
-    if (error || !data) throw new Error("Could not record check-in.");
-    return { ...(data as Profile), reward };
+    // The streak, the once-per-day rule and the atomic credit are decided in
+    // one database transaction (public.claim_daily_checkin, service role only).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return claimCheckinWith(
+      (user, rewards) =>
+        supabaseAdmin.rpc("claim_daily_checkin", { _user: user, _rewards: rewards }),
+      context.userId,
+    );
   });
 
+/**
+ * Ad rewards are paused: no ad provider verifies a viewing server-side yet, so
+ * this endpoint never credits coins. A future reward must come from a provider
+ * callback that is verified on the server and recorded once per event id in
+ * reward_events — never from a request the browser can repeat.
+ */
 export const watchAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Balance> => {
-    const profile = await fetchProfile(context.supabase);
-    const { data, error } = await (
-      await adminProfiles()
-    )
-      .update({ bonus_coins: profile.bonus_coins + 15 })
-      .eq("id", profile.id)
-      .select("paid_coins, bonus_coins")
-      .single();
-    if (error || !data) throw new Error("Could not add coins.");
-    return data as Balance;
+  .handler(async (): Promise<Balance> => {
+    throw new Error(REWARD_MESSAGES.ads_paused);
   });
 
 const unlockInput = z.object({ episode_id: z.string().uuid() });
@@ -105,64 +61,15 @@ export const unlockEpisode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => unlockInput.parse(data))
   .handler(async ({ data, context }): Promise<Balance & { unlocked: boolean }> => {
-    const { data: existing } = await context.supabase
-      .from("user_unlocked_episodes")
-      .select("id")
-      .eq("episode_id", data.episode_id)
-      .maybeSingle();
-    if (existing) return { unlocked: true, paid_coins: 0, bonus_coins: 0 };
-
+    // Free access, VIP entitlement or the coin charge is decided and recorded
+    // in one database transaction (public.unlock_episode, service role only),
+    // so a repeated request can never charge twice.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: episode, error: epError } = (await supabaseAdmin
-      .from("episodes")
-      .select("id, is_free, coin_cost, dramas(is_vip_only)")
-      .eq("id", data.episode_id)
-      .single()) as any;
-    if (epError || !episode) throw new Error("Episode not found.");
-
-    const profile = await fetchProfile(context.supabase);
-
-    const dramaVipOnly = Array.isArray(episode.dramas)
-      ? (episode.dramas[0]?.is_vip_only ?? false)
-      : (episode.dramas?.is_vip_only ?? false);
-
-    if (episode.is_free || isVipActive(profile)) {
-      await context.supabase
-        .from("user_unlocked_episodes")
-        .insert({ episode_id: data.episode_id, user_id: context.userId });
-      return { unlocked: true, paid_coins: profile.paid_coins, bonus_coins: profile.bonus_coins };
-    }
-
-    if (episode.is_vip_only || dramaVipOnly) {
-      throw new Error("This episode is VIP-only. Subscribe to VIP to watch.");
-    }
-
-    const total = profile.paid_coins + profile.bonus_coins;
-    if (total < episode.coin_cost) {
-      throw new Error("Not enough coins. Earn more or buy a coin pack.");
-    }
-
-    let newBonus = profile.bonus_coins;
-    let newPaid = profile.paid_coins;
-    const cost = episode.coin_cost;
-    if (newBonus >= cost) {
-      newBonus -= cost;
-    } else {
-      newPaid -= cost - newBonus;
-      newBonus = 0;
-    }
-
-    const [{ error: updateError }, { error: insertError }] = await Promise.all([
-      (await adminProfiles())
-        .update({ paid_coins: newPaid, bonus_coins: newBonus })
-        .eq("id", profile.id),
-      context.supabase
-        .from("user_unlocked_episodes")
-        .insert({ episode_id: data.episode_id, user_id: context.userId }),
-    ]);
-
-    if (updateError || insertError) throw new Error("Could not unlock episode.");
-    return { unlocked: true, paid_coins: newPaid, bonus_coins: newBonus };
+    return unlockWith(
+      (user, episode) => supabaseAdmin.rpc("unlock_episode", { _user: user, _episode: episode }),
+      context.userId,
+      data.episode_id,
+    );
   });
 
 // Purchases go through the payment providers in shop.functions.ts — coins and

@@ -1,0 +1,21 @@
+-- POST-DEPLOY STEP — deliberately NOT a migration.
+--
+-- This file lives outside drizzle/migrations and is not in the migration
+-- journal, so no migration runner (drizzle-kit, Lovable or otherwise) can
+-- apply it automatically. It must be applied by hand, and only after:
+--   1. the app code that unlocks through public.unlock_episode() (migration
+--      0011) is published, and
+--   2. a real unlock made after publishing has recorded unlock_method
+--      (proof that the new code is serving).
+-- The previously published code inserted unlock rows with the signed-in
+-- user's own session; applying this earlier would make its coin unlocks fail
+-- after the coins were already taken.
+--
+-- Idempotent. After it is applied live, it is added to drizzle/migrations
+-- under the next free number so fresh databases get it too.
+--
+-- After this, browsers can still read their own unlocks, but every new unlock
+-- goes through unlock_episode(), which checks free access, VIP entitlement or
+-- coin payment in one transaction.
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.user_unlocked_episodes FROM anon, authenticated;
+DROP POLICY IF EXISTS "Users create own unlocks" ON public.user_unlocked_episodes;
