@@ -1,4 +1,5 @@
-import { sceneCredits } from "@/lib/fal-prices";
+import { falScenePriceUsd, sceneCredits } from "@/lib/fal-prices";
+import { useLocale } from "@/hooks/use-locale";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -517,7 +518,7 @@ function SceneCard({
           )}
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <span className="font-semibold text-foreground">{scene.credit_cost} credits</span>
+            <SceneCost scene={scene} />
             {scene.complexity !== null && (
               <span className="text-muted-foreground">Complexity {scene.complexity}/10</span>
             )}
@@ -704,5 +705,22 @@ function CreditDashboard({
         lives in each scene's engine panel. / Körningar hos fal.ai kostar inga appkrediter.
       </p>
     </section>
+  );
+}
+
+function SceneCost({ scene }: { scene: FilmScene }) {
+  const { locale } = useLocale();
+  const sv = locale === "sv";
+  if (scene.provider !== "fal") {
+    return <span className="font-semibold text-foreground">{scene.credit_cost} credits</span>;
+  }
+  const usd = falScenePriceUsd();
+  const charged = scene.charged_credits ?? 0;
+  return (
+    <span className="font-semibold text-foreground">
+      {sv ? "fal.ai-reserv" : "fal.ai fallback"}
+      {usd !== null && ` · ≈ $${usd.toFixed(2)} ${sv ? "hos fal.ai" : "on fal.ai"}`}
+      {` · ${charged} ${sv ? "appcredits debiterade" : "app credits charged"}`}
+    </span>
   );
 }

@@ -74,6 +74,10 @@ export type FilmScene = {
   video_url: string | null;
   voice_url: string | null;
   error_message: string | null;
+  /** Engine that actually rendered the current take ("fal" after a fal fallback). */
+  provider: string | null;
+  /** App credits actually charged for the current take. */
+  charged_credits: number | null;
   /** The authoritative structured version of this scene, read by generation. */
   truth: SceneTruth | null;
   /** What the Generation Recovery Director did after a failed render, if anything. */
@@ -293,7 +297,7 @@ export async function loadFilm(film_id: string, session_id: string): Promise<Fil
     ? ((
         await supabaseAdmin
           .from("generations")
-          .select("id, status, video_url, voiceover_url, error_message")
+          .select("id, status, video_url, voiceover_url, error_message, provider, coins_spent")
           .in("id", generationIds)
       ).data ?? [])
     : [];
@@ -322,6 +326,8 @@ export async function loadFilm(film_id: string, session_id: string): Promise<Fil
             : null,
         voice_url: await signedUrl((generation?.voiceover_url as string | null) ?? null),
         error_message: (generation?.error_message as string | null) ?? null,
+        provider: (generation?.provider as string | null) ?? null,
+        charged_credits: (generation?.coins_spent as number | null) ?? null,
         truth: readSceneTruth(scene.truth),
         recovery: readRecovery(scene.recovery),
       };

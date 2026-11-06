@@ -81,3 +81,12 @@ export function sceneCredits(
     approaching: spent + pressCost > scene.credit_cost,
   };
 }
+
+/** Model used when EZY falls back to fal.ai (Kling 3.0). */
+export const FAL_FALLBACK_MODEL = "fal-ai/kling-video/v3/standard/text-to-video";
+
+/** Pure: fal.ai list price in USD for one fallback scene of `seconds` length. */
+export function falScenePriceUsd(seconds = 5, modelId = FAL_FALLBACK_MODEL): number | null {
+  const rate = FAL_USD_PER_SECOND[modelId];
+  return rate === undefined ? null : Math.round(rate * seconds * 100) / 100;
+}
