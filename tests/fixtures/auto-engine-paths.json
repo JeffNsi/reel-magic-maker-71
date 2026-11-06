@@ -1,0 +1,28 @@
+{
+  "description": "Shared storage-path corpus. The SQL function public.auto_engine_is_safe_path and the TypeScript isSafeStoragePath must give the same answer for every entry.",
+  "cases": [
+    { "path": "exports/d893842c/v1/", "root": "exports", "ok": true },
+    { "path": "exports/d893842c/v1/film_9x16.mp4", "root": "exports", "ok": true },
+    { "path": "exports/a_b-c.d/x", "root": "exports", "ok": true },
+    { "path": "teasers/0f2c/v1.mp4", "root": "teasers", "ok": true },
+    { "path": "exports/", "root": "exports", "ok": false },
+    { "path": "exports", "root": "exports", "ok": false },
+    { "path": "exports/../videos/clip.mp4", "root": "exports", "ok": false },
+    { "path": "exports/f/../../clip.mp4", "root": "exports", "ok": false },
+    { "path": "exports/f/..", "root": "exports", "ok": false },
+    { "path": "exports/./x.mp4", "root": "exports", "ok": false },
+    { "path": "exports/f/.hidden", "root": "exports", "ok": false },
+    { "path": "exports/a..b/x.mp4", "root": "exports", "ok": false },
+    { "path": "exports//x.mp4", "root": "exports", "ok": false },
+    { "path": "/exports/x.mp4", "root": "exports", "ok": false },
+    { "path": "exportsx/y.mp4", "root": "exports", "ok": false },
+    { "path": "exports\\x.mp4", "root": "exports", "ok": false },
+    { "path": "exports/x y.mp4", "root": "exports", "ok": false },
+    { "path": "exports/%2e%2e/x.mp4", "root": "exports", "ok": false },
+    { "path": "https://evil.example.com/exports/x.mp4", "root": "exports", "ok": false },
+    { "path": "teasers/x.mp4", "root": "exports", "ok": false },
+    { "path": "exports/x.mp4", "root": "teasers", "ok": false },
+    { "path": "exports/x.mp4", "root": "videos", "ok": false },
+    { "path": "teasers/../exports/x.mp4", "root": "teasers", "ok": false }
+  ]
+}
