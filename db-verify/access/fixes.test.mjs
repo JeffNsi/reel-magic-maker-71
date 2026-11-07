@@ -375,17 +375,24 @@ describe("Migration order: what an automatic runner applies is safe before the n
   // tested in auto-engine/db-verify. Here only this PR's migrations are run.
   const PR1 = ["0009_auto_engine_step1", "0010_auto_engine_review_fixes"];
   const OURS = ["0011_server_only_balances_and_unlocks", "0012_unlock_fixes_and_atomic_rewards"];
-  const ours = (tags) => tags.filter((t) => !PR1.includes(t));
+  const ours = (tags) => tags.filter((t) => OURS.includes(t));
 
-  test("against the live history, a runner applies 0011 then 0012 (after 0009-0010 when PR #1 is merged)", () => {
+  test("against the live history, a runner applies the pending migrations in the agreed order", () => {
     const tags = pending(LIVE_LAST_APPLIED);
-    const alone = OURS;
-    const combined = [...PR1, ...OURS];
-    assert.ok(
-      JSON.stringify(tags) === JSON.stringify(alone) ||
-        JSON.stringify(tags) === JSON.stringify(combined),
-      `unexpected pending order: ${tags.join(", ")}`,
+    // The agreed combined order; any merged subset must keep it.
+    const ORDER = [
+      ...PR1,
+      ...OURS,
+      "0013_server_only_unlock_inserts", // added only after the new code is published
+      "0014_atomic_coin_purchase_credit",
+    ];
+    const positions = tags.map((t) => ORDER.indexOf(t));
+    assert.ok(!positions.includes(-1), `unknown migration in: ${tags.join(", ")}`);
+    assert.deepEqual(
+      [...positions].sort((a, b) => a - b),
+      positions,
     );
+    for (const t of OURS) assert.ok(tags.includes(t), `${t} is pending`);
   });
 
   test("the post-deploy unlock lock is not reachable by any runner", () => {

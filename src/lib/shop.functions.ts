@@ -3,30 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 import { assertAppleValidationUrl, assertCoinCheckout } from "@/lib/coin-apple-pay";
+import { creditPurchaseWith } from "@/lib/coin-credit";
+import { COIN_PACKS, type ShopPack } from "@/lib/coin-packs";
 
-export type ShopPack = "small" | "medium" | "large" | "vip";
+export type { ShopPack };
 
-const PACKS: Record<
-  ShopPack,
-  { priceId: string; amountSek: number; paid: number; bonus: number; name: string }
-> = {
-  small: { priceId: "coins_small", amountSek: 49, paid: 500, bonus: 0, name: "Starter Coin Pack" },
-  medium: {
-    priceId: "coins_medium",
-    amountSek: 99,
-    paid: 1000,
-    bonus: 500,
-    name: "Popular Coin Pack",
-  },
-  large: {
-    priceId: "coins_large",
-    amountSek: 249,
-    paid: 3000,
-    bonus: 2000,
-    name: "Mega Coin Pack",
-  },
-  vip: { priceId: "vip_monthly", amountSek: 149, paid: 0, bonus: 0, name: "VIP Pass" },
-};
+const PACKS = COIN_PACKS;
 
 const packInput = z.object({
   pack: z.enum(["small", "medium", "large", "vip"]),
@@ -34,63 +16,27 @@ const packInput = z.object({
   environment: z.enum(["sandbox", "live"]),
 });
 
-/** Credit coins / VIP after a confirmed payment. Idempotent via coin_purchases.reference. */
+/**
+ * Credit coins / VIP after a confirmed payment. Recording the purchase and
+ * crediting the buyer happen in one database transaction
+ * (public.credit_coin_purchase): exactly once per payment reference, as
+ * increments, and never recorded as paid without the coins.
+ */
 async function fulfillPurchase(opts: {
   supabase: any;
   userId: string;
   pack: ShopPack;
-  provider: string;
+  provider: "sumup" | "stripe";
   reference: string;
   environment: string;
 }) {
-  const pack = PACKS[opts.pack];
-  const { data: claimed, error } = await opts.supabase
-    .from("coin_purchases")
-    .upsert(
-      {
-        user_id: opts.userId,
-        reference: opts.reference,
-        provider: opts.provider,
-        pack: opts.pack,
-        amount: pack.amountSek,
-        currency: "SEK",
-        status: "paid",
-        environment: opts.environment,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "reference", ignoreDuplicates: true },
-    )
-    .select("id");
-
-  if (error) throw new Error("Could not record the purchase.");
-  // Already fulfilled — nothing to credit again.
-  if (!claimed || claimed.length === 0) return { credited: false as const };
-
-  if (opts.pack === "vip") {
-    const until = new Date();
-    until.setDate(until.getDate() + 30);
-    await opts.supabase
-      .from("profiles")
-      .update({ is_vip: true, vip_until: until.toISOString() })
-      .eq("id", opts.userId);
-    return { credited: true as const };
-  }
-
-  const { data: profile, error: pErr } = await opts.supabase
-    .from("profiles")
-    .select("paid_coins, bonus_coins")
-    .eq("id", opts.userId)
-    .single();
-  if (pErr || !profile) throw new Error("Could not load your profile.");
-
-  await opts.supabase
-    .from("profiles")
-    .update({
-      paid_coins: profile.paid_coins + pack.paid,
-      bonus_coins: profile.bonus_coins + pack.bonus,
-    })
-    .eq("id", opts.userId);
-  return { credited: true as const };
+  return creditPurchaseWith((args) => opts.supabase.rpc("credit_coin_purchase", args), {
+    userId: opts.userId,
+    reference: opts.reference,
+    provider: opts.provider,
+    pack: opts.pack,
+    environment: opts.environment,
+  });
 }
 
 // ---------- Built-in payments (Stripe) ----------
