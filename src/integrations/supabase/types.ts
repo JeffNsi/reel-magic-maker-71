@@ -123,6 +123,8 @@ export type Database = {
         Row: {
           amount: number
           created_at: string | null
+          credited_bonus: number | null
+          credited_paid: number | null
           currency: string
           environment: string
           id: string
@@ -132,10 +134,13 @@ export type Database = {
           status: string
           updated_at: string | null
           user_id: string
+          vip_until_after: string | null
         }
         Insert: {
           amount: number
           created_at?: string | null
+          credited_bonus?: number | null
+          credited_paid?: number | null
           currency?: string
           environment?: string
           id?: string
@@ -145,10 +150,13 @@ export type Database = {
           status?: string
           updated_at?: string | null
           user_id: string
+          vip_until_after?: string | null
         }
         Update: {
           amount?: number
           created_at?: string | null
+          credited_bonus?: number | null
+          credited_paid?: number | null
           currency?: string
           environment?: string
           id?: string
@@ -158,6 +166,7 @@ export type Database = {
           status?: string
           updated_at?: string | null
           user_id?: string
+          vip_until_after?: string | null
         }
         Relationships: []
       }
@@ -1487,6 +1496,21 @@ export type Database = {
         Returns: Json
       }
       claim_film_slot: { Args: { _user: string }; Returns: boolean }
+      credit_coin_purchase: {
+        Args: {
+          _amount: number
+          _bonus_coins: number
+          _currency: string
+          _environment: string
+          _pack: string
+          _paid_coins: number
+          _provider: string
+          _reference: string
+          _user: string
+          _vip_days: number
+        }
+        Returns: Json
+      }
       create_approved_character_film: {
         Args: {
           _character: string

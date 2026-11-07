@@ -78,6 +78,13 @@
       "when": 1794003260553,
       "tag": "0012_unlock_fixes_and_atomic_rewards",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794010406688,
+      "tag": "0014_atomic_coin_purchase_credit",
+      "breakpoints": true
     }
   ]
 }

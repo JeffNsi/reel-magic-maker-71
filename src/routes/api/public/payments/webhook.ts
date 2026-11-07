@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { creditPurchaseWith } from "@/lib/coin-credit";
+import { isShopPack } from "@/lib/coin-packs";
 
 let _supabase: any = null;
 function getSupabase(): any {
@@ -13,63 +15,26 @@ function getSupabase(): any {
   return _supabase;
 }
 
-const PACK_COINS: Record<string, { paid: number; bonus: number }> = {
-  small: { paid: 500, bonus: 0 },
-  medium: { paid: 1000, bonus: 500 },
-  large: { paid: 3000, bonus: 2000 },
-};
-
+/**
+ * Credit a pack bought through Stripe (kept for existing sessions; new
+ * purchases use SumUp). Recording and crediting happen in one database
+ * transaction, exactly once per session: a repeated webhook credits nothing,
+ * and a failure throws so the webhook answers with an error and Stripe retries.
+ */
 async function creditPack(userId: string, pack: string, reference: string, env: StripeEnv) {
+  if (!isShopPack(pack)) {
+    console.error("Stripe webhook: unknown pack, nothing credited", { pack });
+    return;
+  }
   const supabase = getSupabase();
-
-  const { data: claimed, error } = await supabase
-    .from("coin_purchases")
-    .upsert(
-      {
-        user_id: userId,
-        reference,
-        provider: "stripe",
-        pack,
-        amount: 0,
-        currency: "SEK",
-        status: "paid",
-        environment: env,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "reference", ignoreDuplicates: true },
-    )
-    .select("id");
-  if (error) {
-    console.error("coin_purchases upsert failed:", error);
-    return;
-  }
-  if (!claimed || claimed.length === 0) return; // already fulfilled
-
-  if (pack === "vip") {
-    const until = new Date();
-    until.setDate(until.getDate() + 30);
-    await supabase
-      .from("profiles")
-      .update({ is_vip: true, vip_until: until.toISOString() })
-      .eq("id", userId);
-    return;
-  }
-
-  const coins = PACK_COINS[pack];
-  if (!coins) return;
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("paid_coins, bonus_coins")
-    .eq("id", userId)
-    .single();
-  if (!profile) return;
-  await supabase
-    .from("profiles")
-    .update({
-      paid_coins: profile.paid_coins + coins.paid,
-      bonus_coins: profile.bonus_coins + coins.bonus,
-    })
-    .eq("id", userId);
+  await creditPurchaseWith((args) => supabase.rpc("credit_coin_purchase", args), {
+    userId,
+    reference,
+    provider: "stripe",
+    pack,
+    environment: env,
+    amount: 0, // the Stripe price is not part of the event; recorded as before
+  });
 }
 
 async function syncVipFromSubscription(subscription: any, env: StripeEnv) {

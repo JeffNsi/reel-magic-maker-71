@@ -240,11 +240,13 @@ describe("migrations and the post-deploy step (source checks; executed in db-ver
     // Before PR #1 is merged idx 9-10 are free; after, they are PR #1's.
     expect([undefined, "0009_auto_engine_step1"]).toContain(at(9));
     expect([undefined, "0010_auto_engine_review_fixes"]).toContain(at(10));
-    expect(journal.entries.slice(-2).map((e) => [e.idx, e.tag])).toEqual([
-      [11, "0011_server_only_balances_and_unlocks"],
-      [12, "0012_unlock_fixes_and_atomic_rewards"],
-    ]);
-    for (const e of journal.entries.slice(-2)) expect(e.when).toBeGreaterThan(PR1_0010_WHEN);
+    expect(at(11)).toBe("0011_server_only_balances_and_unlocks");
+    expect(at(12)).toBe("0012_unlock_fixes_and_atomic_rewards");
+    // idx 13 is reserved for the post-deploy unlock lock once it becomes a migration.
+    expect([undefined, "0013_server_only_unlock_inserts"]).toContain(at(13));
+    for (const e of journal.entries.filter((x) => x.idx >= 11)) {
+      expect(e.when).toBeGreaterThan(PR1_0010_WHEN);
+    }
   });
 
   it("chains the snapshots after PR #1: 0010 → 0011 → 0012, with no fork at 0008", () => {

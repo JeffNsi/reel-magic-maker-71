@@ -14,7 +14,12 @@ export const M0011 = read("drizzle/migrations/0011_server_only_balances_and_unlo
 export const M0012 = read("drizzle/migrations/0012_unlock_fixes_and_atomic_rewards.sql");
 // Not a migration: applied by hand after the new app code is published.
 export const LOCK = read("ops/post-deploy/server_only_unlock_inserts.sql");
-export const STAGES = ["none", "0011", "0012", "lock"];
+export const M0014 = read("drizzle/migrations/0014_atomic_coin_purchase_credit.sql");
+// coin_purchases and subscriptions exactly as Lovable created them (live).
+export const COIN_TABLES = read(
+  "supabase/migrations/20260913174147_22fea86b-7de4-416f-8e1e-148342ba6b14.sql",
+);
+export const STAGES = ["none", "0011", "0012", "lock", "0014"];
 export const TYPES = read("src/integrations/supabase/types.ts");
 
 export const NORMAL = "00000000-0000-4000-8000-0000000000a1"; // default 210 bonus coins
@@ -32,10 +37,12 @@ export async function fresh({ upTo = "lock" } = {}) {
   const db = new PGlite();
   await db.exec(STUB);
   await db.exec(M0002);
+  await db.exec(COIN_TABLES);
   const ids = await seedBefore(db);
   if (stage >= 1) await db.exec(M0011);
   if (stage >= 2) await db.exec(M0012);
   if (stage >= 3) await db.exec(LOCK);
+  if (stage >= 4) await db.exec(M0014);
   return { db, ...ids };
 }
 
