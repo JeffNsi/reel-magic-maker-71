@@ -187,7 +187,10 @@ describe("refund failure paths (behavioral, mocked database only)", () => {
     retryAvailable = true;
     await runFilmTick(new Date("2026-10-17T12:30:00Z"));
     expect(log).toHaveBeenCalledWith("scene refund failed", "generation", expect.any(String));
-    expect(row.status).toBe("failed");
+    // The tick ran on to the film-status refresh instead of stopping at the refund error.
+    expect(updates.some((u) => u["status"] === "failed")).toBe(true);
+    expect(updates.some((u) => u["status"] === "generating")).toBe(true);
+    row.status = "failed";
     expect(row.refunded).toBe(false);
     expect(mocks.render).not.toHaveBeenCalled();
     refundFails = false;
