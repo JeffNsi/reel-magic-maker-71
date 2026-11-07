@@ -723,6 +723,124 @@ export type Database = {
         }
         Relationships: []
       }
+      film_exports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_label: string | null
+          approved_manifest_hash: string | null
+          approved_sha256: string | null
+          created_at: string
+          drama_id: string | null
+          duration_ms: number
+          episode_number: number | null
+          has_music: boolean
+          has_subtitles: boolean
+          has_voice: boolean
+          id: string
+          job_id: string | null
+          manifest: Json
+          manifest_hash: string
+          sha256: string
+          size_bytes: number
+          status: string
+          storage_bucket: string
+          storage_prefix: string
+          story_id: string | null
+          subject_type: string
+          subtitles_path: string | null
+          thumbnail_path: string | null
+          updated_at: string
+          version: number
+          video_landscape_path: string | null
+          video_vertical_path: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_label?: string | null
+          approved_manifest_hash?: string | null
+          approved_sha256?: string | null
+          created_at?: string
+          drama_id?: string | null
+          duration_ms: number
+          episode_number?: number | null
+          has_music?: boolean
+          has_subtitles?: boolean
+          has_voice?: boolean
+          id?: string
+          job_id?: string | null
+          manifest: Json
+          manifest_hash: string
+          sha256: string
+          size_bytes: number
+          status?: string
+          storage_bucket?: string
+          storage_prefix: string
+          story_id?: string | null
+          subject_type: string
+          subtitles_path?: string | null
+          thumbnail_path?: string | null
+          updated_at?: string
+          version: number
+          video_landscape_path?: string | null
+          video_vertical_path: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_label?: string | null
+          approved_manifest_hash?: string | null
+          approved_sha256?: string | null
+          created_at?: string
+          drama_id?: string | null
+          duration_ms?: number
+          episode_number?: number | null
+          has_music?: boolean
+          has_subtitles?: boolean
+          has_voice?: boolean
+          id?: string
+          job_id?: string | null
+          manifest?: Json
+          manifest_hash?: string
+          sha256?: string
+          size_bytes?: number
+          status?: string
+          storage_bucket?: string
+          storage_prefix?: string
+          story_id?: string | null
+          subject_type?: string
+          subtitles_path?: string | null
+          thumbnail_path?: string | null
+          updated_at?: string
+          version?: number
+          video_landscape_path?: string | null
+          video_vertical_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_exports_drama_id_fkey"
+            columns: ["drama_id"]
+            isOneToOne: false
+            referencedRelation: "dramas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "post_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exports_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       film_watchlist: {
         Row: {
           created_at: string
@@ -999,6 +1117,114 @@ export type Database = {
           },
         ]
       }
+      post_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          deadline_at: string | null
+          drama_id: string | null
+          episode_number: number | null
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          heartbeat_at: string | null
+          id: string
+          idempotency_key: string
+          input_identity: string | null
+          kind: string
+          lease_until: string | null
+          locked_by: string | null
+          manifest: Json
+          manifest_hash: string
+          max_attempts: number
+          options: Json
+          progress: number
+          requested_by: string | null
+          result: Json | null
+          stage: string | null
+          started_at: string | null
+          status: string
+          story_id: string | null
+          subject_type: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          deadline_at?: string | null
+          drama_id?: string | null
+          episode_number?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          idempotency_key: string
+          input_identity?: string | null
+          kind: string
+          lease_until?: string | null
+          locked_by?: string | null
+          manifest: Json
+          manifest_hash: string
+          max_attempts?: number
+          options?: Json
+          progress?: number
+          requested_by?: string | null
+          result?: Json | null
+          stage?: string | null
+          started_at?: string | null
+          status?: string
+          story_id?: string | null
+          subject_type: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          deadline_at?: string | null
+          drama_id?: string | null
+          episode_number?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          idempotency_key?: string
+          input_identity?: string | null
+          kind?: string
+          lease_until?: string | null
+          locked_by?: string | null
+          manifest?: Json
+          manifest_hash?: string
+          max_attempts?: number
+          options?: Json
+          progress?: number
+          requested_by?: string | null
+          result?: Json | null
+          stage?: string | null
+          started_at?: string | null
+          status?: string
+          story_id?: string | null
+          subject_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_jobs_drama_id_fkey"
+            columns: ["drama_id"]
+            isOneToOne: false
+            referencedRelation: "dramas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_jobs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           bonus_coins: number
@@ -1037,6 +1263,41 @@ export type Database = {
           vip_until?: string | null
         }
         Relationships: []
+      }
+      reward_events: {
+        Row: {
+          bonus_coins: number
+          created_at: string
+          event_id: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          bonus_coins: number
+          created_at?: string
+          event_id: string
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          bonus_coins?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stories: {
         Row: {
@@ -1334,6 +1595,117 @@ export type Database = {
         }
         Relationships: []
       }
+      teaser_candidates: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_label: string | null
+          approved_revision: number | null
+          caption: string | null
+          content_revision: number
+          created_at: string
+          created_by: string | null
+          end_ms: number
+          export_id: string
+          hashtags: string[]
+          id: string
+          includes_reveal: boolean
+          job_id: string | null
+          kind: string
+          reason: string | null
+          reveal_approved_at: string | null
+          reveal_approved_by: string | null
+          reveal_approved_by_label: string | null
+          reveal_approved_revision: number | null
+          scene_numbers: number[]
+          score: number | null
+          spoiler_risk: string
+          start_ms: number
+          status: string
+          storage_bucket: string
+          storage_path: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_label?: string | null
+          approved_revision?: number | null
+          caption?: string | null
+          content_revision?: number
+          created_at?: string
+          created_by?: string | null
+          end_ms: number
+          export_id: string
+          hashtags?: string[]
+          id?: string
+          includes_reveal?: boolean
+          job_id?: string | null
+          kind: string
+          reason?: string | null
+          reveal_approved_at?: string | null
+          reveal_approved_by?: string | null
+          reveal_approved_by_label?: string | null
+          reveal_approved_revision?: number | null
+          scene_numbers?: number[]
+          score?: number | null
+          spoiler_risk?: string
+          start_ms: number
+          status?: string
+          storage_bucket?: string
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_label?: string | null
+          approved_revision?: number | null
+          caption?: string | null
+          content_revision?: number
+          created_at?: string
+          created_by?: string | null
+          end_ms?: number
+          export_id?: string
+          hashtags?: string[]
+          id?: string
+          includes_reveal?: boolean
+          job_id?: string | null
+          kind?: string
+          reason?: string | null
+          reveal_approved_at?: string | null
+          reveal_approved_by?: string | null
+          reveal_approved_by_label?: string | null
+          reveal_approved_revision?: number | null
+          scene_numbers?: number[]
+          score?: number | null
+          spoiler_risk?: string
+          start_ms?: number
+          status?: string
+          storage_bucket?: string
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teaser_candidates_export_id_fkey"
+            columns: ["export_id"]
+            isOneToOne: false
+            referencedRelation: "film_exports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teaser_candidates_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "post_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       universe_versions: {
         Row: {
           conflicts: Json
@@ -1399,20 +1771,29 @@ export type Database = {
       }
       user_unlocked_episodes: {
         Row: {
+          charged_bonus: number
+          charged_paid: number
           episode_id: string
           id: string
+          unlock_method: string | null
           unlocked_at: string
           user_id: string
         }
         Insert: {
+          charged_bonus?: number
+          charged_paid?: number
           episode_id: string
           id?: string
+          unlock_method?: string | null
           unlocked_at?: string
           user_id: string
         }
         Update: {
+          charged_bonus?: number
+          charged_paid?: number
           episode_id?: string
           id?: string
+          unlock_method?: string | null
           unlocked_at?: string
           user_id?: string
         }
@@ -1438,6 +1819,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_engine_film_source: { Args: { _story_id: string }; Returns: Json }
+      auto_engine_is_export_file: {
+        Args: { _path: string; _prefix: string }
+        Returns: boolean
+      }
+      auto_engine_is_safe_path: {
+        Args: { _path: string; _root: string }
+        Returns: boolean
+      }
+      claim_daily_checkin: {
+        Args: { _rewards: number[]; _user: string }
+        Returns: Json
+      }
       claim_film_slot: { Args: { _user: string }; Returns: boolean }
       create_approved_character_film: {
         Args: {
@@ -1473,6 +1867,10 @@ export type Database = {
           bonus_spent: number
           paid_spent: number
         }[]
+      }
+      unlock_episode: {
+        Args: { _episode: string; _user: string }
+        Returns: Json
       }
     }
     Enums: {
